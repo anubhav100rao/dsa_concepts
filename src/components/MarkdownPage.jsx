@@ -47,13 +47,107 @@ function getQuestionRows(markdown) {
     .filter((cells) => normalizeDifficulty(cells[cells.length - 1]).length > 0)
 }
 
+function getMarkdownSections(markdown) {
+  const lines = markdown.split('\n')
+  const introLines = []
+  const sections = []
+  let currentSection = null
+
+  lines.forEach((line) => {
+    if (line.startsWith('## ')) {
+      if (currentSection) {
+        sections.push(currentSection)
+      }
+
+      currentSection = {
+        heading: line,
+        bodyLines: [],
+      }
+      return
+    }
+
+    if (currentSection) {
+      currentSection.bodyLines.push(line)
+    } else {
+      introLines.push(line)
+    }
+  })
+
+  if (currentSection) {
+    sections.push(currentSection)
+  }
+
+  return {
+    intro: introLines.join('\n'),
+    sections: sections.map((section, index) => {
+      const body = section.bodyLines.join('\n')
+
+      return {
+        id: `${index}-${section.heading}`,
+        heading: section.heading,
+        body,
+        questionRows: getQuestionRows(body),
+      }
+    }),
+  }
+}
+
 function makeQuestionId(topicId, cells) {
   const problem = cells[1] || 'unknown-problem'
   const leetcodeId = cells[2] || 'unknown-lc'
   return `${topicId}:${leetcodeId}:${problem}`.toLowerCase()
 }
 
-export default function MarkdownPage({ doneQuestions, onToggleQuestionDone }) {
+function QuestionSectionToolbar({
+  doneQuestions,
+  onSetQuestionsDone,
+  questionRows,
+  topicId,
+}) {
+  const questionIds = questionRows.map((cells) => makeQuestionId(topicId, cells))
+  const doneCount = questionIds.filter((questionId) => doneQuestions[questionId])
+    .length
+  const isDone = doneCount === questionIds.length
+  const isStarted = doneCount > 0
+
+  return (
+    <div className="question-section-toolbar">
+      <label className="section-check">
+        <input
+          type="checkbox"
+          checked={isDone}
+          ref={(input) => {
+            if (input) {
+              input.indeterminate = isStarted && !isDone
+            }
+          }}
+          onChange={(event) =>
+            onSetQuestionsDone(questionIds, event.target.checked)
+          }
+        />
+        <span>Mark section done</span>
+      </label>
+      <span className="section-progress">
+        {doneCount} / {questionIds.length} done
+      </span>
+      {isStarted && (
+        <button
+          type="button"
+          className="section-clear-btn"
+          onClick={() => onSetQuestionsDone(questionIds, false)}
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  )
+}
+
+export default function MarkdownPage({
+  doneQuestions,
+  onToggleQuestionDone,
+  onSetQuestionsDone,
+}) {
   const { topicId } = useParams()
   const [loadedTopic, setLoadedTopic] = useState({ id: null, content: '' })
   const [difficultyFilters, setDifficultyFilters] = useState({
@@ -70,6 +164,7 @@ export default function MarkdownPage({ doneQuestions, onToggleQuestionDone }) {
     (difficulty) => difficultyFilters[difficulty],
   )
   const content = loadedTopic.content
+  const contentSections = getMarkdownSections(content)
   const questionRows = getQuestionRows(content)
   const visibleQuestionRows = questionRows.filter((cells) =>
     normalizeDifficulty(cells[cells.length - 1]).some(
@@ -227,8 +322,34 @@ export default function MarkdownPage({ doneQuestions, onToggleQuestionDone }) {
           rehypePlugins={[rehypeRaw]}
           components={markdownComponents}
         >
-          {content}
+          {contentSections.intro}
         </ReactMarkdown>
+        {contentSections.sections.map((section) => (
+          <section className="question-section" key={section.id}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={markdownComponents}
+            >
+              {section.heading}
+            </ReactMarkdown>
+            {section.questionRows.length > 0 && (
+              <QuestionSectionToolbar
+                doneQuestions={doneQuestions}
+                onSetQuestionsDone={onSetQuestionsDone}
+                questionRows={section.questionRows}
+                topicId={topicId}
+              />
+            )}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={markdownComponents}
+            >
+              {section.body}
+            </ReactMarkdown>
+          </section>
+        ))}
       </article>
     </div>
   )
