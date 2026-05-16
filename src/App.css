@@ -404,6 +404,88 @@
   max-width: 100%;
 }
 
+.question-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: sticky;
+  top: calc(var(--topbar-height) + 12px);
+  z-index: 20;
+}
+
+.question-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.difficulty-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.difficulty-filter:hover {
+  border-color: var(--border-light);
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.difficulty-filter input {
+  width: 15px;
+  height: 15px;
+  accent-color: currentColor;
+  cursor: pointer;
+}
+
+.difficulty-filter strong {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.difficulty-filter.easy.active {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.difficulty-filter.medium.active {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: var(--yellow-dim);
+  color: var(--yellow);
+}
+
+.difficulty-filter.hard.active {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.question-progress {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  margin: 0;
+}
+
 .markdown-content {
   color: var(--text-primary);
   line-height: 1.7;
@@ -521,7 +603,7 @@
   background: var(--bg-hover);
 }
 
-.markdown-content td:nth-child(4) {
+.markdown-content td:nth-child(5) {
   font-weight: 500;
   white-space: nowrap;
 }
@@ -529,6 +611,30 @@
 /* Color difficulty labels in tables */
 .markdown-content td:last-child {
   font-weight: 500;
+}
+
+.question-done-heading,
+.question-done-cell {
+  text-align: center !important;
+  width: 1%;
+}
+
+.question-done-cell input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.question-row.done td {
+  color: var(--text-muted);
+  background: rgba(52, 211, 153, 0.06);
+}
+
+.question-row.done td:nth-child(3) {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--text-muted);
 }
 
 /* Details/Summary */
@@ -618,6 +724,17 @@
 
   .page-content {
     padding: 20px 16px 48px;
+  }
+
+  .question-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    top: calc(var(--topbar-height) + 8px);
+  }
+
+  .question-progress {
+    white-space: normal;
   }
 
   .home-hero h1 {

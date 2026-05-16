@@ -7,6 +7,14 @@ import './App.css'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [doneQuestions, setDoneQuestions] = useState({})
+
+  const toggleQuestionDone = (questionId) => {
+    setDoneQuestions((current) => ({
+      ...current,
+      [questionId]: !current[questionId],
+    }))
+  }
 
   return (
     <div className="app">
@@ -27,7 +35,15 @@ function App() {
         <div className="page-content">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/topic/:topicId" element={<MarkdownPage />} />
+            <Route
+              path="/topic/:topicId"
+              element={
+                <MarkdownPage
+                  doneQuestions={doneQuestions}
+                  onToggleQuestionDone={toggleQuestionDone}
+                />
+              }
+            />
           </Routes>
         </div>
       </main>
