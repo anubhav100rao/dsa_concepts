@@ -56,6 +56,31 @@
   color: var(--text-secondary);
 }
 
+.topbar-github {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.topbar-github:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.topbar-github svg {
+  display: block;
+}
+
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: var(--sidebar-width);
@@ -397,6 +422,85 @@
   height: 6px;
   border-radius: 50%;
   background: var(--border-light);
+}
+
+/* Contribute */
+.home-contribute {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 40px;
+}
+
+.home-contribute-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-contribute-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.home-contribute-body h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.home-contribute-body p {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.home-contribute-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.home-contribute-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.home-contribute-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-muted);
+}
+
+.home-contribute-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.home-contribute-btn.primary:hover {
+  filter: brightness(1.1);
+  border-color: var(--accent);
 }
 
 /* ===== MARKDOWN PAGE ===== */
@@ -809,6 +913,20 @@
 
   .phases {
     grid-template-columns: 1fr;
+  }
+
+  .home-contribute {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .topbar-github-label {
+    display: none;
+  }
+
+  .topbar-github {
+    padding: 6px 8px;
   }
 
   .markdown-content h1 {
