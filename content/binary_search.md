@@ -441,7 +441,7 @@
 9. Design / online problems using BS
 10. Floating point BS, ternary search
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **BS on answer** is the single most tested pattern — master the template: define search space on the answer, write `canAchieve(mid)`, binary search the boundary. Problems like (410) Split Array, (1011) Ship Packages, (875) Koko, (1482) Bouquets are canonical
 - **Kth smallest via BS + count**: (4) Median of Two Arrays, (719) Kth Pair Distance, (668) Kth in Multiplication Table — the trick is binary searching the answer and counting how many elements are ≤ mid

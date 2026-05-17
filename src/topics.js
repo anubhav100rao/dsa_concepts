@@ -63,6 +63,15 @@ const topics = [
     categories: '25',
   },
   {
+    id: 'range-queries',
+    title: 'Range Queries & Segment Trees',
+    icon: '📐',
+    file: 'range_queries_segment_trees.md',
+    description: 'Prefix sum, BIT, segment tree, lazy propagation, Mo\'s',
+    problems: '250+',
+    categories: '18',
+  },
+  {
     id: 'stack-queue',
     title: 'Stack & Queue',
     icon: '📚',

@@ -508,12 +508,12 @@
 7. Greedy + binary search (minimize-max, maximize-min)
 8. Counting / frequency greedy (partition labels, task scheduler)
 9. Two-pass greedy (candy, trapping rain water)
-10. Exchange argument proofs (staff-level maturity)
+10. Exchange argument proofs (advanced topic)
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Exchange argument**: the gold standard for proving greedy correctness. The pattern: assume you have an optimal solution where two adjacent elements are "out of order" by your greedy criterion, show swapping them doesn't worsen the solution. (179) Largest Number, (857) Hire K Workers, (1029) Two City Scheduling, (630) Course Schedule III all use this
-- **Regret-based greedy + heap**: greedily commit to a choice, but keep a max-heap of past decisions so you can "undo" the worst one when a better option appears. (630), (871), (1642) are canonical — this pattern is a staff-level differentiator
+- **Regret-based greedy + heap**: greedily commit to a choice, but keep a max-heap of past decisions so you can "undo" the worst one when a better option appears. (630), (871), (1642) are canonical — this pattern is an advanced differentiator
 - **Greedy + binary search**: define feasibility via greedy simulation, binary search the answer. (410), (1011), (875), (2071). The greedy `canAchieve(mid)` function is the crux — getting this right is the interview
 - **Candy problem (135)**: two-pass greedy is a pattern that generalizes — left-to-right enforces one constraint, right-to-left enforces another, take max. Also seen in (42) Trapping Rain Water
 - **Interval scheduling**: (435) Non-overlapping Intervals is the purest form — sort by end time, greedily pick earliest-ending non-conflicting interval. Know why sorting by end (not start) is correct

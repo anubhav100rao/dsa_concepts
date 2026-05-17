@@ -587,11 +587,11 @@
 11. Segment tree / BIT
 12. Binary lifting / Euler tour / HLD / centroid decomposition
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Binary Tree Maximum Path Sum (124)**: the gold standard tree DP problem. At each node, compute the best "straight path" (node + left or right child), propagate that up, while tracking the global best "bent path" (left + node + right). The key is returning the straight path but updating answer with the bent path
 - **Serialize/Deserialize (297)**: tests design thinking — preorder with null markers, level-order with null markers, or parenthesized representation. Know the tradeoffs. Interviewers test edge cases: empty tree, single node, skewed tree
-- **Path Sum III (437)**: prefix sum on tree paths — pass a hashmap of prefix sums down the DFS, add current sum, look up (current - target). This is the tree version of "Subarray Sum Equals K" (560). Staff-level insight
+- **Path Sum III (437)**: prefix sum on tree paths — pass a hashmap of prefix sums down the DFS, add current sum, look up (current - target). This is the tree version of "Subarray Sum Equals K" (560). Advanced insight
 - **Binary Tree Cameras (968)**: greedy on tree with 3 states (uncovered, covered, has camera). Post-order DFS, decide bottom-up. The greedy insight: never place cameras on leaves, always on their parents
 - **Sum of Distances in Tree (834)**: the canonical rerooting DP. First DFS: compute subtree sizes and root's answer. Second DFS: re-root — when moving root from parent to child, nodes in child's subtree get 1 closer, rest get 1 farther. `ans[child] = ans[parent] - subtree[child] + (n - subtree[child])`
 - **LCA with binary lifting (1483)**: preprocess ancestors at powers of 2 for each node. Query in O(log n). Extends to path max/min queries. Know the technique: `up[v][k] = up[up[v][k-1]][k-1]`

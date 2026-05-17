@@ -1,6 +1,6 @@
 # 🧠 DSA Concepts — The Ultimate Interview Question Bank
 
-> A meticulously curated, pattern-based collection of **2,700+ LeetCode problems** organized across **9 core DSA topics** and **225+ sub-categories**. Designed for engineers preparing for **Senior / Staff-level** technical interviews at top-tier companies.
+> A meticulously curated, pattern-based collection of **2,700+ LeetCode problems** organized across **10 core DSA topics** and **245+ sub-categories**. Built for everyone preparing for technical interviews — at every level, from your first coding round to advanced deep dives.
 
 ---
 
@@ -14,9 +14,10 @@
 | 4 | [Graphs](#4-graphs) | 300+ | 30 | [`graphs.md`](graphs.md) |
 | 5 | [Greedy Algorithms](#5-greedy-algorithms) | 350+ | 25 | [`greedy.md`](greedy.md) |
 | 6 | [Priority Queue / Heap](#6-priority-queue--heap) | 280+ | 25 | [`priority_queue.md`](priority_queue.md) |
-| 7 | [Stack & Queue](#7-stack--queue) | 300+ | 25 | [`stack_queue.md`](stack_queue.md) |
-| 8 | [Trie (Prefix Tree)](#8-trie-prefix-tree) | 200+ | 20 | [`tries.md`](tries.md) |
-| 9 | [Two Pointers & Sliding Window](#9-two-pointers--sliding-window) | 350+ | 25 | [`two_pointers_sliding_window.md`](two_pointers_sliding_window.md) |
+| 7 | [Range Queries & Segment Trees](#7-range-queries--segment-trees) | 250+ | 18 | [`range_queries_segment_trees.md`](range_queries_segment_trees.md) |
+| 8 | [Stack & Queue](#8-stack--queue) | 300+ | 25 | [`stack_queue.md`](stack_queue.md) |
+| 9 | [Trie (Prefix Tree)](#9-trie-prefix-tree) | 200+ | 20 | [`tries.md`](tries.md) |
+| 10 | [Two Pointers & Sliding Window](#10-two-pointers--sliding-window) | 350+ | 25 | [`two_pointers_sliding_window.md`](two_pointers_sliding_window.md) |
 
 ---
 
@@ -261,7 +262,39 @@ Covers heaps as algorithmic engines — from basic Top-K to Dijkstra, two-heap m
 
 ---
 
-### 7. Stack & Queue
+### 7. Range Queries & Segment Trees
+
+**File:** [`range_queries_segment_trees.md`](range_queries_segment_trees.md) · **250+ problems** · **18 categories**
+
+The full toolkit for interval aggregation — prefix sum, difference arrays, sparse tables, BIT/Fenwick, segment trees (point and lazy), coordinate compression, Mo's algorithm, square root decomposition, and tree-on-tree techniques like HLD.
+
+<details>
+<summary><b>Categories</b></summary>
+
+1. Prefix Sum / Static Range Sum
+2. Difference Array / Range Update — Point Query
+3. Sparse Table (Static RMQ — Range Min/Max/GCD)
+4. Binary Indexed Tree (BIT / Fenwick) — Point Update, Range Sum
+5. BIT — Range Update, Point Query (Difference Trick)
+6. BIT — Range Update, Range Query (Two-BIT Trick)
+7. 2D BIT / 2D Prefix
+8. Segment Tree — Point Update, Range Query
+9. Segment Tree with Lazy Propagation (Range Update + Range Query)
+10. Segment Tree on Coordinates / Coordinate Compression
+11. Segment Tree + DP
+12. Segment Tree Descent / Walk on Tree
+13. Merge Sort Tree / Persistent Segment Tree
+14. Mo's Algorithm (Offline Range Queries)
+15. Square Root Decomposition
+16. Heavy-Light Decomposition / LCA + Segment Tree
+17. Range Queries in Design / Online Problems
+18. Advanced / Contest-Level Range Query Problems
+
+</details>
+
+---
+
+### 8. Stack & Queue
 
 **File:** [`stack_queue.md`](stack_queue.md) · **300+ problems** · **25 categories**
 
@@ -300,7 +333,7 @@ Dual-track coverage — stack fundamentals (parentheses, expression evaluation, 
 
 ---
 
-### 8. Trie (Prefix Tree)
+### 9. Trie (Prefix Tree)
 
 **File:** [`tries.md`](tries.md) · **200+ problems** · **20 categories**
 
@@ -334,7 +367,7 @@ From basic prefix tree implementation to bitwise tries for XOR problems, Aho-Cor
 
 ---
 
-### 9. Two Pointers & Sliding Window
+### 10. Two Pointers & Sliding Window
 
 **File:** [`two_pointers_sliding_window.md`](two_pointers_sliding_window.md) · **350+ problems** · **25 categories**
 
@@ -381,7 +414,8 @@ Dual-track mastery — two-pointer techniques (opposite direction, same directio
 Phase 1: Foundations (Week 1-2)
 ├── Arrays — sections 1-6 (two pointers, sliding window, prefix sum)
 ├── Binary Search — sections 1-5 (classic BS, BS on answer)
-└── Stack & Queue — sections 1-3 (basics, parentheses, monotonic stack)
+├── Stack & Queue — sections 1-3 (basics, parentheses, monotonic stack)
+└── Range Queries — sections 1-2 (prefix sum, difference array)
 
 Phase 2: Core Patterns (Week 3-4)
 ├── Dynamic Programming — sections 1-4 (linear, grid, subsequence, knapsack)
@@ -393,12 +427,13 @@ Phase 3: Advanced (Week 5-6)
 ├── Dynamic Programming — sections 5-8 (interval, tree, state machine, bitmask)
 ├── Graphs — sections 4-8 (Dijkstra, Bellman-Ford, MST)
 ├── Priority Queue — sections 1-5 (Top-K, two heaps, k-way merge, Dijkstra)
+├── Range Queries — sections 3-4, 8 (sparse table, BIT, segment tree)
 └── Trie — sections 1-4 (basic trie, word search, bitwise XOR)
 
-Phase 4: Staff-Level (Week 7-8)
+Phase 4: Expert (Week 7-8)
 ├── Dynamic Programming — sections 9-21 (digit DP, game theory, SOS, profile)
 ├── Graphs — sections 9-30 (SCC, Euler, flow, LCA, centroid decomposition)
-├── Advanced categories across all topics
+├── Range Queries — sections 9-18 (lazy propagation, persistent ST, Mo's, HLD)
 └── Cross-topic combination problems
 ```
 
@@ -408,7 +443,7 @@ Every topic file includes:
 
 - **Categorized problem tables** with LeetCode numbers and difficulty ratings
 - **Study strategy** with recommended learning order
-- **Senior/Staff round priorities** highlighting the most impactful patterns
+- **Important Patterns** highlighting the most impactful patterns
 - **Code templates** for key algorithms (ready to memorize)
 - **Common interview traps** to avoid
 
@@ -422,7 +457,7 @@ Every topic file includes:
 | 🟡 Medium  | ~1,500            |
 | 🔴 Hard    | ~1,000            |
 
-> The emphasis is on **Medium** and **Hard** problems — the range most frequently tested in Senior/Staff interviews.
+> The emphasis is on **Medium** and **Hard** problems — the range most frequently tested in technical interviews.
 
 ---
 
@@ -437,6 +472,7 @@ dsa_sheet/
 ├── graphs.md                          # Graphs — 30 categories
 ├── greedy.md                          # Greedy Algorithms — 25 categories
 ├── priority_queue.md                  # Priority Queue / Heap — 25 categories
+├── range_queries_segment_trees.md     # Range Queries & Segment Trees — 18 categories
 ├── stack_queue.md                     # Stack & Queue — 25 categories
 ├── tries.md                           # Trie (Prefix Tree) — 20 categories
 └── two_pointers_sliding_window.md     # Two Pointers & Sliding Window — 25 categories
@@ -450,7 +486,7 @@ dsa_sheet/
 - **Cross-referencing** — The same problem appears in multiple topics when it uses multiple techniques (e.g., Trapping Rain Water appears in Arrays, Two Pointers, Greedy, and Stack)
 - **Templates included** — Copy-paste-ready code templates for core patterns (sliding window, binary search on answer, monotonic stack, fast-slow pointers, etc.)
 - **Interview trap warnings** — Common pitfalls flagged to prevent day-of mistakes
-- **Staff-level focus** — Priority sections call out exactly which patterns differentiate Senior from Staff engineers
+- **Pattern prioritization** — Important Patterns sections call out the highest-impact techniques in each topic
 
 ---
 

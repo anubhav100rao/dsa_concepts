@@ -495,7 +495,7 @@
 9. Graph + DP → Graph + Greedy
 10. Flow / Matching (conceptual — rarely coded in interviews)
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 - **Dijkstra with modified state**: (787) K-stop shortest path, (1293) obstacle elimination, (1928) time-constrained paths — these test state augmentation skills
 - **Union-Find mastery**: path compression + union by rank is baseline; test with (684/685) redundant connections, (1697) offline sorted queries, (1579) edge removal
 - **Topological sort + DP on DAGs**: (2050) Parallel Courses III, (329) longest increasing path, (269) alien dictionary

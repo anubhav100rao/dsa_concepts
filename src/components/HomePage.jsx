@@ -10,12 +10,12 @@ export default function HomePage() {
         <h1>DSA Concepts</h1>
         <p className="home-subtitle">
           The Ultimate Interview Question Bank — <strong>2,700+</strong>{' '}
-          LeetCode problems across <strong>9 core topics</strong> and{' '}
-          <strong>225+ sub-categories</strong>
+          LeetCode problems across <strong>10 core topics</strong> and{' '}
+          <strong>245+ sub-categories</strong>
         </p>
         <p className="home-tagline">
-          Designed for engineers preparing for Senior / Staff-level technical
-          interviews at top-tier companies.
+          Built for everyone preparing for technical interviews — at every
+          level, from your first coding round to advanced deep dives.
         </p>
       </header>
 
@@ -117,13 +117,13 @@ export default function HomePage() {
           <div className="phase">
             <div className="phase-header">
               <span className="phase-num">4</span>
-              <h3>Staff-Level</h3>
+              <h3>Expert</h3>
               <span className="phase-weeks">Week 7-8</span>
             </div>
             <ul>
               <li>DP — digit DP, game theory, SOS, profile</li>
               <li>Graphs — SCC, Euler, flow, LCA, centroid decomposition</li>
-              <li>Advanced categories across all topics</li>
+              <li>Range Queries — segment tree, BIT, lazy propagation</li>
               <li>Cross-topic combination problems</li>
             </ul>
           </div>

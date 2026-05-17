@@ -507,13 +507,13 @@
 9. 2D / matrix window (85, 1074, 363)
 10. Shrinkable vs non-shrinkable templates
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **"Exactly K" decomposition**: the atMost(K) − atMost(K−1) trick is the single most important advanced sliding window technique. (992) Subarrays with K Different Integers is the canonical problem. It transforms a hard counting problem into two standard sliding window problems. Know it cold
 - **Shrinkable vs Non-shrinkable windows**: two distinct templates that are often confused:
   - **Shrinkable**: window shrinks aggressively to find minimum valid window. `while (condition) shrink left`. Used for "shortest" problems (76, 209)
   - **Non-shrinkable**: window never shrinks, only slides. `if (condition) move left once`. Used for "longest" problems where you want max window size (424, 1004). The window size is monotonically non-decreasing — this is an optimization over shrinkable
-- **Sliding window + monotonic deque**: (239) Sliding Window Maximum is the gateway. The deque maintains decreasing order so front = max. Extends to DP optimization (1425, 1696) where dp[i] = max(dp[j]) + ... over a window. Staff-level pattern
+- **Sliding window + monotonic deque**: (239) Sliding Window Maximum is the gateway. The deque maintains decreasing order so front = max. Extends to DP optimization (1425, 1696) where dp[i] = max(dp[j]) + ... over a window. Advanced pattern
 - **Container With Most Water (11)**: classic "greedy two pointer" proof — always move the shorter wall because moving the taller wall can never increase area (width decreases, height capped by min). Interviewers test whether you can articulate WHY this is correct
 - **Minimum Window Substring (76)**: the ultimate variable-size window problem. Expand right until valid, shrink left greedily, track minimum. Requires a "formed" counter tracking when all characters are satisfied — managing this counter cleanly is the hard part
 - **Count Subarrays With Fixed Bounds (2444)**: a newer pattern — track positions of last min, last max, and last out-of-range. Count valid subarrays ending at each position. Tests compositional thinking

@@ -442,7 +442,7 @@
 3. Bitmask → Digit → Game theory
 4. SOS → Profile → DP with DS optimizations
 
-**For senior/staff rounds, focus heavily on:**
+**High-impact patterns to focus on:**
 - Interval DP (Burst Balloons, Merge Stones, Strange Printer)
 - Bitmask DP (TSP, Shortest Path All Nodes, Smallest Sufficient Team)
 - DP + Binary Search optimization (Super Egg Drop, Russian Doll Envelopes)

@@ -609,13 +609,13 @@
 9. Bit manipulation on arrays → Array math / number theory
 10. Design / online / randomization
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Sliding window mastery**: the variable-size sliding window template is tested everywhere. Know the "atMost(k) − atMost(k−1)" trick for "exactly K" problems (992, 1248, 930). The invariant: expand right, shrink left while condition holds, count valid windows
 - **Prefix sum + hash map combo**: (560) Subarray Sum Equals K is the canonical pattern — prefix[i] − prefix[j] = k ⟹ look up prefix[j] = prefix[i] − k in a hashmap. Extends to modular arithmetic (523, 974), XOR (1310), and 2D (304)
 - **Difference array**: the O(n) trick for range updates — add at start, subtract at end+1, prefix-sum to reconstruct. (1094) Car Pooling, (1109) Flight Bookings, (370) Range Addition
 - **First Missing Positive (41)**: the ultimate in-place array problem — use the array itself as a hash table by placing each number at its correct index. Tests O(1) space thinking under pressure
-- **Contribution technique**: for "sum of f over all subarrays", compute each element's contribution independently. Combine with monotonic stack for min/max variants (907, 2104, 2281). This is a staff-level pattern
+- **Contribution technique**: for "sum of f over all subarrays", compute each element's contribution independently. Combine with monotonic stack for min/max variants (907, 2104, 2281). This is an advanced pattern
 - **Meet-in-the-middle (1755)**: split array in half, enumerate all subset sums for each half (2^20 each), sort + two-pointer or binary search to find closest to target. Rare but impressive
 - **Merge sort-based counting**: (315, 493, 327) — count inversions / special pairs during merge sort by exploiting sorted halves. Alternative: BIT with coordinate compression
 
