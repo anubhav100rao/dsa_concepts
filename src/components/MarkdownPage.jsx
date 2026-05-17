@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import topics from '../topics'
+import conceptMaps from '../conceptMaps'
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard']
 
@@ -96,6 +97,81 @@ function makeQuestionId(topicId, cells) {
   const problem = cells[1] || 'unknown-problem'
   const leetcodeId = cells[2] || 'unknown-lc'
   return `${topicId}:${leetcodeId}:${problem}`.toLowerCase()
+}
+
+function getSectionConcept(topicId, headingLine) {
+  const topicMap = conceptMaps[topicId]
+  if (!topicMap) return null
+  const key = headingLine.replace(/^##\s+/, '').trim()
+  return topicMap[key] || null
+}
+
+function SectionConceptMap({ concept, sectionId }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className={`concept-map ${isOpen ? 'open' : ''}`}>
+      <button
+        type="button"
+        className="concept-map-toggle"
+        aria-expanded={isOpen}
+        aria-controls={`concept-${sectionId}`}
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        <span className="concept-map-toggle-icon" aria-hidden="true">
+          {isOpen ? '−' : '+'}
+        </span>
+        <span className="concept-map-toggle-label">
+          {isOpen ? 'Hide concept map' : 'Show concept map'}
+        </span>
+        <span className="concept-map-toggle-hint">
+          crux · key concepts · points to ponder · code
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="concept-map-body" id={`concept-${sectionId}`}>
+          {concept.crux && (
+            <div className="concept-block concept-crux">
+              <div className="concept-label">Crux</div>
+              <p>{concept.crux}</p>
+            </div>
+          )}
+
+          {concept.concepts && concept.concepts.length > 0 && (
+            <div className="concept-block">
+              <div className="concept-label">Key concepts</div>
+              <ul>
+                {concept.concepts.map((c, i) => (
+                  <li key={i}>{c}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {concept.pointsToPonder && concept.pointsToPonder.length > 0 && (
+            <div className="concept-block">
+              <div className="concept-label">Points to ponder</div>
+              <ul>
+                {concept.pointsToPonder.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {concept.code && (
+            <div className="concept-block">
+              <div className="concept-label">Code sketch</div>
+              <pre className="concept-code">
+                <code>{concept.code}</code>
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function QuestionSectionToolbar({
@@ -324,32 +400,42 @@ export default function MarkdownPage({
         >
           {contentSections.intro}
         </ReactMarkdown>
-        {contentSections.sections.map((section) => (
-          <section className="question-section" key={section.id}>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={markdownComponents}
-            >
-              {section.heading}
-            </ReactMarkdown>
-            {section.questionRows.length > 0 && (
-              <QuestionSectionToolbar
-                doneQuestions={doneQuestions}
-                onSetQuestionsDone={onSetQuestionsDone}
-                questionRows={section.questionRows}
-                topicId={topicId}
-              />
-            )}
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw]}
-              components={markdownComponents}
-            >
-              {section.body}
-            </ReactMarkdown>
-          </section>
-        ))}
+        {contentSections.sections.map((section) => {
+          const sectionConcept = getSectionConcept(topicId, section.heading)
+
+          return (
+            <section className="question-section" key={section.id}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={markdownComponents}
+              >
+                {section.heading}
+              </ReactMarkdown>
+              {sectionConcept && (
+                <SectionConceptMap
+                  concept={sectionConcept}
+                  sectionId={section.id}
+                />
+              )}
+              {section.questionRows.length > 0 && (
+                <QuestionSectionToolbar
+                  doneQuestions={doneQuestions}
+                  onSetQuestionsDone={onSetQuestionsDone}
+                  questionRows={section.questionRows}
+                  topicId={topicId}
+                />
+              )}
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+                components={markdownComponents}
+              >
+                {section.body}
+              </ReactMarkdown>
+            </section>
+          )
+        })}
       </article>
     </div>
   )

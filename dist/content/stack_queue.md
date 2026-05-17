@@ -459,12 +459,12 @@
 7. Circular queue / deque design
 8. Bidirectional BFS
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Monotonic stack is king**: easily the most tested stack pattern — know the template for both next-greater and next-smaller in both directions (left and right). Once you have left/right boundaries, you can solve the entire histogram family (84, 85, 42), subarray contribution (907, 2104, 2281), and max-product (1856)
 - **The subarray contribution technique**: for every element, find how many subarrays it's the min/max of. Uses monotonic stack to find left/right boundaries, then count = left_count × right_count. Handle duplicates carefully (< on one side, ≤ on the other)
 - **Expression evaluation**: (224, 227, 772) — the recursive descent approach scales cleanly: parse term → parse factor → handle parentheses recursively. The stack-based approach uses two stacks (operators + operands) or reduces with sign tracking
-- **Monotonic deque for DP optimization**: (1425, 1696, 862) — when DP transitions look like dp[i] = max(dp[j] + ...) for j in a sliding window, a monotonic deque makes it O(n). This is a staff-level optimization technique
+- **Monotonic deque for DP optimization**: (1425, 1696, 862) — when DP transitions look like dp[i] = max(dp[j] + ...) for j in a sliding window, a monotonic deque makes it O(n). This is an advanced optimization technique
 - **Car Fleet / Collision**: (853, 1776, 2751) — process right-to-left, stack tracks "active" elements, pop when current catches up. Car Fleet II adds floating-point collision time computation
 - **Lexicographic greedy**: (402, 316) — the template is: maintain a stack, pop while top is worse than current and you have enough remaining elements. Know the "last occurrence" trick for (316)
 

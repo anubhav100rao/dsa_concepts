@@ -418,11 +418,11 @@
 9. Design / online / stream processing problems
 10. Trapping Rain Water II / Skyline (complex multi-pattern)
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Two heaps (median)**: (295) Find Median from Data Stream is an absolute must — know the invariant: max-heap for lower half, min-heap for upper half, balance sizes. (480) Sliding Window Median extends it with lazy deletion
 - **Regret-based greedy**: the pattern where you greedily pick, then "undo" via max-heap — (630) Course Schedule III, (871) Refueling Stops, (1642) Furthest Building. Interviewers love this because it tests whether you see that greedy alone fails but greedy + heap works
-- **Sort-then-sweep**: sort by one dimension, heap on another — (857) Hire K Workers (sort by ratio, min-heap on quality), (1383) Maximum Performance (sort by efficiency desc, min-heap on speed), (2542) Maximum Subsequence Score. This is a Staff-level pattern
+- **Sort-then-sweep**: sort by one dimension, heap on another — (857) Hire K Workers (sort by ratio, min-heap on quality), (1383) Maximum Performance (sort by efficiency desc, min-heap on speed), (2542) Maximum Subsequence Score. This is a Advanced pattern
 - **K-way merge**: (23) Merge k Sorted Lists, (632) Smallest Range — the key insight is maintaining one element per list in the heap
 - **Dijkstra variants**: every modified Dijkstra problem (augmented state, multiple constraints) uses the heap as its core engine
 - **Lazy deletion**: know when and why — when removals are infrequent relative to inserts, mark-and-skip is cheaper than a balanced BST. (480) and (2034) are canonical

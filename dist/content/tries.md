@@ -326,11 +326,11 @@
 9. Aho-Corasick multi-pattern matching
 10. Persistent trie / trie on tree
 
-**Senior/Staff round priorities:**
+**Important Patterns:**
 
 - **Trie implementation from scratch**: you will be asked to code this — know the node structure (array[26] or hashmap of children, isEnd flag, optional count/value). Be ready to add features: delete, count prefixes, wildcard search
 - **Word Search II (212)**: the canonical trie + backtracking problem — build trie from words, DFS on grid, prune by removing found words. Interviewers test optimization: can you prune trie branches after finding a word?
-- **Bitwise trie for XOR**: (421) is the gateway — insert numbers bit-by-bit (MSB to LSB, 30 or 31 bits), greedily pick opposite bit at each level. (1707) adds offline sorting, (1803) adds range counting. This is a staff-level pattern
+- **Bitwise trie for XOR**: (421) is the gateway — insert numbers bit-by-bit (MSB to LSB, 30 or 31 bits), greedily pick opposite bit at each level. (1707) adds offline sorting, (1803) adds range counting. This is an advanced pattern
 - **K-th Smallest Lexicographically (440)**: pure trie-thinking without building the trie — count nodes in subtree to decide go-deeper vs go-right. Tests mathematical reasoning about trie structure
 - **Aho-Corasick**: know the concept (trie + failure links = BFS-built automaton for multi-pattern matching). Rarely coded from scratch in interviews but understanding it deeply impresses. (1032) Stream of Characters is the cleanest LC problem for it
 - **System design integration**: trie is the go-to data structure for autocomplete, typeahead, DNS resolution, IP routing (longest prefix match), and spell-check. In system design rounds, mentioning trie with ranking per node (top-k cached at each prefix) is a strong signal
