@@ -1,3 +1,12 @@
+---
+id: dynamic-programming
+title: Dynamic Programming
+icon: 🧩
+description: Linear DP, bitmask, digit DP, game theory
+problems: 300+
+categories: 22
+order: 30
+---
 # Dynamic Programming — Interview Question Bank
 
 ---

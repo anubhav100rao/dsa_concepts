@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import HomePage from './components/HomePage'
 import MarkdownPage from './components/MarkdownPage'
+import SearchPalette from './components/SearchPalette'
+import TopbarSearchTrigger from './components/TopbarSearchTrigger'
 import './App.css'
 
 const DONE_QUESTIONS_STORAGE_KEY = 'dsa-platform:done-questions'
@@ -20,6 +22,7 @@ function getStoredDoneQuestions() {
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const [doneQuestions, setDoneQuestions] = useState(getStoredDoneQuestions)
 
   const toggleQuestionDone = (questionId) => {
@@ -63,6 +66,34 @@ function App() {
     }
   }, [doneQuestions])
 
+  // Global hotkey: ⌘K / Ctrl+K from anywhere, plus "/" when the user isn't
+  // already typing in another field.
+  useEffect(() => {
+    const isEditable = (el) => {
+      if (!el) return false
+      const tag = el.tagName
+      return (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        el.isContentEditable
+      )
+    }
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+        return
+      }
+      if (e.key === '/' && !isEditable(e.target)) {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   return (
     <div className="app">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -78,6 +109,7 @@ function App() {
             </svg>
           </button>
           <span className="topbar-title">DSA Learning Platform</span>
+          <TopbarSearchTrigger onOpen={() => setSearchOpen(true)} />
           <a
             className="topbar-github"
             href="https://github.com/anubhav100rao/dsa_concepts"
@@ -114,6 +146,11 @@ function App() {
           </Routes>
         </div>
       </main>
+      <SearchPalette
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        doneQuestions={doneQuestions}
+      />
     </div>
   )
 }

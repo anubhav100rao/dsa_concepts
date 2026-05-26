@@ -1,3 +1,12 @@
+---
+id: trees
+title: Trees
+icon: 🌳
+description: Binary trees, BST, traversals, construction
+problems: 300+
+categories: 25
+order: 90
+---
 # Trees — Interview Question Bank
 
 ---

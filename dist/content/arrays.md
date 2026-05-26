@@ -1,3 +1,12 @@
+---
+id: arrays
+title: Arrays
+icon: 📊
+description: Two pointers, sliding window, prefix sum, and more
+problems: 400+
+categories: 28
+order: 10
+---
 # Arrays — Interview Question Bank
 
 ---

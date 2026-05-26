@@ -1,3 +1,12 @@
+---
+id: stack-queue
+title: "Stack & Queue"
+icon: 📚
+description: Monotonic stack, expression eval, BFS, deque
+problems: 300+
+categories: 25
+order: 80
+---
 # Stack & Queue — Interview Question Bank
 
 ---

@@ -1,3 +1,12 @@
+---
+id: graphs
+title: Graphs
+icon: 🕸️
+description: BFS, DFS, Dijkstra, Union-Find, MST, SCC
+problems: 300+
+categories: 30
+order: 40
+---
 # Graph Algorithms — Interview Question Bank
 
 ---

@@ -1,5 +1,5 @@
 import { Children, useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -7,8 +7,16 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github-dark.css'
 import topics from '../topics'
 import conceptMaps from '../conceptMaps'
+import {
+  DIFFICULTIES,
+  normalizeDifficulty,
+  getQuestionRows,
+  getMarkdownSections,
+  makeQuestionId,
+  slugifyHeading,
+  stripFrontmatter,
+} from '../lib/markdownParse'
 
-const DIFFICULTIES = ['Easy', 'Medium', 'Hard']
 const REMARK_PLUGINS = [remarkGfm]
 // `rehype-raw` must run before `rehype-highlight` so any raw HTML is parsed
 // before the highlighter walks `<code>` nodes.
@@ -28,83 +36,6 @@ function getTextContent(children) {
   return ''
 }
 
-function normalizeDifficulty(value) {
-  const text = value.toLowerCase()
-  const difficulties = []
-
-  if (text.includes('easy')) difficulties.push('Easy')
-  if (text.includes('medium') || text.includes('med')) difficulties.push('Medium')
-  if (text.includes('hard')) difficulties.push('Hard')
-
-  return difficulties
-}
-
-function getQuestionRows(markdown) {
-  return markdown
-    .split('\n')
-    .filter((line) => line.trim().startsWith('|'))
-    .map((line) =>
-      line
-        .split('|')
-        .slice(1, -1)
-        .map((cell) => cell.trim()),
-    )
-    .filter((cells) => cells.length >= 4)
-    .filter((cells) => cells[0] !== '#' && !cells[0].startsWith('---'))
-    .filter((cells) => normalizeDifficulty(cells[cells.length - 1]).length > 0)
-}
-
-function getMarkdownSections(markdown) {
-  const lines = markdown.split('\n')
-  const introLines = []
-  const sections = []
-  let currentSection = null
-
-  lines.forEach((line) => {
-    if (line.startsWith('## ')) {
-      if (currentSection) {
-        sections.push(currentSection)
-      }
-
-      currentSection = {
-        heading: line,
-        bodyLines: [],
-      }
-      return
-    }
-
-    if (currentSection) {
-      currentSection.bodyLines.push(line)
-    } else {
-      introLines.push(line)
-    }
-  })
-
-  if (currentSection) {
-    sections.push(currentSection)
-  }
-
-  return {
-    intro: introLines.join('\n'),
-    sections: sections.map((section, index) => {
-      const body = section.bodyLines.join('\n')
-
-      return {
-        id: `${index}-${section.heading}`,
-        heading: section.heading,
-        body,
-        questionRows: getQuestionRows(body),
-      }
-    }),
-  }
-}
-
-function makeQuestionId(topicId, cells) {
-  const problem = cells[1] || 'unknown-problem'
-  const leetcodeId = cells[2] || 'unknown-lc'
-  return `${topicId}:${leetcodeId}:${problem}`.toLowerCase()
-}
-
 function getSectionConcept(topicId, headingLine) {
   const topicMap = conceptMaps[topicId]
   if (!topicMap) return null
@@ -112,8 +43,16 @@ function getSectionConcept(topicId, headingLine) {
   return topicMap[key] || null
 }
 
-function SectionConceptMap({ concept, sectionId }) {
-  const [isOpen, setIsOpen] = useState(false)
+function SectionConceptMap({ concept, sectionId, forceOpen }) {
+  const [isOpen, setIsOpen] = useState(Boolean(forceOpen))
+
+  // If the URL flips on the concept-open flag after mount, open the panel.
+  // Compare-to-last pattern avoids a set-state-in-effect lint hit.
+  const [lastForce, setLastForce] = useState(forceOpen)
+  if (lastForce !== forceOpen) {
+    setLastForce(forceOpen)
+    if (forceOpen) setIsOpen(true)
+  }
 
   return (
     <div className={`concept-map ${isOpen ? 'open' : ''}`}>
@@ -231,24 +170,51 @@ export default function MarkdownPage({
   onSetQuestionsDone,
 }) {
   const { topicId } = useParams()
+  const [searchParams] = useSearchParams()
+  const targetQuestionId = searchParams.get('q')
+  const targetSectionSlug = searchParams.get('section')
+  const wantConceptOpen = searchParams.get('concept') === '1'
+  const requestedTab = searchParams.get('tab')
+
   const [loadedTopic, setLoadedTopic] = useState({
     id: null,
     tab: 'questions',
     content: '',
   })
-  const [activeTab, setActiveTab] = useState('questions')
+  const [activeTab, setActiveTab] = useState(
+    requestedTab === 'snippets' ? 'snippets' : 'questions',
+  )
   // Reset the tab when the topic changes by comparing against the last seen
   // topicId during render — avoids cascading renders from a useEffect.
   const [lastTopicId, setLastTopicId] = useState(topicId)
   if (lastTopicId !== topicId) {
     setLastTopicId(topicId)
-    setActiveTab('questions')
+    setActiveTab(requestedTab === 'snippets' ? 'snippets' : 'questions')
   }
+  // If the URL asks for the snippets tab (e.g. via the search palette), honor
+  // it on every search-params change too.
+  const [lastRequestedTab, setLastRequestedTab] = useState(requestedTab)
+  if (lastRequestedTab !== requestedTab) {
+    setLastRequestedTab(requestedTab)
+    if (requestedTab === 'snippets') setActiveTab('snippets')
+    if (requestedTab === 'questions') setActiveTab('questions')
+  }
+
+  // When the user lands via a question deep-link, force all difficulty
+  // filters on so the target row is actually rendered. Compare-to-last
+  // pattern keeps this out of an effect.
   const [difficultyFilters, setDifficultyFilters] = useState({
     Easy: true,
     Medium: true,
     Hard: true,
   })
+  const [lastTarget, setLastTarget] = useState(targetQuestionId)
+  if (lastTarget !== targetQuestionId) {
+    setLastTarget(targetQuestionId)
+    if (targetQuestionId) {
+      setDifficultyFilters({ Easy: true, Medium: true, Hard: true })
+    }
+  }
 
   const topic = topicId
     ? topics.find((t) => t.id === topicId)
@@ -289,6 +255,18 @@ export default function MarkdownPage({
   }
 
   const markdownComponents = {
+    // Stamp section slugs on every ## heading so the deep-link scroll-to
+    // works in both the questions view (where the parent <section> already
+    // carries the slug) and the snippets view (where headings are inline).
+    h2({ children, ...rest }) {
+      const text = getTextContent(children)
+      const slug = slugifyHeading(text)
+      return (
+        <h2 data-section-slug={slug} id={slug} {...rest}>
+          {children}
+        </h2>
+      )
+    },
     tr({ children }) {
       const cells = Children.toArray(children)
       const cellTexts = cells.map((child) =>
@@ -314,7 +292,10 @@ export default function MarkdownPage({
         const problemName = cellTexts[1] || 'question'
 
         return (
-          <tr className={isDone ? 'question-row done' : 'question-row'}>
+          <tr
+            data-question-id={questionId}
+            className={isDone ? 'question-row done' : 'question-row'}
+          >
             <td className="question-done-cell">
               <input
                 type="checkbox"
@@ -352,8 +333,13 @@ export default function MarkdownPage({
       .then((res) => res.text())
       .then((text) => {
         if (!isCurrent) return
-        setLoadedTopic({ id: topic.id, tab: effectiveTab, content: text })
-        window.scrollTo(0, 0)
+        setLoadedTopic({
+          id: topic.id,
+          tab: effectiveTab,
+          content: stripFrontmatter(text),
+        })
+        // Defer the scroll-to-top until the deep-link effect has had a chance
+        // to find its target; if it doesn't fire, we scroll to top below.
       })
       .catch(() => {
         if (!isCurrent) return
@@ -368,6 +354,44 @@ export default function MarkdownPage({
       isCurrent = false
     }
   }, [topic, effectiveTab, isSnippetsView])
+
+  // Deep-link scroll: after content is in the DOM, locate the target row or
+  // section, scroll it into view, and flash it briefly. The dependency on
+  // `content` ensures this runs once the markdown actually rendered.
+  useEffect(() => {
+    if (!content) return
+    if (loadedTopic.id !== topic?.id) return
+
+    // Defer one frame so React has flushed the new markdown.
+    const id = requestAnimationFrame(() => {
+      let target = null
+      if (targetQuestionId) {
+        target = document.querySelector(
+          `[data-question-id="${CSS.escape(targetQuestionId)}"]`,
+        )
+      } else if (targetSectionSlug) {
+        target = document.querySelector(
+          `[data-section-slug="${CSS.escape(targetSectionSlug)}"]`,
+        )
+      }
+
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        target.classList.add('flash')
+        setTimeout(() => target.classList.remove('flash'), 1700)
+      } else if (!targetQuestionId && !targetSectionSlug) {
+        window.scrollTo(0, 0)
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [
+    content,
+    loadedTopic.id,
+    topic?.id,
+    targetQuestionId,
+    targetSectionSlug,
+    isSnippetsView,
+  ])
 
   if (!topic) {
     return (
@@ -449,9 +473,15 @@ export default function MarkdownPage({
             </ReactMarkdown>
             {contentSections.sections.map((section) => {
               const sectionConcept = getSectionConcept(topicId, section.heading)
+              const isTargetSection =
+                !!targetSectionSlug && targetSectionSlug === section.slug
 
               return (
-                <section className="question-section" key={section.id}>
+                <section
+                  className="question-section"
+                  data-section-slug={section.slug}
+                  key={section.id}
+                >
                   <ReactMarkdown
                     remarkPlugins={REMARK_PLUGINS}
                     rehypePlugins={REHYPE_PLUGINS}
@@ -463,6 +493,7 @@ export default function MarkdownPage({
                     <SectionConceptMap
                       concept={sectionConcept}
                       sectionId={section.id}
+                      forceOpen={wantConceptOpen && isTargetSection}
                     />
                   )}
                   {section.questionRows.length > 0 && (

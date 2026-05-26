@@ -1,3 +1,12 @@
+---
+id: binary-search
+title: Binary Search
+icon: 🔍
+description: BS on answer, Kth element, matrix search
+problems: 250+
+categories: 25
+order: 20
+---
 # Binary Search — Interview Question Bank
 
 ---

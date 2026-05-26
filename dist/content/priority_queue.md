@@ -1,3 +1,12 @@
+---
+id: priority-queue
+title: Priority Queue / Heap
+icon: ⛰️
+description: Top-K, two heaps, Dijkstra, k-way merge
+problems: 280+
+categories: 25
+order: 60
+---
 # Priority Queue / Heap — Interview Question Bank
 
 ---

@@ -1,3 +1,12 @@
+---
+id: two-pointers
+title: "Two Pointers & Sliding Window"
+icon: 👆
+description: Opposite/same direction, fixed/variable window
+problems: 350+
+categories: 25
+order: 110
+---
 # Two Pointers & Sliding Window — Interview Question Bank
 
 ---

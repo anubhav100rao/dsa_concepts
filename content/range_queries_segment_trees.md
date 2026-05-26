@@ -1,3 +1,12 @@
+---
+id: range-queries
+title: "Range Queries & Segment Trees"
+icon: 📐
+description: "Prefix sum, BIT, segment tree, lazy propagation, Mo's"
+problems: 250+
+categories: 18
+order: 70
+---
 # Range Queries & Segment Trees — Interview Question Bank
 
 ---

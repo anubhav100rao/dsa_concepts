@@ -1,3 +1,12 @@
+---
+id: greedy
+title: Greedy Algorithms
+icon: 🎯
+description: Exchange argument, interval scheduling, regret-based
+problems: 350+
+categories: 25
+order: 50
+---
 # Greedy Algorithms — Interview Question Bank
 
 ---

@@ -1,3 +1,12 @@
+---
+id: tries
+title: Trie (Prefix Tree)
+icon: 🔤
+description: Bitwise trie, Aho-Corasick, autocomplete
+problems: 200+
+categories: 20
+order: 100
+---
 # Trie (Prefix Tree) — Interview Question Bank
 
 ---
