@@ -456,9 +456,13 @@ export default function MarkdownPage({
       )}
       <article className="markdown-content">
         {isSnippetsView ? (
+          // Pass the h2 override so snippet section headings get
+          // `data-section-slug` — without it, deep-links from the search
+          // palette (?tab=snippets&section=…) have nothing to scroll to.
           <ReactMarkdown
             remarkPlugins={REMARK_PLUGINS}
             rehypePlugins={REHYPE_PLUGINS}
+            components={markdownComponents}
           >
             {content}
           </ReactMarkdown>

@@ -1609,9 +1609,12 @@
   animation: question-row-flash 1.6s ease-out;
 }
 
-.markdown-content section.question-section.flash > h2 {
+.markdown-content section.question-section.flash > h2,
+.markdown-content h2.flash {
   animation: question-row-flash 1.6s ease-out;
   border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: -6px;
 }
 
 /* Mobile: full-screen palette. */
