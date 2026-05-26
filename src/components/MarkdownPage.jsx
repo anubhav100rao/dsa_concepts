@@ -3,10 +3,16 @@ import { useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
+import rehypeHighlight from 'rehype-highlight'
+import 'highlight.js/styles/github-dark.css'
 import topics from '../topics'
 import conceptMaps from '../conceptMaps'
 
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard']
+const REMARK_PLUGINS = [remarkGfm]
+// `rehype-raw` must run before `rehype-highlight` so any raw HTML is parsed
+// before the highlighter walks `<code>` nodes.
+const REHYPE_PLUGINS = [rehypeRaw, rehypeHighlight]
 
 function getTextContent(children) {
   if (children == null || typeof children === 'boolean') return ''
@@ -225,7 +231,19 @@ export default function MarkdownPage({
   onSetQuestionsDone,
 }) {
   const { topicId } = useParams()
-  const [loadedTopic, setLoadedTopic] = useState({ id: null, content: '' })
+  const [loadedTopic, setLoadedTopic] = useState({
+    id: null,
+    tab: 'questions',
+    content: '',
+  })
+  const [activeTab, setActiveTab] = useState('questions')
+  // Reset the tab when the topic changes by comparing against the last seen
+  // topicId during render — avoids cascading renders from a useEffect.
+  const [lastTopicId, setLastTopicId] = useState(topicId)
+  if (lastTopicId !== topicId) {
+    setLastTopicId(topicId)
+    setActiveTab('questions')
+  }
   const [difficultyFilters, setDifficultyFilters] = useState({
     Easy: true,
     Medium: true,
@@ -235,6 +253,11 @@ export default function MarkdownPage({
   const topic = topicId
     ? topics.find((t) => t.id === topicId)
     : topics.find((t) => t.id === 'home')
+
+  const hasSnippets = Boolean(topic?.snippetsFile)
+  // Snippets tab is only meaningful when the topic has a snippets file.
+  const effectiveTab = hasSnippets ? activeTab : 'questions'
+  const isSnippetsView = effectiveTab === 'snippets'
 
   const activeDifficulties = DIFFICULTIES.filter(
     (difficulty) => difficultyFilters[difficulty],
@@ -322,17 +345,21 @@ export default function MarkdownPage({
     if (!topic) return
     let isCurrent = true
 
-    fetch(`/content/${topic.file}`)
+    const fileToLoad =
+      isSnippetsView && topic.snippetsFile ? topic.snippetsFile : topic.file
+
+    fetch(`/content/${fileToLoad}`)
       .then((res) => res.text())
       .then((text) => {
         if (!isCurrent) return
-        setLoadedTopic({ id: topic.id, content: text })
+        setLoadedTopic({ id: topic.id, tab: effectiveTab, content: text })
         window.scrollTo(0, 0)
       })
       .catch(() => {
         if (!isCurrent) return
         setLoadedTopic({
           id: topic.id,
+          tab: effectiveTab,
           content: '# Error\nFailed to load content.',
         })
       })
@@ -340,7 +367,7 @@ export default function MarkdownPage({
     return () => {
       isCurrent = false
     }
-  }, [topic])
+  }, [topic, effectiveTab, isSnippetsView])
 
   if (!topic) {
     return (
@@ -353,12 +380,18 @@ export default function MarkdownPage({
     )
   }
 
-  if (loadedTopic.id !== topic.id) {
+  if (loadedTopic.id !== topic.id || loadedTopic.tab !== effectiveTab) {
     return (
       <div className="markdown-page">
+        {hasSnippets && (
+          <TopicTabs activeTab={effectiveTab} onChange={setActiveTab} />
+        )}
         <div className="loading">
           <div className="loading-spinner" />
-          <p>Loading {topic.title}...</p>
+          <p>
+            Loading {topic.title}
+            {isSnippetsView ? ' snippets' : ''}...
+          </p>
         </div>
       </div>
     )
@@ -366,77 +399,118 @@ export default function MarkdownPage({
 
   return (
     <div className="markdown-page">
-      <section className="question-toolbar" aria-label="Question filters">
-        <div className="question-filter-group">
-          {DIFFICULTIES.map((difficulty) => (
-            <label
-              key={difficulty}
-              className={`difficulty-filter ${difficulty.toLowerCase()} ${
-                difficultyFilters[difficulty] ? 'active' : ''
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={difficultyFilters[difficulty]}
-                onChange={() => toggleDifficultyFilter(difficulty)}
-              />
-              <span>{difficulty}</span>
-              <strong>{difficultyCounts[difficulty] || 0}</strong>
-            </label>
-          ))}
-        </div>
-        <p className="question-progress">
-          {doneVisibleCount} / {visibleQuestionRows.length} done
-          {activeDifficulties.length > 0 &&
-            activeDifficulties.length < DIFFICULTIES.length &&
-            ` in ${activeDifficulties.join(', ')}`}
-        </p>
-      </section>
+      {hasSnippets && (
+        <TopicTabs activeTab={effectiveTab} onChange={setActiveTab} />
+      )}
+      {!isSnippetsView && (
+        <section className="question-toolbar" aria-label="Question filters">
+          <div className="question-filter-group">
+            {DIFFICULTIES.map((difficulty) => (
+              <label
+                key={difficulty}
+                className={`difficulty-filter ${difficulty.toLowerCase()} ${
+                  difficultyFilters[difficulty] ? 'active' : ''
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={difficultyFilters[difficulty]}
+                  onChange={() => toggleDifficultyFilter(difficulty)}
+                />
+                <span>{difficulty}</span>
+                <strong>{difficultyCounts[difficulty] || 0}</strong>
+              </label>
+            ))}
+          </div>
+          <p className="question-progress">
+            {doneVisibleCount} / {visibleQuestionRows.length} done
+            {activeDifficulties.length > 0 &&
+              activeDifficulties.length < DIFFICULTIES.length &&
+              ` in ${activeDifficulties.join(', ')}`}
+          </p>
+        </section>
+      )}
       <article className="markdown-content">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={markdownComponents}
-        >
-          {contentSections.intro}
-        </ReactMarkdown>
-        {contentSections.sections.map((section) => {
-          const sectionConcept = getSectionConcept(topicId, section.heading)
+        {isSnippetsView ? (
+          <ReactMarkdown
+            remarkPlugins={REMARK_PLUGINS}
+            rehypePlugins={REHYPE_PLUGINS}
+          >
+            {content}
+          </ReactMarkdown>
+        ) : (
+          <>
+            <ReactMarkdown
+              remarkPlugins={REMARK_PLUGINS}
+              rehypePlugins={REHYPE_PLUGINS}
+              components={markdownComponents}
+            >
+              {contentSections.intro}
+            </ReactMarkdown>
+            {contentSections.sections.map((section) => {
+              const sectionConcept = getSectionConcept(topicId, section.heading)
 
-          return (
-            <section className="question-section" key={section.id}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={markdownComponents}
-              >
-                {section.heading}
-              </ReactMarkdown>
-              {sectionConcept && (
-                <SectionConceptMap
-                  concept={sectionConcept}
-                  sectionId={section.id}
-                />
-              )}
-              {section.questionRows.length > 0 && (
-                <QuestionSectionToolbar
-                  doneQuestions={doneQuestions}
-                  onSetQuestionsDone={onSetQuestionsDone}
-                  questionRows={section.questionRows}
-                  topicId={topicId}
-                />
-              )}
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-                components={markdownComponents}
-              >
-                {section.body}
-              </ReactMarkdown>
-            </section>
-          )
-        })}
+              return (
+                <section className="question-section" key={section.id}>
+                  <ReactMarkdown
+                    remarkPlugins={REMARK_PLUGINS}
+                    rehypePlugins={REHYPE_PLUGINS}
+                    components={markdownComponents}
+                  >
+                    {section.heading}
+                  </ReactMarkdown>
+                  {sectionConcept && (
+                    <SectionConceptMap
+                      concept={sectionConcept}
+                      sectionId={section.id}
+                    />
+                  )}
+                  {section.questionRows.length > 0 && (
+                    <QuestionSectionToolbar
+                      doneQuestions={doneQuestions}
+                      onSetQuestionsDone={onSetQuestionsDone}
+                      questionRows={section.questionRows}
+                      topicId={topicId}
+                    />
+                  )}
+                  <ReactMarkdown
+                    remarkPlugins={REMARK_PLUGINS}
+                    rehypePlugins={REHYPE_PLUGINS}
+                    components={markdownComponents}
+                  >
+                    {section.body}
+                  </ReactMarkdown>
+                </section>
+              )
+            })}
+          </>
+        )}
       </article>
+    </div>
+  )
+}
+
+function TopicTabs({ activeTab, onChange }) {
+  return (
+    <div className="topic-tabs" role="tablist" aria-label="Topic view">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'questions'}
+        className={`topic-tab ${activeTab === 'questions' ? 'active' : ''}`}
+        onClick={() => onChange('questions')}
+      >
+        Questions
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'snippets'}
+        className={`topic-tab ${activeTab === 'snippets' ? 'active' : ''}`}
+        onClick={() => onChange('snippets')}
+      >
+        Snippets
+      </button>
     </div>
   )
 }
