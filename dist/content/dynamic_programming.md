@@ -87,7 +87,6 @@ order: 30
 | 21 | Count Different Palindromic Subsequences | 730 | Hard |
 | 22 | Make Array Strictly Increasing | 1187 | Hard |
 | 23 | Longest Ideal Subsequence | 2370 | Medium |
-| 24 | Number of Longest Increasing Subsequence | 673 | Medium |
 
 ---
 

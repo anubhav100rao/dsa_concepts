@@ -375,7 +375,6 @@ order: 90
 | 11  | Longest Increasing Subsequence II          | 2407        | Hard         |
 | 12  | The Skyline Problem (segment tree variant) | 218         | Hard         |
 | 13  | Range Module                               | 715         | Hard         |
-| 14  | Count of Range Sum                         | 327         | Hard         |
 
 ---
 

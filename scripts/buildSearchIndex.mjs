@@ -221,11 +221,24 @@ export async function buildSearchIndex({ silent = false } = {}) {
 
     // -- sections + questions
     const { sections } = getMarkdownSections(content)
+    // The same problem can legitimately appear under two H3 subsections of
+    // one H2 (e.g. a knapsack problem listed under both "0/1" and "bounded").
+    // Section slugs are H2-level, so those rows would otherwise collide on
+    // `id` and the second occurrence would be dropped from the index. Track
+    // used ids per topic and suffix duplicates so every row stays searchable.
+    const usedQuestionIds = new Set()
     for (const section of sections) {
       const concept = conceptMaps[topic.id]?.[section.headingText] || null
       docs.push(buildSectionDoc(topic, section, concept))
       for (const cells of section.questionRows) {
-        docs.push(buildQuestionDoc(topic, section, cells))
+        const doc = buildQuestionDoc(topic, section, cells)
+        if (usedQuestionIds.has(doc.id)) {
+          let k = 2
+          while (usedQuestionIds.has(`${doc.id}::${k}`)) k++
+          doc.id = `${doc.id}::${k}`
+        }
+        usedQuestionIds.add(doc.id)
+        docs.push(doc)
       }
     }
 
