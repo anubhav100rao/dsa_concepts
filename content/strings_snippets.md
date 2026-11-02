@@ -1,5 +1,9 @@
 ## 1. Basic string traversal
 
+**Use when:** You must look at every character once, in order, as in "count", "convert" or "check each character".
+
+**Complexity:** O(n) time and O(1) extra space.
+
 ```cpp
 for (char c : s) {
     // use c
@@ -10,9 +14,19 @@ for (int i = 0; i < s.size(); i++) {
 }
 ```
 
+**Example:** `s = "abc"` visits `a`, `b`, `c` in that order.
+
+**Pitfalls:** `s.size()` is unsigned, so `i <= s.size() - 1` wraps around on an empty string. Use `i < s.size()`. Write `char& c` if the loop needs to change the string.
+
+**Used in:** LC 58, LC 657, LC 709
+
 ---
 
 ## 2. Frequency count
+
+**Use when:** The problem says "how many times", "first unique" or "most common", and the order of characters doesn't matter.
+
+**Complexity:** O(n) time and O(alphabet) space, which is effectively O(1).
 
 ### Lowercase letters
 
@@ -34,9 +48,19 @@ for (char c : s) {
 }
 ```
 
+**Example:** `s = "aab"` gives `freq['a' - 'a'] = 2` and `freq['b' - 'a'] = 1`.
+
+**Pitfalls:** `c - 'a'` is out of bounds on uppercase letters, digits or spaces, so read the constraints. `char` can be signed, so a non-ASCII byte makes `freq[c]` a negative index.
+
+**Used in:** LC 242, LC 383, LC 387, LC 451, LC 1207
+
 ---
 
 ## 3. Check anagram
+
+**Use when:** Two strings must contain the same letters the same number of times, as in "rearrange" or "using all the letters".
+
+**Complexity:** O(n) time and O(1) space for the 26 counters.
 
 ```cpp
 bool isAnagram(string a, string b) {
@@ -55,9 +79,19 @@ bool isAnagram(string a, string b) {
 }
 ```
 
+**Example:** `a = "listen", b = "silent"` returns `true`; `a = "rat", b = "car"` returns `false`.
+
+**Pitfalls:** This version assumes lowercase letters, so uppercase or Unicode input indexes outside the array; switch to a map for those. The size check is only an early exit, because the final loop would catch the difference anyway.
+
+**Used in:** LC 242, LC 438, LC 567
+
 ---
 
 ## 4. Reverse string
+
+**Use when:** The problem asks to reverse the whole string or one known range in place.
+
+**Complexity:** O(n) time for n reversed characters, and O(1) extra space.
 
 ```cpp
 reverse(s.begin(), s.end());
@@ -69,9 +103,19 @@ reverse(s.begin(), s.end());
 reverse(s.begin() + l, s.begin() + r + 1);
 ```
 
+**Example:** `s = "hello"` becomes `"olleh"`; with `l = 1, r = 3` it becomes `"hlleo"`.
+
+**Pitfalls:** The end iterator is exclusive, so reversing the inclusive range `[l, r]` needs `s.begin() + r + 1`. Forgetting the `+ 1` leaves the last character in place.
+
+**Used in:** LC 344, LC 541, LC 557
+
 ---
 
 ## 5. Palindrome check
+
+**Use when:** You must check whether one given string reads the same in both directions.
+
+**Complexity:** O(n) time and O(1) space, though the by-value parameter copies the string.
 
 ```cpp
 bool isPalindrome(string s) {
@@ -87,9 +131,19 @@ bool isPalindrome(string s) {
 }
 ```
 
+**Example:** `"racecar"` returns `true`; `"abca"` returns `false`.
+
+**Pitfalls:** Empty and single-character strings are palindromes, and `l < r` handles both. Keep `r` as a signed `int`: as `size_t`, `s.size() - 1` wraps on an empty string and `l < r` reads out of bounds.
+
+**Used in:** LC 680, LC 2108
+
 ---
 
 ## 6. Two-pointer valid palindrome ignoring non-alphanumeric
+
+**Use when:** A palindrome check must ignore case, spaces and punctuation.
+
+**Complexity:** O(n) time, since each pointer only moves inward. O(1) extra space.
 
 ```cpp
 bool isValidPalindrome(string s) {
@@ -109,9 +163,19 @@ bool isValidPalindrome(string s) {
 }
 ```
 
+**Example:** `"A man, a plan, a canal: Panama"` returns `true`; `"race a car"` returns `false`.
+
+**Pitfalls:** The inner loops need `l < r` too, or `",,,"` runs out of bounds. Compare with `tolower` on both sides, so `A` matches `a`.
+
+**Used in:** LC 125
+
 ---
 
 ## 7. Remove spaces
+
+**Use when:** Spaces carry no meaning and should go before further processing, as in an expression parser.
+
+**Complexity:** O(n) time and O(n) space for the new string.
 
 ```cpp
 string res;
@@ -121,9 +185,19 @@ for (char c : s) {
 }
 ```
 
+**Example:** `s = "a b  c"` gives `res = "abc"`.
+
+**Pitfalls:** Only `' '` is removed, so tabs and newlines stay; use `isspace` for those. Erasing in place inside a loop is O(n^2), which this approach avoids.
+
+**Used in:** LC 224, LC 227
+
 ---
 
 ## 8. Split string by space
+
+**Use when:** Input is words separated by any number of spaces, and you need the words themselves.
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 stringstream ss(s);
@@ -135,9 +209,19 @@ while (ss >> word) {
 }
 ```
 
+**Example:** `s = "  the sky  "` gives `{"the", "sky"}`.
+
+**Pitfalls:** `>>` skips all runs of whitespace, so empty fields disappear. That helps LC 151, but it is wrong when empty fields matter; use a custom split then. Requires `<sstream>`.
+
+**Used in:** LC 58, LC 151, LC 290, LC 557, LC 648
+
 ---
 
 ## 9. Split by custom delimiter
+
+**Use when:** Fields are separated by one specific character, such as `.` in versions or `/` in paths.
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 vector<string> split(string s, char delimiter) {
@@ -158,9 +242,19 @@ vector<string> split(string s, char delimiter) {
 }
 ```
 
+**Example:** `split("a/b//c", '/')` gives `{"a", "b", "", "c"}`.
+
+**Pitfalls:** It keeps empty fields, so `"/a"` starts with `""` and `""` gives `{""}`. Skip empties if the caller wants them gone, as LC 71 does. The final `push_back` after the loop is what catches the last field.
+
+**Used in:** LC 71, LC 165
+
 ---
 
 ## 10. Join strings
+
+**Use when:** Parts must be glued back together with a separator between them, but not after the last one.
+
+**Complexity:** O(total length) time and space, as `+=` is amortized O(1) per character.
 
 ```cpp
 string join(vector<string>& words, string sep) {
@@ -175,9 +269,19 @@ string join(vector<string>& words, string sep) {
 }
 ```
 
+**Example:** `join({"a", "b", "c"}, ", ")` returns `"a, b, c"`.
+
+**Pitfalls:** The `i > 0` check avoids a trailing separator. An empty list returns `""`. `res = res + x` in a loop would copy the string every time, so stay with `+=`.
+
+**Used in:** LC 71, LC 151, LC 557, LC 648
+
 ---
 
 ## 11. Substring
+
+**Use when:** You need a real copy of a range, typically for a hash key, a comparison or an answer.
+
+**Complexity:** O(length) time and space per call, which is easy to miss inside a loop.
 
 ```cpp
 string sub = s.substr(start, length);
@@ -189,9 +293,19 @@ Example:
 string sub = s.substr(i, j - i + 1);
 ```
 
+**Example:** `s = "abcdef"`: `s.substr(1, 3)` is `"bcd"`; with `i = 1, j = 3`, `s.substr(i, j - i + 1)` is also `"bcd"`.
+
+**Pitfalls:** The second argument is a length, not an end index, unlike Java and Python. `start > s.size()` throws `out_of_range`, and calling it in a nested loop adds a factor of n. `string_view` avoids the copy.
+
+**Used in:** LC 93, LC 459, LC 1316
+
 ---
 
 ## 12. Find substring
+
+**Use when:** You need a quick "is this piece in there, and where?" and the inputs are small.
+
+**Complexity:** Usually fast in practice, but O(n * m) in the worst case, with O(1) space. Use KMP when the worst case matters.
 
 ```cpp
 int pos = s.find(pattern);
@@ -200,6 +314,12 @@ if (pos != string::npos) {
     // found at pos
 }
 ```
+
+**Example:** `s = "hello", pattern = "ll"` gives `pos = 2`; `pattern = "xy"` gives `string::npos`.
+
+**Pitfalls:** `find` returns `size_t`. Storing it in `int` only works because `-1` converts back to `npos`, so prefer `size_t` or `auto`. Pass a start position, as in `s.find(pattern, pos + 1)`, to find later matches.
+
+**Used in:** LC 28, LC 459, LC 1408
 
 ---
 
