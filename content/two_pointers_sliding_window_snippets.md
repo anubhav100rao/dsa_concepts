@@ -629,7 +629,7 @@ for (int right = 0; right < n; right++) {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Sorted array + pair/triple sum     -> opposite-direction two pointers

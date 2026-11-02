@@ -633,7 +633,7 @@ vector<int> morrisInorder(TreeNode* root) {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Sorted output from BST            -> inorder traversal

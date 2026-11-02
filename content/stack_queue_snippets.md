@@ -703,7 +703,7 @@ long long subArrayRanges(vector<int>& a) {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Balanced brackets / matching       -> stack

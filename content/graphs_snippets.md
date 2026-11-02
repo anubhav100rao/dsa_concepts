@@ -2,9 +2,9 @@ No worries. Here are **C++ graph snippets** for common intermediate/advanced var
 
 ---
 
-# 1. Graph representation
+## 1. Graph representation
 
-## Adjacency list — unweighted
+### Adjacency list — unweighted
 
 ```cpp
 int n;
@@ -14,7 +14,7 @@ g[u].push_back(v);
 g[v].push_back(u); // remove for directed graph
 ```
 
-## Weighted graph
+### Weighted graph
 
 ```cpp
 int n;
@@ -24,7 +24,7 @@ g[u].push_back({v, w});
 g[v].push_back({u, w}); // remove for directed
 ```
 
-## Grid directions
+### Grid directions
 
 ```cpp
 vector<int> dx = {-1, 0, 1, 0};
@@ -37,7 +37,7 @@ bool valid(int x, int y, int n, int m) {
 
 ---
 
-# 2. DFS — connected components
+## 2. DFS — connected components
 
 ```cpp
 vector<int> vis(n, 0);
@@ -64,7 +64,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 3. BFS — unweighted shortest path
+## 3. BFS — unweighted shortest path
 
 ```cpp
 vector<int> dist(n, -1);
@@ -88,7 +88,7 @@ while (!q.empty()) {
 
 ---
 
-# 4. Multi-source BFS
+## 4. Multi-source BFS
 
 Use for nearest hospital/restaurant/zero/rotten orange.
 
@@ -123,7 +123,7 @@ while (!q.empty()) {
 
 ---
 
-# 5. Cycle detection — undirected graph DFS
+## 5. Cycle detection — undirected graph DFS
 
 ```cpp
 vector<int> vis(n, 0);
@@ -154,7 +154,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 6. Cycle detection — directed graph DFS
+## 6. Cycle detection — directed graph DFS
 
 ```cpp
 vector<int> color(n, 0);
@@ -184,7 +184,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 7. Topological sort — Kahn’s algorithm
+## 7. Topological sort — Kahn’s algorithm
 
 ```cpp
 vector<int> indegree(n, 0);
@@ -223,7 +223,7 @@ bool hasCycle = topo.size() != n;
 
 ---
 
-# 8. Topological sort — DFS
+## 8. Topological sort — DFS
 
 ```cpp
 vector<int> vis(n, 0);
@@ -248,7 +248,7 @@ reverse(topo.begin(), topo.end());
 
 ---
 
-# 9. Bipartite graph check
+## 9. Bipartite graph check
 
 ```cpp
 vector<int> color(n, -1);
@@ -287,7 +287,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 10. Dijkstra — shortest path
+## 10. Dijkstra — shortest path
 
 ```cpp
 const long long INF = 1e18;
@@ -317,7 +317,7 @@ while (!pq.empty()) {
 
 ---
 
-# 11. Dijkstra with path reconstruction
+## 11. Dijkstra with path reconstruction
 
 ```cpp
 vector<long long> dist(n, INF);
@@ -363,7 +363,7 @@ if (dist[target] != INF) {
 
 ---
 
-# 12. 0-1 BFS
+## 12. 0-1 BFS
 
 Use when edge weights are only `0` or `1`.
 
@@ -394,7 +394,7 @@ while (!dq.empty()) {
 
 ---
 
-# 13. Bellman-Ford
+## 13. Bellman-Ford
 
 Use for negative edges.
 
@@ -417,7 +417,7 @@ for (int i = 0; i < n - 1; i++) {
 
 ---
 
-# 14. Negative cycle detection
+## 14. Negative cycle detection
 
 ```cpp
 bool hasNegativeCycle = false;
@@ -432,7 +432,7 @@ for (auto &e : edges) {
 
 ---
 
-# 15. Cheapest path with at most K stops
+## 15. Cheapest path with at most K stops
 
 ```cpp
 vector<int> dist(n, 1e9);
@@ -457,7 +457,7 @@ return dist[dst] == 1e9 ? -1 : dist[dst];
 
 ---
 
-# 16. Floyd-Warshall — all pairs shortest path
+## 16. Floyd-Warshall — all pairs shortest path
 
 ```cpp
 const long long INF = 1e18;
@@ -485,7 +485,7 @@ for (int via = 0; via < n; via++) {
 
 ---
 
-# 17. DSU / Union Find
+## 17. DSU / Union Find
 
 ```cpp
 class DSU {
@@ -524,7 +524,7 @@ public:
 
 ---
 
-# 18. Number of connected components using DSU
+## 18. Number of connected components using DSU
 
 ```cpp
 DSU dsu(n);
@@ -539,7 +539,7 @@ for (auto &[u, v] : edges) {
 
 ---
 
-# 19. Kruskal MST
+## 19. Kruskal MST
 
 ```cpp
 struct Edge {
@@ -567,7 +567,7 @@ bool connected = used == n - 1;
 
 ---
 
-# 20. Prim MST
+## 20. Prim MST
 
 ```cpp
 vector<int> vis(n, 0);
@@ -599,7 +599,7 @@ while (!pq.empty()) {
 
 ---
 
-# 21. Bridges in graph — Tarjan
+## 21. Bridges in graph — Tarjan
 
 ```cpp
 vector<int> tin(n, -1), low(n, -1), vis(n, 0);
@@ -633,7 +633,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 22. Articulation points
+## 22. Articulation points
 
 ```cpp
 vector<int> tin(n, -1), low(n, -1), vis(n, 0), isArt(n, 0);
@@ -670,7 +670,7 @@ void dfs(int u, int parent) {
 
 ---
 
-# 23. Kosaraju SCC
+## 23. Kosaraju SCC
 
 ```cpp
 vector<int> vis(n, 0), order;
@@ -721,7 +721,7 @@ for (int u : order) {
 
 ---
 
-# 24. Tarjan SCC
+## 24. Tarjan SCC
 
 ```cpp
 vector<int> disc(n, -1), low(n, 0), inStack(n, 0);
@@ -763,7 +763,7 @@ void dfs(int u) {
 
 ---
 
-# 25. Longest path in DAG
+## 25. Longest path in DAG
 
 ```cpp
 vector<int> indegree(n, 0);
@@ -802,7 +802,7 @@ int ans = *max_element(dp.begin(), dp.end());
 
 ---
 
-# 26. Shortest path in DAG
+## 26. Shortest path in DAG
 
 ```cpp
 vector<int> topo; // assume already computed
@@ -821,7 +821,7 @@ for (int u : topo) {
 
 ---
 
-# 27. Grid DFS — number of islands
+## 27. Grid DFS — number of islands
 
 ```cpp
 void dfs(int x, int y) {
@@ -851,7 +851,7 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# 28. Shortest path in binary matrix
+## 28. Shortest path in binary matrix
 
 ```cpp
 queue<pair<int,int>> q;
@@ -883,7 +883,7 @@ while (!q.empty()) {
 
 ---
 
-# 29. BFS with extra state
+## 29. BFS with extra state
 
 Example: shortest path with obstacle elimination.
 
@@ -920,7 +920,7 @@ while (!q.empty()) {
 
 ---
 
-# 30. Word ladder BFS
+## 30. Word ladder BFS
 
 ```cpp
 unordered_set<string> st(wordList.begin(), wordList.end());
@@ -954,7 +954,7 @@ return 0;
 
 ---
 
-# 31. Alien Dictionary
+## 31. Alien Dictionary
 
 ```cpp
 vector<vector<int>> g(26);
@@ -1016,7 +1016,7 @@ return order.size() == total ? order : "";
 
 ---
 
-# 32. Euler path / itinerary style
+## 32. Euler path / itinerary style
 
 ```cpp
 unordered_map<string, priority_queue<string, vector<string>, greater<string>>> g;
@@ -1045,7 +1045,7 @@ reverse(route.begin(), route.end());
 
 ---
 
-# 33. Bipartite matching — DFS augmenting path
+## 33. Bipartite matching — DFS augmenting path
 
 ```cpp
 vector<vector<int>> g(n); // left side nodes: 0 to n-1
@@ -1079,7 +1079,7 @@ for (int u = 0; u < n; u++) {
 
 ---
 
-# 34. Detect redundant connection
+## 34. Detect redundant connection
 
 ```cpp
 DSU dsu(n + 1);
@@ -1095,7 +1095,7 @@ for (auto &e : edges) {
 
 ---
 
-# 35. Number of islands II — dynamic DSU
+## 35. Number of islands II — dynamic DSU
 
 ```cpp
 DSU dsu(n * m);
@@ -1136,7 +1136,7 @@ for (auto &pos : positions) {
 
 ---
 
-# 36. Clone graph
+## 36. Clone graph
 
 ```cpp
 unordered_map<Node*, Node*> mp;
@@ -1159,7 +1159,7 @@ Node* cloneGraph(Node* node) {
 
 ---
 
-# 37. Evaluate division — weighted graph DFS
+## 37. Evaluate division — weighted graph DFS
 
 ```cpp
 unordered_map<string, vector<pair<string,double>>> g;
@@ -1194,7 +1194,7 @@ double dfs(string u, string target, unordered_set<string>& vis) {
 
 ---
 
-# 38. A\* search skeleton
+## 38. A\* search skeleton
 
 Useful for shortest path on map/grid with heuristic.
 
@@ -1235,7 +1235,7 @@ while (!pq.empty()) {
 
 ---
 
-# 39. Common graph pattern selection
+## 39. Common graph pattern selection
 
 ```cpp
 // unweighted shortest path        -> BFS

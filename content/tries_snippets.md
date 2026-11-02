@@ -482,7 +482,7 @@ string smallest(Node* root, int length) {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Prefix lookup / startsWith         -> basic trie

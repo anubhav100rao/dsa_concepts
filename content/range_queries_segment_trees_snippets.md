@@ -77,7 +77,6 @@ long long rectSum(int r1, int c1, int r2, int c2) {
 
 ---
 
-# Fenwick Tree / BIT
 
 ## 5. Fenwick Tree — point update, range sum query
 
@@ -212,7 +211,6 @@ struct RangeFenwick {
 
 ---
 
-# Segment Tree
 
 ## 8. Segment Tree — range sum, point update
 
@@ -497,7 +495,6 @@ struct AssignSegTree {
 
 ---
 
-# Sparse Table
 
 ## 12. Sparse Table — static range minimum query
 
@@ -547,7 +544,6 @@ st[k][i] = gcd(st[k - 1][i], st[k - 1][i + (1 << (k - 1))]);
 
 ---
 
-# Monotonic Queue
 
 ## 14. Sliding Window Minimum
 
@@ -599,7 +595,6 @@ for (int i = 0; i < n; i++) {
 
 ---
 
-# Square Root Decomposition
 
 ## 16. Sqrt Decomposition — range sum, point update
 
@@ -635,7 +630,6 @@ long long query(int l, int r) {
 
 ---
 
-# Ordered Set / Coordinate Compression Style
 
 ## 17. Count elements `<= x` in subarray `[l, r]` — merge sort tree
 
@@ -686,7 +680,6 @@ struct MergeSortTree {
 
 ---
 
-# Mo's Algorithm
 
 ## 18. Mo's Algorithm — offline range queries
 
@@ -739,7 +732,7 @@ for (auto qu : queries) {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Static range sum        -> prefix sum

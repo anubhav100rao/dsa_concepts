@@ -1,4 +1,4 @@
-# 1. Memoization template
+## 1. Memoization template
 
 ```cpp
 int solve(int i, vector<int>& nums, vector<int>& dp) {
@@ -19,7 +19,7 @@ int solve(int i, vector<int>& nums, vector<int>& dp) {
 
 ---
 
-# 2. 1D DP — House Robber
+## 2. 1D DP — House Robber
 
 ```cpp
 int rob(vector<int>& nums) {
@@ -57,7 +57,7 @@ int rob(vector<int>& nums) {
 
 ---
 
-# 3. Grid DP — Minimum Path Sum
+## 3. Grid DP — Minimum Path Sum
 
 ```cpp
 int minPathSum(vector<vector<int>>& grid) {
@@ -106,7 +106,7 @@ int minPathSum(vector<vector<int>>& grid) {
 
 ---
 
-# 4. 0/1 Knapsack
+## 4. 0/1 Knapsack
 
 ```cpp
 int knapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -154,7 +154,7 @@ Important:
 
 ---
 
-# 5. Unbounded Knapsack
+## 5. Unbounded Knapsack
 
 ```cpp
 int unboundedKnapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -179,7 +179,7 @@ Important:
 
 ---
 
-# 6. Coin Change — Minimum coins
+## 6. Coin Change — Minimum coins
 
 ```cpp
 int coinChange(vector<int>& coins, int amount) {
@@ -202,7 +202,7 @@ int coinChange(vector<int>& coins, int amount) {
 
 ---
 
-# 7. Coin Change II — Number of combinations
+## 7. Coin Change II — Number of combinations
 
 ```cpp
 int change(int amount, vector<int>& coins) {
@@ -228,7 +228,7 @@ Important:
 
 ---
 
-# 8. Subset Sum
+## 8. Subset Sum
 
 ```cpp
 bool subsetSum(vector<int>& nums, int target) {
@@ -247,7 +247,7 @@ bool subsetSum(vector<int>& nums, int target) {
 
 ---
 
-# 9. Target Sum
+## 9. Target Sum
 
 ```cpp
 int findTargetSumWays(vector<int>& nums, int target) {
@@ -281,7 +281,7 @@ positiveSum = (total + target) / 2
 
 ---
 
-# 10. LCS — Longest Common Subsequence
+## 10. LCS — Longest Common Subsequence
 
 ```cpp
 int longestCommonSubsequence(string a, string b) {
@@ -330,7 +330,7 @@ int longestCommonSubsequence(string a, string b) {
 
 ---
 
-# 11. Longest Common Substring
+## 11. Longest Common Substring
 
 ```cpp
 int longestCommonSubstring(string a, string b) {
@@ -364,7 +364,7 @@ Important:
 
 ---
 
-# 12. Edit Distance
+## 12. Edit Distance
 
 ```cpp
 int minDistance(string a, string b) {
@@ -395,7 +395,7 @@ int minDistance(string a, string b) {
 
 ---
 
-# 13. LIS — O(n²)
+## 13. LIS — O(n²)
 
 ```cpp
 int lengthOfLIS(vector<int>& nums) {
@@ -420,7 +420,7 @@ int lengthOfLIS(vector<int>& nums) {
 
 ---
 
-# 14. LIS — O(n log n)
+## 14. LIS — O(n log n)
 
 ```cpp
 int lengthOfLIS(vector<int>& nums) {
@@ -448,7 +448,7 @@ auto it = upper_bound(tails.begin(), tails.end(), x);
 
 ---
 
-# 15. Interval DP — Matrix Chain style
+## 15. Interval DP — Matrix Chain style
 
 ```cpp
 int intervalDP(vector<int>& arr) {
@@ -475,7 +475,7 @@ int intervalDP(vector<int>& arr) {
 
 ---
 
-# 16. Burst Balloons
+## 16. Burst Balloons
 
 ```cpp
 int maxCoins(vector<int>& nums) {
@@ -513,7 +513,7 @@ Idea:
 
 ---
 
-# 17. Palindrome Partitioning II
+## 17. Palindrome Partitioning II
 
 ```cpp
 int minCut(string s) {
@@ -551,7 +551,7 @@ int minCut(string s) {
 
 ---
 
-# 18. Tree DP — House Robber III
+## 18. Tree DP — House Robber III
 
 ```cpp
 pair<int, int> dfs(TreeNode* root) {
@@ -583,7 +583,7 @@ second = skip current node
 
 ---
 
-# 19. Tree DP — Diameter style
+## 19. Tree DP — Diameter style
 
 ```cpp
 int ans = 0;
@@ -602,7 +602,7 @@ int height(TreeNode* root) {
 
 ---
 
-# 20. DP on DAG
+## 20. DP on DAG
 
 ```cpp
 int dfs(int u, vector<vector<int>>& graph, vector<int>& dp) {
@@ -624,7 +624,7 @@ int dfs(int u, vector<vector<int>>& graph, vector<int>& dp) {
 
 ---
 
-# 21. Longest Increasing Path in Matrix
+## 21. Longest Increasing Path in Matrix
 
 ```cpp
 int dirs[5] = {0, 1, 0, -1, 0};
@@ -668,7 +668,7 @@ int longestIncreasingPath(vector<vector<int>>& mat) {
 
 ---
 
-# 22. Bitmask DP — TSP style
+## 22. Bitmask DP — TSP style
 
 ```cpp
 int tsp(vector<vector<int>>& cost) {
@@ -710,7 +710,7 @@ int tsp(vector<vector<int>>& cost) {
 
 ---
 
-# 23. Bitmask DP — Assignment problem
+## 23. Bitmask DP — Assignment problem
 
 ```cpp
 int minCostAssignment(vector<vector<int>>& cost) {
@@ -742,7 +742,7 @@ int minCostAssignment(vector<vector<int>>& cost) {
 
 ---
 
-# 24. Digit DP template
+## 24. Digit DP template
 
 ```cpp
 string num;
@@ -787,7 +787,7 @@ long long countSpecialNumbers(long long n) {
 
 ---
 
-# 25. DP + BFS state — Shortest Path Visiting All Nodes
+## 25. DP + BFS state — Shortest Path Visiting All Nodes
 
 ```cpp
 int shortestPathLength(vector<vector<int>>& graph) {
@@ -825,7 +825,7 @@ int shortestPathLength(vector<vector<int>>& graph) {
 
 ---
 
-# 26. DP with monotonic deque
+## 26. DP with monotonic deque
 
 Example:
 
@@ -868,7 +868,7 @@ int constrainedSubsetSum(vector<int>& nums, int k) {
 
 ---
 
-# 27. Partition DP
+## 27. Partition DP
 
 Example:
 
@@ -907,7 +907,7 @@ Word Break variants
 
 ---
 
-# 28. Stock DP — State machine
+## 28. Stock DP — State machine
 
 ```cpp
 int maxProfit(vector<int>& prices) {
@@ -941,7 +941,7 @@ rest = doing nothing
 
 ---
 
-# 29. Regex Matching DP
+## 29. Regex Matching DP
 
 ```cpp
 bool isMatch(string s, string p) {
@@ -977,7 +977,7 @@ bool isMatch(string s, string p) {
 
 ---
 
-# 30. Wildcard Matching DP
+## 30. Wildcard Matching DP
 
 ```cpp
 bool isMatch(string s, string p) {
@@ -1009,7 +1009,7 @@ bool isMatch(string s, string p) {
 
 ---
 
-# 31. DP with prefix sum optimization
+## 31. DP with prefix sum optimization
 
 ```cpp
 vector<int> prefix(n + 1, 0);
@@ -1032,7 +1032,7 @@ dp[l][r] = min(dp[l][r],
 
 ---
 
-# 32. DP reconstruction — print chosen items
+## 32. DP reconstruction — print chosen items
 
 ```cpp
 vector<int> reconstructKnapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -1068,7 +1068,7 @@ vector<int> reconstructKnapsack(vector<int>& wt, vector<int>& val, int W) {
 
 ---
 
-# 33. Most useful DP constants
+## 33. Most useful DP constants
 
 ```cpp
 const int INF = 1e9;
@@ -1098,7 +1098,7 @@ dp[0] = 0;
 
 ---
 
-# 34. Quick pattern reminder
+## 34. Quick pattern reminder
 
 ```cpp
 // 0/1 knapsack

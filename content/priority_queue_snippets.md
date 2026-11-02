@@ -429,7 +429,7 @@ struct MinHeap {
 
 ---
 
-# Common Choose-What Pattern
+## Common Choose-What Pattern
 
 ```cpp
 // Kth largest / smallest             -> fixed-size heap of size k
