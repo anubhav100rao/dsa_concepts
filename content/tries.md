@@ -9,6 +9,28 @@ order: 100
 ---
 # Trie (Prefix Tree) — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a section.
+
+| If the problem says…                                                     | Reach for                                 | Section |
+| ------------------------------------------------------------------------ | ----------------------------------------- | ------- |
+| "supports insert, search and startsWith"                                 | Plain trie                                | 1       |
+| "suggest at most three products after each character", "a dot matches any letter" | Walk to the prefix node, then list or branch | 2 |
+| "return all words on the board", "formed from adjacent cells"            | Trie pointer carried through a grid DFS   | 3, 5    |
+| "maximum result of nums[i] XOR nums[j]"                                  | Bitwise trie, high bit first              | 4, 15   |
+| "count pairs where low <= XOR <= high"                                   | Bitwise trie with counts on nodes         | 15, 17  |
+| "minimize the extra characters", "return all possible sentences"         | DP that walks the trie from each index    | 6       |
+| "a suffix of the characters queried so far", "shortest reference string" | Insert the words reversed                 | 7       |
+| "longest prefix match", "reduce the trie's memory"                       | Compressed trie (radix tree)              | 8, 19   |
+| "kth lexicographically smallest integer in [1, n]"                       | Count subtrees of the implicit digit trie | 5, 9    |
+| "createPath", "ls", "mkdir", paths like "/a/b/c"                         | Trie on path components                   | 10      |
+| "replace with the shortest root"                                         | Stop at the first end marker              | 11      |
+| "identical folders", "serialize an N-ary tree"                           | Post-order subtree serialization          | 12      |
+| "maximum XOR with any element in range [L, R]", "as of version k"        | Persistent trie                           | 13      |
+| "for each query [node, val], over all ancestors of node"                 | Insert going down a tree, erase coming up | 14      |
+| "find every occurrence of these patterns in the text"                    | Aho-Corasick                              | 16      |
+| "sum of values for keys starting with", "sum of prefix scores"           | Counts or sums stored on nodes            | 17      |
+| "the concatenation of the two words is a palindrome"                     | Reversed trie plus palindrome checks      | 20      |
+
 ---
 
 ## 1. Basic Trie Design / Implementation
