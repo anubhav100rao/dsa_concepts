@@ -11,6 +11,23 @@ order: 15
 
 > Code templates for every pattern below live under the **Snippets** tab — traversal, frequency counting, sliding window, KMP, Z-function, Manacher's, rolling hash, tries, and more.
 
+### Which pattern do I use?
+
+| If the problem says... | Think | Section |
+|------------------------|-------|---------|
+| "reverse the words", "return the sum as a string", "too large for a built-in integer" | One pass, carry from the right | 1. Basics & Traversal |
+| "after deleting at most one character", "is s a subsequence of t", "typed with backspaces" | Pointers from both ends, or one per string | 2. Two Pointers (Strings) |
+| "longest substring with at most k...", "smallest substring containing all...", "all anagrams of p in s" | Grow right, shrink left | 3. Sliding Window |
+| "anagram", "can be built from the letters of", "one-to-one mapping", order doesn't matter | Count letters, compare counts | 4. Hashing, Frequency & Anagrams |
+| "first occurrence of needle", "longest prefix that is also a suffix", "made by repeating a substring" | KMP, Z-function or rolling hash | 5. Pattern Matching (KMP / Z / Rabin-Karp) |
+| "longest palindromic substring", "minimum cuts so every part is a palindrome", "minimum insertions to make it a palindrome" | Center expansion or interval DP | 6. Palindromes |
+| "ignore leading whitespace", "version numbers separated by dots", "encode so it decodes back to the original" | Walk with an index, handle each token | 7. Parsing, Encoding & Number Conversion |
+| "valid parentheses", "k[encoded]", "remove adjacent duplicates", "evaluate the expression" | Stack holds what's still unresolved | 8. Stack-Based String Problems |
+| "minimum operations to convert word1 to word2", "longest common subsequence", "can be segmented into dictionary words" | Table over two prefixes | 9. String DP |
+| "starts with this prefix", "suggestions after each typed character", "find all dictionary words in the grid" | Trie shares prefixes | 10. Trie-Based String Problems |
+| "smallest number after removing k digits", "lexicographically smallest", "no two adjacent characters are the same" | Decide left to right; monotonic stack or most-frequent first | 11. Greedy / Construction |
+| "exactly one extra letter", "words share no common letters", "every letter can be upper or lower case" | XOR or a 26-bit letter mask | 12. Bit & ASCII Tricks |
+
 ---
 
 ## 1. Basics & Traversal
