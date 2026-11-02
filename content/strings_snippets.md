@@ -325,6 +325,10 @@ if (pos != string::npos) {
 
 ## 13. Count vowels
 
+**Use when:** The problem tests membership in a small fixed set of characters, such as vowels.
+
+**Complexity:** O(n) time and O(1) space.
+
 ```cpp
 bool isVowel(char c) {
     c = tolower(c);
@@ -338,9 +342,19 @@ for (char c : s) {
 }
 ```
 
+**Example:** `s = "Education"` gives `count = 5`.
+
+**Pitfalls:** Lowercase first, or capital vowels are missed. Check whether the problem counts `y` and whether it wants a total or a per-window count (LC 1456 keeps a running count instead of recounting).
+
+**Used in:** LC 345, LC 1456
+
 ---
 
 ## 14. Sliding window — longest substring without repeating chars
+
+**Use when:** The problem asks for the "longest substring without repeating characters", or any window that must stay duplicate-free.
+
+**Complexity:** O(n) time, with O(1) space for the 256 slots.
 
 ```cpp
 int longestUniqueSubstring(string s) {
@@ -360,9 +374,19 @@ int longestUniqueSubstring(string s) {
 }
 ```
 
+**Example:** `"abcabcbb"` returns `3`; `"abba"` returns `2`.
+
+**Pitfalls:** The `last[s[right]] >= left` check is the classic bug: without it, the last `a` in `"abba"` moves `left` backward. Use `right - left + 1` for the length, with the `+ 1`.
+
+**Used in:** LC 3, LC 1695
+
 ---
 
 ## 15. Sliding window — minimum window substring
+
+**Use when:** The problem asks for the "smallest substring containing all characters of t", including duplicates.
+
+**Complexity:** O(n + m) time, as each index enters and leaves the window once. O(1) space for the 128 counters.
 
 ```cpp
 string minWindow(string s, string t) {
@@ -397,9 +421,19 @@ string minWindow(string s, string t) {
 }
 ```
 
+**Example:** `s = "ADOBECODEBANC", t = "ABC"` returns `"BANC"`; `s = "a", t = "aa"` returns `""`.
+
+**Pitfalls:** Record the best window inside the `while` loop, before shrinking. Negative `need` values mean surplus copies, so `required` changes only when a count crosses zero. Return `""` when `bestLen` was never updated.
+
+**Used in:** LC 76
+
 ---
 
 ## 16. Expand around center — longest palindromic substring
+
+**Use when:** The problem asks for the "longest palindromic substring" and n is at most a few thousand.
+
+**Complexity:** O(n^2) time and O(1) extra space.
 
 ```cpp
 string longestPalindrome(string s) {
@@ -428,9 +462,19 @@ string longestPalindrome(string s) {
 }
 ```
 
+**Example:** `"babad"` returns `"bab"`; `"cbbd"` returns `"bb"`.
+
+**Pitfalls:** Run both `expand(i, i)` and `expand(i, i + 1)`, or even lengths are missed. The loop ends one step past the palindrome on each side, so the length is `r - l - 1` and the start is `l + 1`.
+
+**Used in:** LC 5, LC 647
+
 ---
 
 ## 17. KMP prefix function / LPS array
+
+**Use when:** You need the "longest prefix that is also a suffix", a string's period, or the failure table for KMP.
+
+**Complexity:** O(m) time and O(m) space.
 
 ```cpp
 vector<int> computeLPS(string pattern) {
@@ -459,9 +503,19 @@ vector<int> computeLPS(string pattern) {
 }
 ```
 
+**Example:** `"aabaaab"` gives `[0, 1, 0, 1, 2, 2, 3]`.
+
+**Pitfalls:** Don't advance `i` when falling back to `len = lps[len - 1]`, because the same character must be tried against the shorter border. The prefix must be proper, so `i` starts at 1 and `lps[0]` stays 0.
+
+**Used in:** LC 28, LC 214, LC 459, LC 1392
+
 ---
 
 ## 18. KMP string matching
+
+**Use when:** You need every occurrence of one pattern in a text with a guaranteed linear time, as in "all indices where a occurs".
+
+**Complexity:** O(n + m) time and O(m) space.
 
 ```cpp
 vector<int> kmpSearch(string text, string pattern) {
@@ -492,9 +546,19 @@ vector<int> kmpSearch(string text, string pattern) {
 }
 ```
 
+**Example:** `text = "ababa", pattern = "aba"` returns `[0, 2]`, including the overlap.
+
+**Pitfalls:** An empty pattern reads `lps[-1]`, so guard against it first. After a match, set `j = lps[j - 1]` rather than `0`, or overlapping matches are lost. Needs `computeLPS` from the previous section.
+
+**Used in:** LC 28, LC 3006, LC 3008
+
 ---
 
 ## 19. Rabin-Karp rolling hash
+
+**Use when:** You compare one window against a pattern while sliding, or need many same-length comparisons at low cost.
+
+**Complexity:** O(n + m) expected time, and O(n * m) if most positions need a verification. O(1) extra space, excluding the answer.
 
 ```cpp
 vector<int> rabinKarp(string text, string pattern) {
@@ -534,9 +598,19 @@ vector<int> rabinKarp(string text, string pattern) {
 }
 ```
 
+**Example:** `text = "abcabc", pattern = "bc"` returns `[1, 4]`.
+
+**Pitfalls:** Equal hashes are only probable, so keep the `substr` check. Add `mod` after subtracting, or the hash goes negative. `power` must be `base^(m - 1)`, which is why it skips the first iteration.
+
+**Used in:** LC 28, LC 1316
+
 ---
 
 ## 20. Z-function
+
+**Use when:** You need the longest match between each suffix and the whole string, as in "longest common prefix of each suffix with s".
+
+**Complexity:** O(n) time and O(n) space.
 
 Useful for pattern matching and string borders.
 
@@ -566,9 +640,19 @@ vector<int> zFunction(string s) {
 }
 ```
 
+**Example:** `"aabxaab"` gives `[0, 1, 0, 0, 3, 1, 0]`.
+
+**Pitfalls:** `z[0]` is left at 0 here, though some problems define it as n, as LC 2223 does when summing scores. The box `[l, r]` is inclusive, so the reuse bound is `r - i + 1`.
+
+**Used in:** LC 214, LC 2223
+
 ---
 
 ## 21. Pattern matching using Z-function
+
+**Use when:** You want pattern search with a single array and no separate failure table, or Z-values are already in play.
+
+**Complexity:** O(n + m) time and O(n + m) space.
 
 ```cpp
 vector<int> zSearch(string text, string pattern) {
@@ -588,9 +672,19 @@ vector<int> zSearch(string text, string pattern) {
 }
 ```
 
+**Example:** `text = "abcabc", pattern = "abc"` returns `[0, 3]`.
+
+**Pitfalls:** The `$` must not occur in either string, or `z` can exceed `m` and matches get missed by the `== m` test. Subtract `m + 1` to convert back to a text index. Needs `zFunction` from the previous section.
+
+**Used in:** LC 28, LC 3008
+
 ---
 
 ## 22. Manacher’s algorithm — longest palindrome in O(n)
+
+**Use when:** The problem needs palindrome radii for all centers at n around 10^5, where O(n^2) expansion is too slow.
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 string manacher(string s) {
@@ -639,9 +733,19 @@ string manacher(string s) {
 }
 ```
 
+**Example:** `"babad"` returns `"bab"`; `"cbbd"` returns `"bb"`.
+
+**Pitfalls:** The `#` padding makes all palindromes odd in `t`, and then `p[i]` equals the palindrome's length in `s`. The original start is `(bestCenter - bestLen) / 2`. Ties keep the first center, since `p[i] > bestLen` is strict.
+
+**Used in:** LC 5, LC 647, LC 1960
+
 ---
 
 ## 23. Trie
+
+**Use when:** The problem has many words and asks about prefixes, as in "starts with" or "suggest words as the user types".
+
+**Complexity:** O(L) time per operation, for a word of length L. O(total characters * 26) space.
 
 ```cpp
 struct TrieNode {
@@ -710,13 +814,29 @@ public:
 };
 ```
 
+**Example:** After `insert("apple")`: `search("app")` is `false`, `startsWith("app")` is `true`, and `search("apple")` is `true`.
+
+**Pitfalls:** `search` must return `node->isEnd`, or every prefix counts as a word. Nodes are never freed, which is fine for interviews but a leak in production. `c - 'a'` assumes lowercase input.
+
+**Used in:** LC 208, LC 211, LC 212, LC 648, LC 720, LC 1268
+
 ---
 
 ## 24. Sort characters in string
 
+**Use when:** You need a canonical form of a string, such as an anagram key, or need the letters in order.
+
+**Complexity:** O(n log n) time and O(log n) stack space. A counting sort over 26 letters is O(n).
+
 ```cpp
 sort(s.begin(), s.end());
 ```
+
+**Example:** `s = "dcba"` becomes `"abcd"`.
+
+**Pitfalls:** It sorts by byte value, so all uppercase letters come before all lowercase ones. It also changes `s` in place, so copy first if you still need the original.
+
+**Used in:** LC 49, LC 242
 
 ---
 
