@@ -9,6 +9,32 @@ order: 80
 ---
 # Stack & Queue — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a clue below, then start at that section.
+
+| If the problem says... | Think | Section |
+|---|---|---|
+| "backspace", "remove adjacent pairs", "final string after operations" | Output as a stack | 1, 16 |
+| "valid", "balanced", "minimum removals to make valid" | Bracket matching | 2 |
+| "next greater", "how many days until", "first smaller to the right" | Monotonic stack | 3 |
+| "largest rectangle", "histogram", "how much water can it trap" | Nearest smaller on both sides | 4 |
+| "consecutive days up to today", values arriving through next() | Stack of (value, span) | 5 |
+| "sum of the minimum of every subarray", "modulo 1e9+7" | Contribution of each element | 6, 24 |
+| "lexicographically smallest", "remove k digits", "most competitive" | Greedy pop with a budget | 7 |
+| "evaluate the expression", "basic calculator" | Operand stack with pending operator | 8 |
+| "iteratively", "without recursion", "next() and hasNext()" | Explicit DFS stack | 9 |
+| "k[encoded]", "chemical formula", "nested list" | Save context on open, combine on close | 10 |
+| "maximum of each window", "jump at most k steps" | Monotonic deque | 11 |
+| "level by level", "rightmost node at each level" | Queue with size snapshot | 12 |
+| "fewest steps", "nearest", "minutes until all rot" | BFS, often multi-source | 13 |
+| "fewest steps" where start and target are both known and states explode | Bidirectional BFS | 23 |
+| "minimum cost" where every move costs 0 or 1 | 0-1 BFS with a deque | 14 |
+| "design a circular queue", "calls in the last 3000 ms" | Ring buffer or expiring queue | 15, 22 |
+| "collide", "explode", "fleets", "moving left or right" | Stack of survivors | 17, 20 |
+| "undo", "back and forward", "getMin in O(1)" | Two stacks or augmented entries | 18 |
+| "pop the most frequent", "stacks with a fixed capacity" | Several stacks by tier or index | 19 |
+| "function start and end logs" | Call stack over time | 21 |
+| "takes turns", "goes to the back of the line" | Queue simulation | 22 |
+
 ---
 
 ## 1. Basic Stack Operations / Simulation
