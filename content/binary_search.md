@@ -323,8 +323,10 @@ order: 20
 | 3   | Reverse Pairs                       | 493         | Hard         |
 | 4   | Range Frequency Queries             | 2080        | Medium       |
 | 5   | Online Majority Element In Subarray | 1157        | Hard         |
-| 6   | My Calendar I / II / III            | 729/731/732 | Med/Med/Hard |
-| 7   | Count Good Triplets in an Array     | 2179        | Hard         |
+| 6   | My Calendar I                       | 729         | Medium       |
+| 7   | My Calendar II                      | 731         | Medium       |
+| 8   | My Calendar III                     | 732         | Hard         |
+| 9   | Count Good Triplets in an Array     | 2179        | Hard         |
 
 ---
 
@@ -395,13 +397,15 @@ order: 20
 
 | #   | Problem                                | LC #        | Difficulty   |
 | --- | -------------------------------------- | ----------- | ------------ |
-| 1   | My Calendar I / II / III               | 729/731/732 | Med/Med/Hard |
-| 2   | Meeting Rooms II (BS insert for sweep) | 253         | Medium       |
-| 3   | The Skyline Problem                    | 218         | Hard         |
-| 4   | Range Module                           | 715         | Hard         |
-| 5   | Maximum Profit in Job Scheduling       | 1235        | Hard         |
-| 6   | Minimum Interval to Include Each Query | 1851        | Hard         |
-| 7   | Describe the Painting                  | 1943        | Medium       |
+| 1   | My Calendar I                          | 729         | Medium       |
+| 2   | My Calendar II                         | 731         | Medium       |
+| 3   | My Calendar III                        | 732         | Hard         |
+| 4   | Meeting Rooms II (BS insert for sweep) | 253         | Medium       |
+| 5   | The Skyline Problem                    | 218         | Hard         |
+| 6   | Range Module                           | 715         | Hard         |
+| 7   | Maximum Profit in Job Scheduling       | 1235        | Hard         |
+| 8   | Minimum Interval to Include Each Query | 1851        | Hard         |
+| 9   | Describe the Painting                  | 1943        | Medium       |
 
 ---
 

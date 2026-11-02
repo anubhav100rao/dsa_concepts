@@ -241,12 +241,13 @@ order: 100
 | --- | ---------------------------------------------------- | ------- | ---------- |
 | 1   | Stream of Characters                                 | 1032    | Hard       |
 | 2   | Word Search II (Aho-Corasick for large dictionaries) | 212     | Hard       |
-| 3   | Bold Words in String / Add Bold Tag                  | 758/616 | Medium     |
-| 4   | Multi-pattern search in text (classic)               | —       | Hard       |
-| 5   | Count occurrences of each pattern in text (classic)  | —       | Hard       |
-| 6   | DNA Sequence matching (classic bioinformatics)       | —       | Hard       |
-| 7   | Minimum Number of Valid Strings to Form Target       | 3291    | Hard       |
-| 8   | Concatenated Words (Aho-Corasick variant)            | 472     | Hard       |
+| 3   | Bold Words in String                                 | 758     | Medium     |
+| 4   | Add Bold Tag in String                               | 616     | Medium     |
+| 5   | Multi-pattern search in text (classic)               | —       | Hard       |
+| 6   | Count occurrences of each pattern in text (classic)  | —       | Hard       |
+| 7   | DNA Sequence matching (classic bioinformatics)       | —       | Hard       |
+| 8   | Minimum Number of Valid Strings to Form Target       | 3291    | Hard       |
+| 9   | Concatenated Words (Aho-Corasick variant)            | 472     | Hard       |
 
 ---
 

@@ -50,13 +50,15 @@ export function getQuestionRows(markdown) {
     .filter((cells) => normalizeDifficulty(cells[cells.length - 1]).length > 0)
 }
 
-// Stable id matching the existing localStorage scheme used by the
-// done-questions map (see App.jsx). Must stay byte-identical so the
-// search palette and the question table agree.
-export function makeQuestionId(topicId, cells) {
-  const problem = cells[1] || 'unknown-problem'
-  const leetcodeId = cells[2] || 'unknown-lc'
-  return `${topicId}:${leetcodeId}:${problem}`.toLowerCase()
+// Stable id for a problem, shared by every row that lists it, so marking it
+// done in one topic marks it done everywhere. The LeetCode number decides the
+// id because the same problem is often worded differently between sections;
+// unnumbered problems fall back to their name. The search palette and the
+// question table must agree on this, and the done-questions map is keyed by it.
+export function makeQuestionId(cells) {
+  const leetcodeId = String(cells[2] || '').trim()
+  if (/^\d+$/.test(leetcodeId)) return `lc:${leetcodeId}`
+  return `name:${slugifyHeading(cells[1] || 'unknown-problem')}`
 }
 
 export function slugifyHeading(headingLine) {

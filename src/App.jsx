@@ -1,20 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import HomePage from './components/HomePage'
 import MarkdownPage from './components/MarkdownPage'
 import SearchPalette from './components/SearchPalette'
 import TopbarSearchTrigger from './components/TopbarSearchTrigger'
+import {
+  DONE_QUESTIONS_STORAGE_KEY,
+  loadDoneQuestions,
+} from './lib/doneQuestions'
 import './App.css'
-
-const DONE_QUESTIONS_STORAGE_KEY = 'dsa-platform:done-questions'
 
 function getStoredDoneQuestions() {
   try {
-    const storedQuestions = window.localStorage.getItem(
-      DONE_QUESTIONS_STORAGE_KEY,
-    )
-    return storedQuestions ? JSON.parse(storedQuestions) : {}
+    return loadDoneQuestions(window.localStorage)
   } catch {
     return {}
   }
@@ -25,7 +24,7 @@ function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [doneQuestions, setDoneQuestions] = useState(getStoredDoneQuestions)
 
-  const toggleQuestionDone = (questionId) => {
+  const toggleQuestionDone = useCallback((questionId) => {
     setDoneQuestions((current) => {
       const nextQuestions = { ...current }
 
@@ -37,9 +36,9 @@ function App() {
 
       return nextQuestions
     })
-  }
+  }, [])
 
-  const setQuestionsDone = (questionIds, isDone) => {
+  const setQuestionsDone = useCallback((questionIds, isDone) => {
     setDoneQuestions((current) => {
       const nextQuestions = { ...current }
 
@@ -53,7 +52,7 @@ function App() {
 
       return nextQuestions
     })
-  }
+  }, [])
 
   useEffect(() => {
     try {

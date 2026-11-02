@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node --test \"src/**/*.test.js\"",
     "build:search-index": "node scripts/buildSearchIndex.mjs"
   },
   "dependencies": {

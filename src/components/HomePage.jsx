@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import topics from '../topics'
+import topics, { stats } from '../topics'
+import { DIFFICULTIES } from '../lib/markdownParse'
 
 export default function HomePage() {
   const topicCards = topics.filter((t) => t.id !== 'home')
@@ -9,9 +10,10 @@ export default function HomePage() {
       <header className="home-hero">
         <h1>DSA Concepts</h1>
         <p className="home-subtitle">
-          The Ultimate Interview Question Bank — <strong>2,700+</strong>{' '}
-          LeetCode problems across <strong>10 core topics</strong> and{' '}
-          <strong>245+ sub-categories</strong>
+          The Ultimate Interview Question Bank —{' '}
+          <strong>{stats.problems.toLocaleString()}</strong> unique problems
+          across <strong>{stats.topics} core topics</strong> and{' '}
+          <strong>{stats.sections} sub-categories</strong>
         </p>
         <p className="home-tagline">
           Built for everyone preparing for technical interviews — at every
@@ -46,30 +48,26 @@ export default function HomePage() {
       <section className="home-difficulty">
         <h2>Difficulty Distribution</h2>
         <div className="difficulty-bars">
-          <div className="difficulty-row">
-            <span className="difficulty-label easy">Easy</span>
-            <div className="difficulty-bar">
-              <div className="difficulty-fill easy" style={{ width: '7.5%' }} />
-            </div>
-            <span className="difficulty-count">~200</span>
-          </div>
-          <div className="difficulty-row">
-            <span className="difficulty-label medium">Medium</span>
-            <div className="difficulty-bar">
-              <div
-                className="difficulty-fill medium"
-                style={{ width: '55.5%' }}
-              />
-            </div>
-            <span className="difficulty-count">~1,500</span>
-          </div>
-          <div className="difficulty-row">
-            <span className="difficulty-label hard">Hard</span>
-            <div className="difficulty-bar">
-              <div className="difficulty-fill hard" style={{ width: '37%' }} />
-            </div>
-            <span className="difficulty-count">~1,000</span>
-          </div>
+          {DIFFICULTIES.map((difficulty) => {
+            const count = stats.difficulty[difficulty]
+            const className = difficulty.toLowerCase()
+            return (
+              <div className="difficulty-row" key={difficulty}>
+                <span className={`difficulty-label ${className}`}>
+                  {difficulty}
+                </span>
+                <div className="difficulty-bar">
+                  <div
+                    className={`difficulty-fill ${className}`}
+                    style={{ width: `${(count / stats.problems) * 100}%` }}
+                  />
+                </div>
+                <span className="difficulty-count">
+                  {count.toLocaleString()}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </section>
 

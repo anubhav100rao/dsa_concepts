@@ -1,5 +1,14 @@
-import { Children, useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import {
+  Children,
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+import { useLocation, useParams, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
@@ -13,7 +22,6 @@ import {
   getQuestionRows,
   getMarkdownSections,
   makeQuestionId,
-  slugifyHeading,
   stripFrontmatter,
 } from '../lib/markdownParse'
 
@@ -21,6 +29,30 @@ const REMARK_PLUGINS = [remarkGfm]
 // `rehype-raw` must run before `rehype-highlight` so any raw HTML is parsed
 // before the highlighter walks `<code>` nodes.
 const REHYPE_PLUGINS = [rehypeRaw, rehypeHighlight]
+// Headings render inside a <button> inside the <h2>, so only inline markup
+// survives; the heading element itself gets unwrapped.
+const HEADING_ELEMENTS = ['code', 'em', 'strong']
+
+const COLLAPSED_SECTIONS_STORAGE_KEY = 'dsa-platform:collapsed-sections'
+const NO_COLLAPSED_SECTIONS = {}
+
+function getStoredCollapsedSections() {
+  try {
+    const stored = window.localStorage.getItem(COLLAPSED_SECTIONS_STORAGE_KEY)
+    return stored ? JSON.parse(stored) : {}
+  } catch {
+    return {}
+  }
+}
+
+function countUniqueQuestions(rows) {
+  return new Set(rows.map((cells) => makeQuestionId(cells))).size
+}
+
+// Done state and filters reach the rows through context, so ticking a box
+// re-renders only the rows and counters instead of re-parsing every section's
+// markdown.
+const QuestionStateContext = createContext(null)
 
 function getTextContent(children) {
   if (children == null || typeof children === 'boolean') return ''
@@ -119,13 +151,9 @@ function SectionConceptMap({ concept, sectionId, forceOpen }) {
   )
 }
 
-function QuestionSectionToolbar({
-  doneQuestions,
-  onSetQuestionsDone,
-  questionRows,
-  topicId,
-}) {
-  const questionIds = questionRows.map((cells) => makeQuestionId(topicId, cells))
+function QuestionSectionToolbar({ questionRows }) {
+  const { doneQuestions, onSetQuestionsDone } = useContext(QuestionStateContext)
+  const questionIds = questionRows.map((cells) => makeQuestionId(cells))
   const doneCount = questionIds.filter((questionId) => doneQuestions[questionId])
     .length
   const isDone = doneCount === questionIds.length
@@ -155,11 +183,205 @@ function QuestionSectionToolbar({
         <button
           type="button"
           className="section-clear-btn"
+          title="Also clears these questions everywhere else they appear"
           onClick={() => onSetQuestionsDone(questionIds, false)}
         >
           Clear
         </button>
       )}
+    </div>
+  )
+}
+
+function CollapsedSectionProgress({ questionRows }) {
+  const { doneQuestions } = useContext(QuestionStateContext)
+  const doneCount = questionRows.filter(
+    (cells) => doneQuestions[makeQuestionId(cells)],
+  ).length
+  const isComplete = doneCount === questionRows.length
+
+  return (
+    <span
+      className={`section-heading-progress ${isComplete ? 'complete' : ''}`}
+    >
+      {doneCount} / {questionRows.length} done
+    </span>
+  )
+}
+
+function QuestionRow({ cellTexts, rowDifficulties, children }) {
+  const { doneQuestions, difficultyFilters, onToggleQuestionDone } =
+    useContext(QuestionStateContext)
+  const isVisible = rowDifficulties.some(
+    (difficulty) => difficultyFilters[difficulty],
+  )
+
+  if (!isVisible) return null
+
+  const questionId = makeQuestionId(cellTexts)
+  const isDone = Boolean(doneQuestions[questionId])
+  const problemName = cellTexts[1] || 'question'
+
+  return (
+    <tr
+      data-question-id={questionId}
+      className={isDone ? 'question-row done' : 'question-row'}
+    >
+      <td className="question-done-cell">
+        <input
+          type="checkbox"
+          checked={isDone}
+          onChange={() => onToggleQuestionDone(questionId)}
+          aria-label={`Mark ${problemName} as done`}
+        />
+      </td>
+      {children}
+    </tr>
+  )
+}
+
+function MarkdownTableRow({ children }) {
+  const cells = Children.toArray(children)
+  const cellTexts = cells.map((child) =>
+    getTextContent(child?.props?.children).trim(),
+  )
+  const isQuestionHeader =
+    cellTexts.includes('Problem') && cellTexts.includes('Difficulty')
+  const rowDifficulties = normalizeDifficulty(cellTexts[cellTexts.length - 1])
+  const isQuestionRow =
+    cellTexts.length >= 4 && !isQuestionHeader && rowDifficulties.length > 0
+
+  if (isQuestionRow) {
+    return (
+      <QuestionRow cellTexts={cellTexts} rowDifficulties={rowDifficulties}>
+        {children}
+      </QuestionRow>
+    )
+  }
+
+  if (isQuestionHeader) {
+    return (
+      <tr>
+        <th className="question-done-heading">Done</th>
+        {children}
+      </tr>
+    )
+  }
+
+  return <tr>{children}</tr>
+}
+
+const MARKDOWN_COMPONENTS = { tr: MarkdownTableRow }
+
+const MarkdownBlock = memo(function MarkdownBlock({ markdown }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={REMARK_PLUGINS}
+      rehypePlugins={REHYPE_PLUGINS}
+      components={MARKDOWN_COMPONENTS}
+    >
+      {markdown}
+    </ReactMarkdown>
+  )
+})
+
+const CollapsibleSection = memo(function CollapsibleSection({
+  section,
+  isCollapsed,
+  onToggle,
+  showQuestionTools,
+  concept,
+  forceConceptOpen,
+}) {
+  const bodyId = `section-body-${section.slug}`
+  const hasQuestions = showQuestionTools && section.questionRows.length > 0
+  const sectionClass = showQuestionTools ? 'question-section' : 'snippet-section'
+
+  return (
+    <section
+      className={`collapsible-section ${sectionClass} ${
+        isCollapsed ? 'is-collapsed' : ''
+      }`}
+      data-section-slug={section.slug}
+    >
+      <h2
+        className="section-heading"
+        id={section.slug}
+        data-section-slug={section.slug}
+      >
+        <button
+          type="button"
+          className="section-toggle"
+          aria-expanded={!isCollapsed}
+          aria-controls={isCollapsed ? undefined : bodyId}
+          onClick={() => onToggle(section.slug)}
+        >
+          <svg
+            className="section-chevron"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+          <span>
+            <ReactMarkdown
+              remarkPlugins={REMARK_PLUGINS}
+              allowedElements={HEADING_ELEMENTS}
+              unwrapDisallowed
+            >
+              {section.heading}
+            </ReactMarkdown>
+          </span>
+        </button>
+        {isCollapsed && hasQuestions && (
+          <CollapsedSectionProgress questionRows={section.questionRows} />
+        )}
+      </h2>
+      {!isCollapsed && (
+        <div id={bodyId}>
+          {concept && (
+            <SectionConceptMap
+              concept={concept}
+              sectionId={section.id}
+              forceOpen={forceConceptOpen}
+            />
+          )}
+          {hasQuestions && (
+            <QuestionSectionToolbar questionRows={section.questionRows} />
+          )}
+          <MarkdownBlock markdown={section.body} />
+        </div>
+      )}
+    </section>
+  )
+})
+
+function SectionBulkActions({ sections, collapsedInScope, onSetAllCollapsed }) {
+  const collapsedCount = sections.filter(
+    (section) => collapsedInScope[section.slug],
+  ).length
+
+  return (
+    <div className="section-bulk-actions">
+      <button
+        type="button"
+        className="section-bulk-btn"
+        disabled={collapsedCount === sections.length}
+        onClick={() => onSetAllCollapsed(true)}
+      >
+        Collapse all
+      </button>
+      <button
+        type="button"
+        className="section-bulk-btn"
+        disabled={collapsedCount === 0}
+        onClick={() => onSetAllCollapsed(false)}
+      >
+        Expand all
+      </button>
     </div>
   )
 }
@@ -170,6 +392,7 @@ export default function MarkdownPage({
   onSetQuestionsDone,
 }) {
   const { topicId } = useParams()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const targetQuestionId = searchParams.get('q')
   const targetSectionSlug = searchParams.get('section')
@@ -202,15 +425,16 @@ export default function MarkdownPage({
 
   // When the user lands via a question deep-link, force all difficulty
   // filters on so the target row is actually rendered. Compare-to-last
-  // pattern keeps this out of an effect.
+  // pattern keeps this out of an effect. Keyed on the navigation rather than
+  // the id, so reopening the same search result still works.
   const [difficultyFilters, setDifficultyFilters] = useState({
     Easy: true,
     Medium: true,
     Hard: true,
   })
-  const [lastTarget, setLastTarget] = useState(targetQuestionId)
-  if (lastTarget !== targetQuestionId) {
-    setLastTarget(targetQuestionId)
+  const [lastLocationKey, setLastLocationKey] = useState(location.key)
+  if (lastLocationKey !== location.key) {
+    setLastLocationKey(location.key)
     if (targetQuestionId) {
       setDifficultyFilters({ Easy: true, Medium: true, Hard: true })
     }
@@ -224,26 +448,35 @@ export default function MarkdownPage({
   // Snippets tab is only meaningful when the topic has a snippets file.
   const effectiveTab = hasSnippets ? activeTab : 'questions'
   const isSnippetsView = effectiveTab === 'snippets'
+  const isContentReady =
+    loadedTopic.id === topic?.id && loadedTopic.tab === effectiveTab
 
   const activeDifficulties = DIFFICULTIES.filter(
     (difficulty) => difficultyFilters[difficulty],
   )
   const content = loadedTopic.content
-  const contentSections = getMarkdownSections(content)
-  const questionRows = getQuestionRows(content)
+  const contentSections = useMemo(() => getMarkdownSections(content), [content])
+  const questionRows = useMemo(() => getQuestionRows(content), [content])
   const visibleQuestionRows = questionRows.filter((cells) =>
     normalizeDifficulty(cells[cells.length - 1]).some(
       (difficulty) => difficultyFilters[difficulty],
     ),
   )
-  const doneVisibleCount = visibleQuestionRows.filter(
-    (cells) => doneQuestions[makeQuestionId(topicId, cells)],
+  // A problem can repeat across a topic's sections, so topic-level numbers
+  // count each one once; the per-section toolbars count their own rows.
+  const visibleQuestionIds = new Set(
+    visibleQuestionRows.map((cells) => makeQuestionId(cells)),
+  )
+  const doneVisibleCount = [...visibleQuestionIds].filter(
+    (questionId) => doneQuestions[questionId],
   ).length
 
   const difficultyCounts = DIFFICULTIES.reduce((counts, difficulty) => {
-    counts[difficulty] = questionRows.filter((cells) =>
-      normalizeDifficulty(cells[cells.length - 1]).includes(difficulty),
-    ).length
+    counts[difficulty] = countUniqueQuestions(
+      questionRows.filter((cells) =>
+        normalizeDifficulty(cells[cells.length - 1]).includes(difficulty),
+      ),
+    )
     return counts
   }, {})
 
@@ -254,73 +487,82 @@ export default function MarkdownPage({
     }))
   }
 
-  const markdownComponents = {
-    // Stamp section slugs on every ## heading so the deep-link scroll-to
-    // works in both the questions view (where the parent <section> already
-    // carries the slug) and the snippets view (where headings are inline).
-    h2({ children, ...rest }) {
-      const text = getTextContent(children)
-      const slug = slugifyHeading(text)
-      return (
-        <h2 data-section-slug={slug} id={slug} {...rest}>
-          {children}
-        </h2>
-      )
+  const questionState = useMemo(
+    () => ({
+      doneQuestions,
+      difficultyFilters,
+      onToggleQuestionDone,
+      onSetQuestionsDone,
+    }),
+    [doneQuestions, difficultyFilters, onToggleQuestionDone, onSetQuestionsDone],
+  )
+
+  // Collapsed sections are remembered per topic and per tab.
+  const [collapsedSections, setCollapsedSections] = useState(
+    getStoredCollapsedSections,
+  )
+  const collapseScope = `${topicId}:${effectiveTab}`
+  const collapsedInScope =
+    collapsedSections[collapseScope] || NO_COLLAPSED_SECTIONS
+
+  const toggleSection = useCallback(
+    (slug) => {
+      setCollapsedSections((current) => {
+        const nextScope = { ...current[collapseScope] }
+        if (nextScope[slug]) {
+          delete nextScope[slug]
+        } else {
+          nextScope[slug] = true
+        }
+        return { ...current, [collapseScope]: nextScope }
+      })
     },
-    tr({ children }) {
-      const cells = Children.toArray(children)
-      const cellTexts = cells.map((child) =>
-        getTextContent(child?.props?.children).trim(),
-      )
-      const isQuestionHeader =
-        cellTexts.includes('Problem') && cellTexts.includes('Difficulty')
-      const rowDifficulties = normalizeDifficulty(cellTexts[cellTexts.length - 1])
-      const isQuestionRow =
-        cellTexts.length >= 4 &&
-        !isQuestionHeader &&
-        rowDifficulties.length > 0
+    [collapseScope],
+  )
 
-      if (isQuestionRow) {
-        const isVisible = rowDifficulties.some(
-          (difficulty) => difficultyFilters[difficulty],
-        )
-
-        if (!isVisible) return null
-
-        const questionId = makeQuestionId(topicId, cellTexts)
-        const isDone = Boolean(doneQuestions[questionId])
-        const problemName = cellTexts[1] || 'question'
-
-        return (
-          <tr
-            data-question-id={questionId}
-            className={isDone ? 'question-row done' : 'question-row'}
-          >
-            <td className="question-done-cell">
-              <input
-                type="checkbox"
-                checked={isDone}
-                onChange={() => onToggleQuestionDone(questionId)}
-                aria-label={`Mark ${problemName} as done`}
-              />
-            </td>
-            {children}
-          </tr>
-        )
-      }
-
-      if (isQuestionHeader) {
-        return (
-          <tr>
-            <th className="question-done-heading">Done</th>
-            {children}
-          </tr>
-        )
-      }
-
-      return <tr>{children}</tr>
-    },
+  const setAllSectionsCollapsed = (isCollapsed) => {
+    const nextScope = {}
+    if (isCollapsed) {
+      contentSections.sections.forEach((section) => {
+        nextScope[section.slug] = true
+      })
+    }
+    setCollapsedSections((current) => ({
+      ...current,
+      [collapseScope]: nextScope,
+    }))
   }
+
+  // A deep link must open its section before the scroll effect below looks
+  // for the target. The section comes from the parsed markdown because a
+  // collapsed section's rows aren't in the DOM. Runs once per navigation, so
+  // the learner can still collapse that section afterwards.
+  const deepLinkKey = isContentReady ? `${location.key}:${collapseScope}` : null
+  const [lastDeepLinkKey, setLastDeepLinkKey] = useState(null)
+  if (lastDeepLinkKey !== deepLinkKey) {
+    setLastDeepLinkKey(deepLinkKey)
+    const sectionSlug =
+      targetSectionSlug ||
+      contentSections.sections.find((section) =>
+        section.questionRows.some(
+          (cells) => makeQuestionId(cells) === targetQuestionId,
+        ),
+      )?.slug
+    if (deepLinkKey && sectionSlug && collapsedInScope[sectionSlug]) {
+      toggleSection(sectionSlug)
+    }
+  }
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        COLLAPSED_SECTIONS_STORAGE_KEY,
+        JSON.stringify(collapsedSections),
+      )
+    } catch {
+      // If storage is unavailable or full, the in-memory state still works.
+    }
+  }, [collapsedSections])
 
   useEffect(() => {
     if (!topic) return
@@ -359,19 +601,26 @@ export default function MarkdownPage({
   // section, scroll it into view, and flash it briefly. The dependency on
   // `content` ensures this runs once the markdown actually rendered.
   useEffect(() => {
-    if (!content) return
-    if (loadedTopic.id !== topic?.id) return
+    if (!isContentReady || !content) return
 
     // Defer one frame so React has flushed the new markdown.
     const id = requestAnimationFrame(() => {
       let target = null
       if (targetQuestionId) {
-        target = document.querySelector(
-          `[data-question-id="${CSS.escape(targetQuestionId)}"]`,
-        )
+        // A problem can repeat within a topic, so prefer the row in the
+        // section the link came from.
+        const rowSelector = `[data-question-id="${CSS.escape(targetQuestionId)}"]`
+        const section =
+          targetSectionSlug &&
+          document.querySelector(
+            `section[data-section-slug="${CSS.escape(targetSectionSlug)}"]`,
+          )
+        target =
+          (section && section.querySelector(rowSelector)) ||
+          document.querySelector(rowSelector)
       } else if (targetSectionSlug) {
         target = document.querySelector(
-          `[data-section-slug="${CSS.escape(targetSectionSlug)}"]`,
+          `h2[data-section-slug="${CSS.escape(targetSectionSlug)}"]`,
         )
       }
 
@@ -386,11 +635,10 @@ export default function MarkdownPage({
     return () => cancelAnimationFrame(id)
   }, [
     content,
-    loadedTopic.id,
-    topic?.id,
+    isContentReady,
+    location.key,
     targetQuestionId,
     targetSectionSlug,
-    isSnippetsView,
   ])
 
   if (!topic) {
@@ -404,7 +652,7 @@ export default function MarkdownPage({
     )
   }
 
-  if (loadedTopic.id !== topic.id || loadedTopic.tab !== effectiveTab) {
+  if (!isContentReady) {
     return (
       <div className="markdown-page">
         {hasSnippets && (
@@ -421,12 +669,22 @@ export default function MarkdownPage({
     )
   }
 
+  const bulkActions = contentSections.sections.length > 0 && (
+    <SectionBulkActions
+      sections={contentSections.sections}
+      collapsedInScope={collapsedInScope}
+      onSetAllCollapsed={setAllSectionsCollapsed}
+    />
+  )
+
   return (
     <div className="markdown-page">
       {hasSnippets && (
         <TopicTabs activeTab={effectiveTab} onChange={setActiveTab} />
       )}
-      {!isSnippetsView && (
+      {isSnippetsView ? (
+        <div className="snippet-toolbar">{bulkActions}</div>
+      ) : (
         <section className="question-toolbar" aria-label="Question filters">
           <div className="question-filter-group">
             {DIFFICULTIES.map((difficulty) => (
@@ -446,80 +704,36 @@ export default function MarkdownPage({
               </label>
             ))}
           </div>
-          <p className="question-progress">
-            {doneVisibleCount} / {visibleQuestionRows.length} done
-            {activeDifficulties.length > 0 &&
-              activeDifficulties.length < DIFFICULTIES.length &&
-              ` in ${activeDifficulties.join(', ')}`}
-          </p>
+          <div className="question-toolbar-side">
+            <p className="question-progress">
+              {doneVisibleCount} / {visibleQuestionIds.size} done
+              {activeDifficulties.length > 0 &&
+                activeDifficulties.length < DIFFICULTIES.length &&
+                ` in ${activeDifficulties.join(', ')}`}
+            </p>
+            {bulkActions}
+          </div>
         </section>
       )}
       <article className="markdown-content">
-        {isSnippetsView ? (
-          // Pass the h2 override so snippet section headings get
-          // `data-section-slug` — without it, deep-links from the search
-          // palette (?tab=snippets&section=…) have nothing to scroll to.
-          <ReactMarkdown
-            remarkPlugins={REMARK_PLUGINS}
-            rehypePlugins={REHYPE_PLUGINS}
-            components={markdownComponents}
-          >
-            {content}
-          </ReactMarkdown>
-        ) : (
-          <>
-            <ReactMarkdown
-              remarkPlugins={REMARK_PLUGINS}
-              rehypePlugins={REHYPE_PLUGINS}
-              components={markdownComponents}
-            >
-              {contentSections.intro}
-            </ReactMarkdown>
-            {contentSections.sections.map((section) => {
-              const sectionConcept = getSectionConcept(topicId, section.heading)
-              const isTargetSection =
-                !!targetSectionSlug && targetSectionSlug === section.slug
-
-              return (
-                <section
-                  className="question-section"
-                  data-section-slug={section.slug}
-                  key={section.id}
-                >
-                  <ReactMarkdown
-                    remarkPlugins={REMARK_PLUGINS}
-                    rehypePlugins={REHYPE_PLUGINS}
-                    components={markdownComponents}
-                  >
-                    {section.heading}
-                  </ReactMarkdown>
-                  {sectionConcept && (
-                    <SectionConceptMap
-                      concept={sectionConcept}
-                      sectionId={section.id}
-                      forceOpen={wantConceptOpen && isTargetSection}
-                    />
-                  )}
-                  {section.questionRows.length > 0 && (
-                    <QuestionSectionToolbar
-                      doneQuestions={doneQuestions}
-                      onSetQuestionsDone={onSetQuestionsDone}
-                      questionRows={section.questionRows}
-                      topicId={topicId}
-                    />
-                  )}
-                  <ReactMarkdown
-                    remarkPlugins={REMARK_PLUGINS}
-                    rehypePlugins={REHYPE_PLUGINS}
-                    components={markdownComponents}
-                  >
-                    {section.body}
-                  </ReactMarkdown>
-                </section>
-              )
-            })}
-          </>
-        )}
+        <QuestionStateContext.Provider value={questionState}>
+          <MarkdownBlock markdown={contentSections.intro} />
+          {contentSections.sections.map((section) => (
+            <CollapsibleSection
+              key={section.id}
+              section={section}
+              isCollapsed={Boolean(collapsedInScope[section.slug])}
+              onToggle={toggleSection}
+              showQuestionTools={!isSnippetsView}
+              concept={
+                isSnippetsView ? null : getSectionConcept(topicId, section.heading)
+              }
+              forceConceptOpen={
+                wantConceptOpen && targetSectionSlug === section.slug
+              }
+            />
+          ))}
+        </QuestionStateContext.Provider>
       </article>
     </div>
   )

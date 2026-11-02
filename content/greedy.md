@@ -56,9 +56,11 @@ order: 50
 | 13 | Maximum Number of Events That Can Be Attended | 1353 | Medium |
 | 14 | Maximum Profit in Job Scheduling (DP, but greedy insight) | 1235 | Hard |
 | 15 | Car Pooling | 1094 | Medium |
-| 16 | My Calendar I / II / III | 729/731/732 | Med/Med/Hard |
-| 17 | Minimum Interval to Include Each Query | 1851 | Hard |
-| 18 | Points That Intersect With Cars | 2848 | Easy |
+| 16 | My Calendar I | 729 | Medium |
+| 17 | My Calendar II | 731 | Medium |
+| 18 | My Calendar III | 732 | Hard |
+| 19 | Minimum Interval to Include Each Query | 1851 | Hard |
+| 20 | Points That Intersect With Cars | 2848 | Easy |
 
 ---
 
@@ -307,13 +309,14 @@ order: 50
 | 6 | Reducing Dishes | 1402 | Hard |
 | 7 | Minimum Cost to Move Chips | 1217 | Easy |
 | 8 | Water Bottles | 1518 | Easy |
-| 9 | Power of Two / Three | 231/326 | Easy |
-| 10 | Smallest Range II | 910 | Medium |
-| 11 | Score After Flipping Matrix | 861 | Medium |
-| 12 | Maximum 69 Number | 1323 | Easy |
-| 13 | Largest Perimeter Triangle | 976 | Easy |
-| 14 | Minimum Suffix Flips | 1529 | Medium |
-| 15 | Max Points on a Line | 149 | Hard |
+| 9 | Power of Two | 231 | Easy |
+| 10 | Power of Three | 326 | Easy |
+| 11 | Smallest Range II | 910 | Medium |
+| 12 | Score After Flipping Matrix | 861 | Medium |
+| 13 | Maximum 69 Number | 1323 | Easy |
+| 14 | Largest Perimeter Triangle | 976 | Easy |
+| 15 | Minimum Suffix Flips | 1529 | Medium |
+| 16 | Max Points on a Line | 149 | Hard |
 
 ---
 
@@ -371,13 +374,14 @@ order: 50
 |---|---------|------|------------|
 | 1 | Score After Flipping Matrix | 861 | Medium |
 | 2 | Set Matrix Zeroes | 73 | Medium |
-| 3 | Minimum Number of Flips to Make Binary Grid Palindromic I/II | 3239/3240 | Med/Med |
-| 4 | Spiral Matrix (traversal, greedy boundary) | 54 | Medium |
-| 5 | Rotate Image | 48 | Medium |
-| 6 | Game of Life | 289 | Medium |
-| 7 | Where Will the Ball Fall | 1706 | Medium |
-| 8 | Number of Laser Beams in a Bank | 2125 | Medium |
-| 9 | Minimum Moves to Reach Target Score | 2139 | Medium |
+| 3 | Minimum Number of Flips to Make Binary Grid Palindromic I | 3239 | Medium |
+| 4 | Minimum Number of Flips to Make Binary Grid Palindromic II | 3240 | Medium |
+| 5 | Spiral Matrix (traversal, greedy boundary) | 54 | Medium |
+| 6 | Rotate Image | 48 | Medium |
+| 7 | Game of Life | 289 | Medium |
+| 8 | Where Will the Ball Fall | 1706 | Medium |
+| 9 | Number of Laser Beams in a Bank | 2125 | Medium |
+| 10 | Minimum Moves to Reach Target Score | 2139 | Medium |
 
 ---
 

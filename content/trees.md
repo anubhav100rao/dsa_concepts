@@ -368,13 +368,15 @@ order: 90
 | 4   | Reverse Pairs                              | 493         | Hard         |
 | 5   | Range Frequency Queries                    | 2080        | Medium       |
 | 6   | Online Majority Element In Subarray        | 1157        | Hard         |
-| 7   | My Calendar I / II / III                   | 729/731/732 | Med/Med/Hard |
-| 8   | Falling Squares                            | 699         | Hard         |
-| 9   | Rectangle Area II                          | 850         | Hard         |
-| 10  | Count Good Triplets in an Array            | 2179        | Hard         |
-| 11  | Longest Increasing Subsequence II          | 2407        | Hard         |
-| 12  | The Skyline Problem (segment tree variant) | 218         | Hard         |
-| 13  | Range Module                               | 715         | Hard         |
+| 7   | My Calendar I                              | 729         | Medium       |
+| 8   | My Calendar II                             | 731         | Medium       |
+| 9   | My Calendar III                            | 732         | Hard         |
+| 10  | Falling Squares                            | 699         | Hard         |
+| 11  | Rectangle Area II                          | 850         | Hard         |
+| 12  | Count Good Triplets in an Array            | 2179        | Hard         |
+| 13  | Longest Increasing Subsequence II          | 2407        | Hard         |
+| 14  | The Skyline Problem (segment tree variant) | 218         | Hard         |
+| 15  | Range Module                               | 715         | Hard         |
 
 ---
 

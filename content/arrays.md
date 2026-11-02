@@ -140,17 +140,20 @@ order: 10
 | 2 | Corporate Flight Bookings | 1109 | Medium |
 | 3 | Range Addition | 370 | Medium |
 | 4 | Meeting Rooms II (sweep line) | 253 | Medium |
-| 5 | My Calendar I / II / III | 729/731/732 | Med/Med/Hard |
-| 6 | The Skyline Problem | 218 | Hard |
-| 7 | Minimum Number of Arrows to Burst Balloons | 452 | Medium |
-| 8 | Number of Flowers in Full Bloom | 2251 | Hard |
-| 9 | Describe the Painting | 1943 | Medium |
-| 10 | Brightest Position on Street | 2021 | Medium |
-| 11 | Maximum Population Year | 1854 | Easy |
-| 12 | Minimum Number of Increments on Subarrays to Form Target | 1526 | Hard |
-| 13 | Number of Laser Beams in a Bank | 2125 | Medium |
-| 14 | Shifting Letters II | 2381 | Medium |
-| 15 | Zero Array Transformations I / II | 3355/3356 | Med/Med |
+| 5 | My Calendar I | 729 | Medium |
+| 6 | My Calendar II | 731 | Medium |
+| 7 | My Calendar III | 732 | Hard |
+| 8 | The Skyline Problem | 218 | Hard |
+| 9 | Minimum Number of Arrows to Burst Balloons | 452 | Medium |
+| 10 | Number of Flowers in Full Bloom | 2251 | Hard |
+| 11 | Describe the Painting | 1943 | Medium |
+| 12 | Brightest Position on Street | 2021 | Medium |
+| 13 | Maximum Population Year | 1854 | Easy |
+| 14 | Minimum Number of Increments on Subarrays to Form Target | 1526 | Hard |
+| 15 | Number of Laser Beams in a Bank | 2125 | Medium |
+| 16 | Shifting Letters II | 2381 | Medium |
+| 17 | Zero Array Transformation I | 3355 | Medium |
+| 18 | Zero Array Transformation II | 3356 | Medium |
 
 ---
 
@@ -551,10 +554,12 @@ order: 10
 | 2 | Count of Smaller Numbers After Self | 315 | Hard |
 | 3 | Reverse Pairs | 493 | Hard |
 | 4 | Number of Flowers in Full Bloom | 2251 | Hard |
-| 5 | My Calendar I / II / III | 729/731/732 | Med/Med/Hard |
-| 6 | Escape a Large Maze (graph — coord compression) | 1036 | Hard |
-| 7 | Rectangle Area II | 850 | Hard |
-| 8 | Count Good Triplets in an Array | 2179 | Hard |
+| 5 | My Calendar I | 729 | Medium |
+| 6 | My Calendar II | 731 | Medium |
+| 7 | My Calendar III | 732 | Hard |
+| 8 | Escape a Large Maze (graph — coord compression) | 1036 | Hard |
+| 9 | Rectangle Area II | 850 | Hard |
+| 10 | Count Good Triplets in an Array | 2179 | Hard |
 
 ---
 

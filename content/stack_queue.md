@@ -313,7 +313,8 @@ order: 80
 | 12 | Odd Even Jump (monotonic stack + DP) | 975 | Hard |
 | 13 | Longest Well-Performing Interval | 1124 | Medium |
 | 14 | Maximum Score of a Good Subarray | 1793 | Hard |
-| 15 | Beautiful Towers I / II | 2865/2866 | Med/Med |
+| 15 | Beautiful Towers I | 2865 | Medium |
+| 16 | Beautiful Towers II | 2866 | Medium |
 
 ---
 
