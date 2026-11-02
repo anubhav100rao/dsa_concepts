@@ -9,6 +9,38 @@ order: 10
 ---
 # Arrays — Interview Question Bank
 
+**Which pattern do I use?** Find the phrase closest to your problem, then go to that section.
+
+| The problem says | Think | Section |
+|---|---|---|
+| "sorted", "pair that sums to target", "container", "unique triplets" | Move one of two ends inward | 1 |
+| "remove in-place", "return the new length", "is subsequence" | Slow writes, fast reads | 2 |
+| "subarray of length k", "every k consecutive", "anagram of p" | Fixed window | 3 |
+| "longest/shortest subarray" with a limit, "at most k", non-negative values | Grow right, shrink left | 4 |
+| "number of subarrays with sum k", negatives allowed, "divisible by k" | Prefix sum plus hash map | 5 |
+| "add to every element from i to j", "trips", "most overlapping" | Difference array or sweep | 6 |
+| "indices of two numbers" unsorted, "group", "most frequent", "consecutive sequence" | Hash map or set | 7 |
+| "largest sum" or "maximum product" of a contiguous subarray, "buy then sell" | Kadane | 8 |
+| "numbers in the range [1, n]", "missing", "duplicate", "O(1) extra space" | Cyclic sort or index marking | 9, 17 |
+| "spiral", "rotate 90 degrees", "diagonal", "sorted rows and columns" | Matrix boundaries and identities | 10 |
+| "sum over all subarrays", "sum of subarray minimums" | Each element's contribution | 11 |
+| "merge overlapping", "insert interval", "free time" | Sort by start and sweep | 12 |
+| "largest number formed", "sort by a custom rule", "k-th largest" | Comparator or quickselect | 13 |
+| "linear time" sort with bounded values, "top k frequent", "maximum gap" | Buckets by value or count | 14 |
+| "appears more than n/2 times" or "n/3 times", O(1) space | Boyer-Moore voting | 15 |
+| "count pairs i < j where", "smaller numbers after self", "median of two sorted" | Merge sort or divide and conquer | 16 |
+| "product except self", "left and right" conditions for each index | Prefix and suffix arrays | 18 |
+| "every element appears twice except one", "XOR", "without extra memory" | Bit tricks | 19 |
+| "simulate", "apply these rules", "collide" | Careful direct simulation | 20 |
+| "strictly increasing then decreasing", "peak", "shortest unsorted subarray" | Trend scan | 21 |
+| "design a class", "O(1) average", "stream", "getRandom" | Array plus hash map | 22 |
+| "two arrays", "assign", "pick one from each of k lists" | One pointer per array | 23 |
+| "for each query", queries can be answered in any order | Offline sort or Fenwick tree | 24 |
+| "each with equal probability", "weighted", "stream of unknown length" | Fisher-Yates or reservoir | 25 |
+| coordinates up to 10^9 but few points, "rank" of values | Compress to ranks | 26 |
+| "gcd", "divisible", "prime", "n-th magical number" | Number theory | 27 |
+| n around 40, "closest subset sum", "patch", "maximum running time" | Check the Hard list first | 28 |
+
 ---
 
 ## 1. Two Pointers (Opposite Direction)
