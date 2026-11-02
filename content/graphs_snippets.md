@@ -1,7 +1,3 @@
-No worries. Here are **C++ graph snippets** for common intermediate/advanced variations. No `main`, only important parts.
-
----
-
 ## 1. Graph representation
 
 ### Adjacency list — unweighted

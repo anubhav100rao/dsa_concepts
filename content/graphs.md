@@ -9,6 +9,41 @@ order: 40
 ---
 # Graph Algorithms — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a row, then open that section.
+
+| If the problem says... | Think | Section |
+|---|---|---|
+| "minimum steps / moves" and every move costs the same | BFS | 1. BFS / Level-Order Traversal |
+| "number of islands", "all paths from source to target" | DFS or backtracking | 2. DFS / Backtracking on Graphs |
+| "prerequisites", "must come before", "return an order" | Toposort | 3. Topological Sort |
+| "minimum time / cost" with non-negative edge costs | Dijkstra | 4. Shortest Path — Dijkstra |
+| "at most k stops", "weights may be negative" | Bellman-Ford | 5. Shortest Path — Bellman-Ford / SPFA |
+| "for every city...", many pairs of queries, n ≤ 400 | Floyd-Warshall | 6. Shortest Path — Floyd-Warshall (All-Pairs) |
+| "same group?", edges arrive over time, "swap any number of times" | Union-Find | 7. Union-Find (Disjoint Set Union) |
+| "minimum cost to connect all points" | MST | 8. Minimum Spanning Tree (Kruskal / Prim) |
+| "can you finish all courses?", "eventually safe" | Cycle check | 9. Cycle Detection |
+| "split into two groups so no conflicting pair is together" | 2-coloring | 10. Bipartite Graph / Graph Coloring |
+| "every node can reach every other" on directed edges | SCC | 11. Strongly Connected Components (Tarjan / Kosaraju) |
+| "critical connection", "single point of failure" | Bridges | 12. Articulation Points & Bridges |
+| "use every ticket / edge exactly once" | Hierholzer | 13. Euler Path / Circuit |
+| "visit every node" and n ≤ 20 | Bitmask DP or BFS | 14. Hamiltonian Path / TSP |
+| "assign each X to at most one Y", "maximum pairs" | Matching | 15. Network Flow / Matching |
+| "4-directionally connected", "water flows to" | Grid as a graph | 16. Graph on Grid (Matrix as Graph) |
+| "distance to the nearest...", "spreads each minute" | Multi-source BFS | 17. Multi-Source BFS |
+| "fewest walls to remove", moves are free or cost 1 | 0-1 BFS | 18. 0-1 BFS (Deque BFS) |
+| "transform begin into end", huge branching, known target | Two-ended BFS | 19. Bidirectional BFS |
+| huge state space, and you can estimate distance to the goal | A* | 20. A* / Heuristic Search |
+| "in one move you can...", no graph in the input | States as nodes | 21. Graph Construction / Implicit Graphs |
+| "n nodes and n - 1 edges", "answer for every root" | Tree DP or rerooting | 22. Tree-Specific Graph Problems |
+| "longest path", "number of ways", "within maxTime" | DP over a DAG | 23. Graph + DP (DP on Graphs / DAGs) |
+| "minimum vertices / operations" decided by degrees or components | Counting argument | 24. Graph + Greedy |
+| "lowest common ancestor", "k-th ancestor", tree path queries | LCA | 25. LCA / Ancestor Queries |
+| many path queries or "all paths of length k" on a big tree | Tree decomposition | 26. Centroid Decomposition / Heavy-Light Decomposition |
+| "each node has at most one outgoing edge", "favorite[i]" | Rho shapes | 27. Functional Graph (Successor Graph) |
+| "trusted by everyone", "network rank" | Count degrees | 28. Graph Simulation / Degree-Based |
+| "connected unless listed", grid side of 10^6 with few blocks | Complement or compression | 29. Advanced — Complement Graph / Virtual Graph |
+| "after each operation return...", "addEdge / shortestPath" | Online structure | 30. Design / Online Graph Problems |
+
 ---
 
 ## 1. BFS / Level-Order Traversal

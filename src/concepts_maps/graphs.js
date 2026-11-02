@@ -1,10 +1,40 @@
 export const graphs = {
   '1. BFS / Level-Order Traversal': {
     crux: 'Layer-by-layer expansion from one (or many) sources gives shortest-path-by-edges in O(V + E) for unweighted graphs.',
+    signals: [
+      '"Minimum number of steps / moves / mutations to reach..." where every move costs the same: BFS finds it the first time it arrives.',
+      '"Shortest clear path" through a binary matrix, or "nearest exit" from a position in a maze.',
+      '"In one move you can..." with a start and a goal: the states are nodes, even with no graph in the input (LC 752, LC 433).',
+      'The answer depends on distance in layers, like "after each minute" or "level by level".',
+    ],
+    notThis: [
+      'Edges have different costs, as in Network Delay Time (LC 743): the fewest edges may not be the cheapest route, so use Dijkstra.',
+      'You need every path or the best path by a non-distance score, as in Path with Maximum Gold (LC 1219): use DFS with backtracking.',
+      'Many starting points spread at once, as in Rotting Oranges (LC 994): seed them all together, as in Multi-Source BFS.',
+    ],
     concepts: [
       'Mark visited BEFORE enqueue (not on dequeue) — otherwise the same node lands in the queue multiple times and the work blows up.',
       'Use a "(node, dist)" tuple or snapshot len(queue) at level boundary — both work, pick what reads cleaner per problem.',
       'Multi-source BFS = enqueue every source with distance 0 → equivalent to BFS from a virtual super-source.',
+    ],
+    example: {
+      problem: 'Shortest Path in Binary Matrix with [[0,0,0],[1,1,0],[1,1,0]]',
+      lc: 1091,
+      walkthrough: [
+        'Start with q = [(0,0,1)] and mark (0,0). The third number counts cells on the path, so the start already counts as 1.',
+        'Pop (0,0,1). The only free neighbor is (0,1), so push (0,1,2) and mark it.',
+        'Pop (0,1,2). Free neighbors are (0,2) and (1,2), so push (0,2,3) and (1,2,3). (1,2) is a diagonal move.',
+        'Pop (0,2,3). Its neighbors are all marked or walls, so nothing is pushed.',
+        'Pop (1,2,3). (2,2) is free, so push (2,2,4).',
+        'Pop (2,2,4). This is the bottom-right cell, so return 4.',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space. On an R x C grid that is O(R x C), since each cell has a fixed number of neighbors.',
+    pitfalls: [
+      'Marking on pop instead of push: several parents push the same cell, and on a large open grid the queue can blow up.',
+      'Checking only the start cell: LC 1091 also returns -1 when the bottom-right cell is blocked.',
+      'Counting edges when the problem counts cells: LC 1091 and LC 127 count the start, so they start at 1, while LC 752 counts moves from 0.',
+      'Using 4 directions when the problem allows 8: LC 1091 moves diagonally.',
     ],
     pointsToPonder: [
       'Why is "mark on enqueue" correct even when multiple parents discover the same child in the same layer?',
@@ -26,14 +56,46 @@ while q:
             grid[nr][nc] = 1
             q.append((nr, nc, d+1))
 return -1`,
+    practice: [1926, 1091, 994, 752, 127],
+    snippet: '3-bfs-unweighted-shortest-path',
   },
 
   '2. DFS / Backtracking on Graphs': {
     crux: 'Recurse into unvisited neighbors; the call stack IS the path — backtrack by un-marking on the way out (only for path-enumeration problems).',
+    signals: [
+      '"Number of islands / provinces / connected components": each new unvisited cell starts one group.',
+      '"All paths from source to target" or "return all possible...": the current path matters, so unmark on the way back.',
+      '"Maximum area" or "total time" where a whole region or subtree adds up into one number (LC 695, LC 1376).',
+      '"Surrounded regions" or "cells that can\'t reach the border": start DFS from the border and flip what is left.',
+      '"Clone" or "deep copy" a graph, where you must follow every edge once and handle cycles.',
+    ],
+    notThis: [
+      'The problem asks for the shortest route in an unweighted graph, as in LC 1091: DFS finds a path, not the shortest one, so use BFS.',
+      'Edges keep arriving and you only ask about connectivity, as in Number of Islands II (LC 305): use Union-Find.',
+      'The grid is big and paths are long: recursion can overflow the stack, so use an explicit stack or BFS.',
+    ],
     concepts: [
       'For "count components / flood fill", a single visited set used across all roots suffices (no backtrack).',
       'For "all paths from S to T", you need to UNMARK on return to allow other branches to revisit — backtracking-style.',
       'Recursion depth = longest path; on big graphs convert to iterative DFS (explicit stack) to avoid stack overflow.',
+    ],
+    example: {
+      problem: 'Number of Islands with [["1","1","0"],["0","0","1"],["0","1","1"]]',
+      lc: 200,
+      walkthrough: [
+        'Scan from the top-left. (0,0) is "1", so count = 1 and dfs(0,0) starts.',
+        'dfs sets (0,0) to "0", then spreads right to (0,1) and sets that to "0". Every other neighbor is water or off the grid, so this island is finished.',
+        'The scan passes (0,1), (0,2), (1,0) and (1,1), which are all "0" now.',
+        '(1,2) is "1", so count = 2 and dfs(1,2) starts. It clears (1,2), then (2,2), then (2,1).',
+        'The rest of the scan finds only "0", so the answer is 2.',
+      ],
+    },
+    complexity: 'O(V + E) time, or O(R x C) on a grid. Recursion uses O(V) stack in the worst case, for example a snake-shaped island.',
+    pitfalls: [
+      'Marking the cell after recursing instead of before: two neighbors can then re-enter each other forever.',
+      'Unmarking when you only need coverage: backtracking on a flood fill turns O(R x C) into exponential work.',
+      'Keeping visited marks when enumerating paths: LC 797 and LC 1219 need the mark removed on return, or other paths get blocked.',
+      'Flood Fill (LC 733) with the new color equal to the old color: the "same color" check never stops unless you return early.',
     ],
     pointsToPonder: [
       'Does THIS problem need backtracking (enumerate) or just visited-tracking (cover-once)?',
@@ -52,14 +114,47 @@ for r in range(R):
         if grid[r][c] == '1':
             count += 1; dfs(r, c)
 return count`,
+    practice: [733, 200, 695, 133, 797],
+    snippet: '27-grid-dfs-number-of-islands',
   },
 
   '3. Topological Sort': {
     crux: 'Linearize a DAG so every edge u→v has u before v: either Kahn (BFS on zero-in-degree) or DFS-postorder reversed.',
+    signals: [
+      '"Prerequisites", "dependencies" or "must come before": a pair [a, b] is a directed edge.',
+      '"Return an order in which you can finish all tasks", or an empty result if it can\'t be done.',
+      '"Minimum time / semesters to finish all courses": count Kahn layers, or take the longest path through the DAG (LC 1136, LC 2050).',
+      '"Words are sorted in an unknown alphabet": each adjacent pair gives one ordering rule (LC 269).',
+      '"Recipes that need ingredients", or anything that becomes available once all its inputs are ready (LC 2115).',
+    ],
+    notThis: [
+      'The graph is undirected, as in Graph Valid Tree (LC 261): direction has no meaning there, so use Union-Find or DFS.',
+      'You only need to know whether a cycle exists and the order doesn\'t matter: 3-color DFS also works, and it\'s shorter to write (see Cycle Detection).',
+      'You must order things by a cost rather than by a dependency: sort or use a heap.',
+    ],
     concepts: [
       'Kahn detects cycles for free: if fewer than n nodes get processed, there is a cycle.',
       'Toposort + DP is the canonical way to do longest path / aggregate over a DAG in O(V + E).',
       'Lexicographic toposort needs a MIN-HEAP of zero-in-degree nodes (Alien Dictionary, Sequence Reconstruction).',
+    ],
+    example: {
+      problem: 'Course Schedule II with numCourses = 4, prerequisites = [[1,0],[2,0],[3,1],[3,2]]',
+      lc: 210,
+      walkthrough: [
+        'Each pair [a, b] adds b → a. So g[0] = [1,2], g[1] = [3], g[2] = [3], and indeg = [0,1,1,2].',
+        'Only course 0 has in-degree 0, so q = [0].',
+        'Pop 0, so out = [0]. indeg[1] and indeg[2] both drop to 0, so q = [1,2].',
+        'Pop 1, so out = [0,1]. indeg[3] drops to 1, which isn\'t 0 yet.',
+        'Pop 2, so out = [0,1,2]. indeg[3] drops to 0, so q = [3].',
+        'Pop 3, so out = [0,1,2,3]. All 4 courses were processed, so this order is the answer.',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V + E) space for the adjacency list and in-degrees. A heap for the smallest-first order adds a log V factor.',
+    pitfalls: [
+      'Reversing the edge: in LC 207 and LC 210, [a, b] means b comes first, so the edge is b → a.',
+      'Skipping the final check: if len(out) < n, a cycle stopped some nodes from ever reaching in-degree 0.',
+      'Alien Dictionary (LC 269): if a longer word comes before its own prefix, like "abc" before "ab", the answer is invalid. Handle that case explicitly.',
+      'Alien Dictionary (LC 269): each letter that appears needs a node, even if no ordering rule mentions it.',
     ],
     pointsToPonder: [
       'For Alien Dictionary, what edges does each adjacent pair of words contribute — and which prefix case is invalid?',
@@ -79,14 +174,48 @@ while q:
         indeg[v] -= 1
         if indeg[v] == 0: q.append(v)
 return out if len(out) == n else []`,
+    practice: [207, 210, 802, 2115, 269],
+    snippet: '7-topological-sort-kahn-s-algorithm',
   },
 
   '4. Shortest Path — Dijkstra': {
     crux: 'Min-heap of (dist, node); pop smallest, relax neighbors, skip if already finalized. Non-negative weights only.',
+    signals: [
+      '"Minimum time / cost / effort to get from A to B" with different non-negative costs on the edges.',
+      '"How long until all nodes receive the signal": that is the largest shortest distance from the source (LC 743).',
+      '"Minimize the maximum" along a path: same template, but a path is scored by its largest edge (LC 1631, LC 778).',
+      '"Maximum probability" of a path: multiply along edges and take the largest with a max-heap (LC 1514).',
+      '"Number of shortest paths": keep a counter beside dist while relaxing (LC 1976).',
+    ],
+    notThis: [
+      'Edges can be negative: a popped node may not be final, so use Bellman-Ford.',
+      'Every edge costs 1 (use BFS) or every edge costs 0 or 1 (use 0-1 BFS): both drop the log factor.',
+      'You need the distance between every pair on a small graph, as in LC 1334: Floyd-Warshall is shorter to write.',
+    ],
     concepts: [
       'Each node may be pushed multiple times; the FIRST pop with finalized dist is correct — guard with `if d > dist[u]: continue`.',
       'Augment the state with extra dimensions (stops left, obstacles eliminated, time budget) when constraints leak out of edge weights.',
       'Path with Maximum Probability / Minimum Effort: same template, swap min/max and the relaxation operator (× for prob, max-of for effort).',
+    ],
+    example: {
+      problem: 'Network Delay Time with times = [[1,2,4],[1,3,1],[3,2,2]], n = 3, k = 1',
+      lc: 743,
+      walkthrough: [
+        'Start with dist[1] = 0 and pq = [(0,1)].',
+        'Pop (0,1). Relax 1 → 2 to get dist[2] = 4, and 1 → 3 to get dist[3] = 1. Now pq = [(1,3),(4,2)].',
+        'Pop (1,3). Relax 3 → 2: 1 + 2 = 3 beats 4, so dist[2] = 3. Now pq = [(3,2),(4,2)].',
+        'Pop (3,2). Node 2 has no outgoing edges.',
+        'Pop (4,2). 4 > dist[2] = 3, so this entry is stale and gets skipped.',
+        'dist[1:] = [0,3,1], so the largest is 3. The answer is 3.',
+      ],
+    },
+    complexity: 'O(E log E) time, which is the same as O(E log V), because the heap holds up to E entries. O(V + E) space.',
+    pitfalls: [
+      'Leaving out the stale check `if d > dist[u]: continue`: old entries re-relax their edges and waste time.',
+      'Using one dist per node when a limit also matters: in LC 787, a pricier route with fewer stops can still be the only valid one, so make the state (node, stops).',
+      'Taking the maximum over dist on 1-indexed input without slicing off index 0: LC 743 would always report inf and return -1.',
+      'Stopping when the target is pushed rather than when it is popped: a shorter route may still be waiting in the heap.',
+      'Overflow on long paths in C++: LC 1976 needs 64-bit distances.',
     ],
     pointsToPonder: [
       'Why does Dijkstra fail on negative edges — what specific invariant breaks?',
@@ -108,14 +237,46 @@ while pq:
             heapq.heappush(pq, (dist[v], v))
 ans = max(dist[1:])
 return ans if ans < float('inf') else -1`,
+    practice: [743, 1631, 1514, 787, 778],
+    snippet: '10-dijkstra-shortest-path',
   },
 
   '5. Shortest Path — Bellman-Ford / SPFA': {
     crux: 'Relax every edge V-1 times. Handles negative weights; detects negative cycles in the V-th pass.',
+    signals: [
+      '"At most k stops" or "using at most k edges": each round allows one more edge (LC 787).',
+      '"Edge weights may be negative": the classic case Dijkstra can\'t handle.',
+      '"Detect a negative cycle", or "can you make infinite profit" around a loop.',
+      'The input is a plain list of edges and n is small enough for O(V x E).',
+    ],
+    notThis: [
+      'All weights are non-negative with no hop limit: Dijkstra is much faster on the same input.',
+      'A limit is on a resource other than hops, as in Minimum Cost to Reach Destination in Time (LC 1928): use Dijkstra or DP over (node, time).',
+      'The graph is a DAG with negative edges: relax in topological order for O(V + E).',
+    ],
     concepts: [
       'Standard Bellman-Ford is O(V·E); SPFA is the queue-optimized variant — fast in practice, same worst case.',
       'Cheapest Flights with K Stops (LC 787) = K+1 RELAXATION ROUNDS on a fresh copy each round (so paths use at most K+1 edges).',
       'Negative cycle: any edge still relaxable after V-1 passes proves one exists.',
+    ],
+    example: {
+      problem: 'Cheapest Flights Within K Stops with n = 3, flights = [[0,1,100],[1,2,100],[0,2,500]], src = 0, dst = 2',
+      lc: 787,
+      walkthrough: [
+        'Start with dist = [0, inf, inf]. With K stops we run K + 1 rounds, each allowing one more flight.',
+        'K = 0, so one round. 0 → 1 gives nxt[1] = 100. 1 → 2 reads dist[1] = inf from the old array, so nothing happens. 0 → 2 gives nxt[2] = 500.',
+        'dist = [0, 100, 500], so with K = 0 the answer is 500.',
+        'K = 1 adds a second round. 1 → 2 now reads dist[1] = 100, so 200 < 500 and nxt[2] = 200.',
+        'dist = [0, 100, 200], so with K = 1 the answer is 200.',
+        'Without the copy, round 1 would use the fresh dist[1] = 100 in the same pass and report 200 for K = 0, which needs two flights.',
+      ],
+    },
+    complexity: 'O(K x E) time here, or O(V x E) for the full algorithm. O(V) space. SPFA is usually faster but has the same worst case.',
+    pitfalls: [
+      'Updating dist in place in a hop-limited problem: one round can chain several edges and break the limit.',
+      'K stops means K + 1 edges: looping K times returns the wrong answer for LC 787.',
+      'Relaxing from unreached nodes in C++: inf + negative w looks like a real distance, so check dist[u] != INF first.',
+      'A check after V - 1 rounds finds only negative cycles reachable from the source. Add a virtual source to cover the whole graph.',
     ],
     pointsToPonder: [
       'For LC 787, why is "copy dist before each round" essential — what bug appears if you mutate in place?',
@@ -131,14 +292,46 @@ for _ in range(K + 1):
             nxt[v] = dist[u] + w
     dist = nxt
 return dist[dst] if dist[dst] < float('inf') else -1`,
+    practice: [743, 787, 1928],
+    snippet: '13-bellman-ford',
   },
 
   '6. Shortest Path — Floyd-Warshall (All-Pairs)': {
     crux: 'Triple loop with K as the OUTER loop: dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]). O(V³).',
+    signals: [
+      '"For every city, count the cities reachable within a distance threshold": you need all pairs (LC 1334).',
+      '"Answer many queries asking whether a is a prerequisite of b": this is transitive closure (LC 1462).',
+      '"Convert character x to y at a given cost", where conversions can chain (LC 2976).',
+      'n is around 100 to 400 and the input is an edge list or a matrix.',
+      'A later step needs distances between chosen nodes, as in bitmask TSP.',
+    ],
+    notThis: [
+      'There is one source, or V is in the thousands: run Dijkstra or BFS from what you actually need.',
+      'The graph is an unweighted tree: all-pairs is BFS from each node in O(V²), which beats O(V³).',
+      'Queries only ask whether two nodes connect: Union-Find answers that in near O(1).',
+    ],
     concepts: [
       'K-outer is critical: it asks "using only nodes {0..k} as intermediates, what is the best i→j?" — the recurrence depends on it.',
       'Works with negative edges (no negative cycles); a negative diagonal entry after the algorithm signals a negative cycle.',
       'Transitive closure (LC 1462): replace min with logical OR — same triple loop.',
+    ],
+    example: {
+      problem: 'All-pairs distances with n = 3 and directed edges 0→1 (3), 1→2 (1), 0→2 (7), 2→0 (2)',
+      walkthrough: [
+        'Start with dist = [[0,3,7],[inf,0,1],[2,inf,0]].',
+        'k = 0: 2→0→1 costs 2 + 3 = 5, so dist[2][1] = 5. Nothing else improves.',
+        'k = 1: 0→1→2 costs 3 + 1 = 4, which beats 7, so dist[0][2] = 4.',
+        'k = 2: 1→2→0 costs 1 + 2 = 3, so dist[1][0] = 3.',
+        'Final dist = [[0,3,4],[3,0,1],[2,5,0]]. Every diagonal entry is still 0, so there is no negative cycle.',
+      ],
+    },
+    complexity: 'O(V³) time and O(V²) space.',
+    pitfalls: [
+      'Putting k in an inner loop: the recurrence relies on all paths through 0..k-1 being final before k is used, and the answers come out wrong.',
+      'Forgetting dist[i][i] = 0: paths through the start node then look unreachable.',
+      'Adding two INF values in C++: guard the sum or use a smaller INF, or it can overflow and look negative.',
+      'Overwriting parallel edges: keep the smallest with min(dist[u][v], w), as LC 2976 can list the same conversion several times.',
+      'Adding only one direction for an undirected edge, as in LC 1334.',
     ],
     pointsToPonder: [
       'Why MUST k be the OUTER loop and not the inner — what wrong answer does the wrong order give?',
@@ -156,14 +349,47 @@ for k in range(n):
         for j in range(n):
             if dist[i][k] + dist[k][j] < dist[i][j]:
                 dist[i][j] = dist[i][k] + dist[k][j]`,
+    practice: [1334, 1462, 399, 2976, 847],
+    snippet: '16-floyd-warshall-all-pairs-shortest-path',
   },
 
   '7. Union-Find (Disjoint Set Union)': {
     crux: 'Two ops on a forest of parent pointers: find(x) with path compression, union(x,y) by rank/size → near O(1) per op.',
+    signals: [
+      '"Are these two in the same group?" with connections arriving over time.',
+      '"Which edge can be removed so that the graph becomes a tree?": the first edge joining two already connected nodes (LC 684).',
+      '"Accounts / friends / equations that are transitively the same": a == b and b == c means one group (LC 721, LC 990).',
+      '"Queries with a limit": sort queries and edges, then add edges as the limit grows (LC 1697).',
+      '"Swap any number of times": everything linked ends up in one group, which you can then rearrange (LC 1202).',
+    ],
+    notThis: [
+      'You need the actual path or a distance: Union-Find knows only whether two nodes are connected, so use BFS or Dijkstra.',
+      'Edges get deleted while you answer online: Union-Find can\'t split a group. Process offline in reverse, or use BFS.',
+      'The graph is directed, as in LC 685: Union-Find ignores direction, so extra case analysis is required.',
+    ],
     concepts: [
       'Path compression + union by rank/size gives O(α(n)) amortized — effectively constant.',
       'Use DSU for OFFLINE connectivity: sort queries by some threshold, add edges progressively, answer when ready (LC 1697).',
       'Components with extra info (size, min, sum) — store the info AT THE ROOT and update on union.',
+    ],
+    example: {
+      problem: 'Redundant Connection with edges = [[1,2],[1,3],[2,3]]',
+      lc: 684,
+      walkthrough: [
+        'Nodes are 1-indexed, so n = 4 and parent = [0,1,2,3], rank = [0,0,0,0].',
+        'union(1,2): the roots differ and ranks tie. So parent[2] = 1 and rank[1] = 1.',
+        'union(1,3): the roots are 1 and 3, and rank[1] is larger. So parent[3] = 1.',
+        'union(2,3): find(2) = 1 and find(3) = 1. They already share a root, so union returns False.',
+        'This edge closes the cycle, so the answer is [2,3].',
+      ],
+    },
+    complexity: 'O(α(n)) amortized per operation with path compression and union by rank or size, which is effectively constant. O(n) space.',
+    pitfalls: [
+      'Comparing parent[a] == parent[b] instead of find(a) == find(b): parent pointers can be out of date until compressed.',
+      'Linking the nodes instead of their roots: parent[a] = b loses a\'s old group.',
+      'Sizing the array as n on 1-indexed input: LC 684 needs n + 1.',
+      'Decrementing the component count on every union rather than only when it joins two different groups.',
+      'LC 947 uses rows and columns as nodes in one array: offset the columns so that row 1 and column 1 stay separate.',
     ],
     pointsToPonder: [
       'When does DSU beat BFS/DFS for connectivity — typically streaming edges OR offline-sortable queries.',
@@ -184,14 +410,46 @@ def union(a, b):
     parent[rb] = ra
     if rank[ra] == rank[rb]: rank[ra] += 1
     return True`,
+    practice: [323, 684, 990, 1319, 721],
+    snippet: '17-dsu-union-find',
   },
 
   '8. Minimum Spanning Tree (Kruskal / Prim)': {
     crux: 'Pick the lightest "safe" edge until n-1 edges chosen. Kruskal: sort edges + DSU. Prim: grow tree via min-heap.',
+    signals: [
+      '"Minimum cost to connect all points / cities" so that everything is reachable.',
+      '"Connect with the fewest total wire or pipe" and no requirement on the route between any one pair.',
+      '"Build a well here or lay a pipe there": a well is an edge from one virtual node (LC 1168).',
+      '"Which edges appear in every minimum spanning tree?" (LC 1489).',
+    ],
+    notThis: [
+      'The problem asks for the cheapest route between two nodes: an MST minimizes the total and can make one pair\'s route long, so use Dijkstra.',
+      'Edges are directed: neither Kruskal nor Prim applies, as this needs a minimum arborescence.',
+      'You only have to count how many new edges connect everything, as in LC 1319: count components, without any weights.',
+    ],
     concepts: [
       'MST cut property: for any cut, the lightest crossing edge belongs to SOME MST — justifies both algorithms.',
       'Kruskal is best for sparse graphs (E log E); Prim is best when the graph is given as an adjacency list / dense.',
       'Critical edges (LC 1489): an edge is critical iff removing it increases MST weight; pseudo-critical iff it appears in SOME MST.',
+    ],
+    example: {
+      problem: 'Min Cost to Connect All Points with points = [[0,0],[1,0],[0,1],[5,5]]',
+      lc: 1584,
+      walkthrough: [
+        'Sorted edges (w, u, v): (1,0,1), (1,0,2), (2,1,2), (9,1,3), (9,2,3), (10,0,3).',
+        '(1,0,1): 0 and 1 are in different groups, so take it. total = 1, picked = 1.',
+        '(1,0,2): 0 and 2 are in different groups, so take it. total = 2, picked = 2.',
+        '(2,1,2): 1 and 2 already share a group, so taking it would form a cycle. Skip it.',
+        '(9,1,3): 3 is still separate, so take it. total = 11, picked = 3 = n - 1, so stop.',
+        'The answer is 11.',
+      ],
+    },
+    complexity: 'Kruskal is O(E log E) for the sort. On LC 1584, E is about n²/2, so O(n² log n) time and O(n²) space. Array-based Prim is O(n²) time and O(n) space for that dense case.',
+    pitfalls: [
+      'Assuming the graph is connected: LC 1135 returns -1 when picked < n - 1 at the end.',
+      'Prim: marking a node when pushing instead of when popping, which locks in an edge before a cheaper one is seen.',
+      'Building all n² edges for LC 1584 when n is large: Prim on an implicit graph saves the memory.',
+      'LC 1168: wells are easy to miss as edges. Add a virtual node 0 with an edge of cost wells[i] to each house.',
     ],
     pointsToPonder: [
       'Why does Kruskal NEVER need to undo a union — what guarantees correctness across ties?',
@@ -215,14 +473,45 @@ for w, u, v in edges:
         parent[ru] = rv; total += w; picked += 1
         if picked == n - 1: break
 return total`,
+    practice: [1584, 1135, 1168, 1489],
+    snippet: '19-kruskal-mst',
   },
 
   '9. Cycle Detection': {
     crux: 'Directed: DFS with 3-color (white/gray/black) — gray-on-gray = back edge = cycle. Undirected: DFS with parent / DSU.',
+    signals: [
+      '"Can you finish all courses?": a yes means the prerequisite graph has no cycle (LC 207).',
+      '"Eventually safe" nodes: those from which every path avoids a cycle (LC 802).',
+      '"Is this graph a valid tree?": connected and without a cycle, so exactly n - 1 edges (LC 261).',
+      '"Find the edge that, when removed, leaves a tree" (LC 684).',
+      '"Longest cycle", or "a cycle of the same value in a grid" (LC 2360, LC 1559).',
+    ],
+    notThis: [
+      'You also need the order: Kahn gives you the order and the cycle check at once.',
+      'Each node has at most one outgoing edge, as in LC 2360: walk the chain with timestamps (see Functional Graph).',
+      'You need to know whether the cycle has odd length: use 2-coloring (see Bipartite).',
+    ],
     concepts: [
       'Directed cycle = back edge to an ancestor on the current DFS stack (gray node).',
       'Undirected cycle (DFS): if a neighbor is visited AND not parent, you have a cycle.',
       'Undirected cycle (DSU): when union(u,v) finds them already connected, edge (u,v) closes a cycle.',
+    ],
+    example: {
+      problem: 'Directed cycle check on the diamond 0→1, 0→2, 1→3, 2→3, then again with 3→1 added',
+      walkthrough: [
+        'Diamond: dfs(0) makes 0 gray, then dfs(1) makes 1 gray, then dfs(3) makes 3 gray.',
+        '3 has no edges, so it turns black, and so does 1.',
+        'Back at 0, dfs(2) makes 2 gray. Its neighbor 3 is black, so this is not a back edge and there is no cycle.',
+        '2 and 0 turn black, so the answer is False. A plain visited set would have wrongly reported a cycle at 2 → 3.',
+        'With 3→1 added: 0, 1 and 3 are gray when 3 looks at 1. 1 is gray, so this is a back edge and the answer is True.',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space for colors and recursion. Union-Find for the undirected case is O(E α(V)).',
+    pitfalls: [
+      'Using a single visited flag on a directed graph: reaching a finished node through a second route isn\'t a cycle.',
+      'Forgetting to set the node black on the way out: later searches then report false cycles.',
+      'Undirected DFS: without skipping the parent, every edge looks like a cycle. With parallel edges, skip by edge id and not by parent node.',
+      'Starting DFS from node 0 only: the cycle may be in another component.',
     ],
     pointsToPonder: [
       'Why does "visited" alone fail for directed graphs — what does the gray/black distinction capture?',
@@ -240,14 +529,45 @@ def dfs(u):
     color[u] = BLACK
     return False
 return any(color[u] == WHITE and dfs(u) for u in range(n))`,
+    practice: [141, 207, 261, 802, 2360],
+    snippet: '6-cycle-detection-directed-graph-dfs',
   },
 
   '10. Bipartite Graph / Graph Coloring': {
     crux: 'Try to 2-color: BFS/DFS, assign opposite color to each neighbor; conflict ⇒ not bipartite ⇔ odd cycle exists.',
+    signals: [
+      '"Split everyone into two groups so that no pair who dislike each other are together" (LC 886).',
+      '"Every edge connects a node in set A to a node in set B" (LC 785).',
+      '"No two adjacent nodes share a color": with two colors it is BFS, and with more it depends on the graph.',
+      '"Does the graph contain an odd cycle?"',
+    ],
+    notThis: [
+      'There are more than 2 colors and n is large: k-coloring is NP-hard in general. Flower Planting (LC 1042) is the exception, because each garden has at most 3 paths and greedy works.',
+      'You need pairs and not just two sides: use bipartite matching.',
+      'Conflicts go only one way, like "a must come before b": that is an ordering problem, so use topological sort.',
+    ],
     concepts: [
       'A graph is bipartite ⇔ contains no odd cycle ⇔ 2-colorable.',
       'Run BFS/DFS per component (graphs may be disconnected).',
       'For "Possible Bipartition" (LC 886), the "dislike" pairs form edges; bipartite check tells you if assignment exists.',
+    ],
+    example: {
+      problem: 'Is Graph Bipartite? with graph = [[1,2,3],[0,2],[0,1,3],[0,2]]',
+      lc: 785,
+      walkthrough: [
+        'color = [0,0,0,0], where 0 means uncolored. Set color[0] = 1, so q = [0].',
+        'Pop 0. Neighbors 1, 2 and 3 are uncolored, so each gets -1. Now q = [1,2,3].',
+        'Pop 1. Neighbor 0 has color 1, which is the opposite, so that\'s fine.',
+        'Neighbor 2 has color -1, the same as node 1. That is a conflict, so return False.',
+        'The conflict comes from the odd cycle 0-1-2 of length 3.',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space.',
+    pitfalls: [
+      'Starting from node 0 only: LC 785 can be disconnected, so start from every uncolored node.',
+      'Using colors 0 and 1 together with 0 for "uncolored": the check gets confused, so use -1 or 1 and -1.',
+      'LC 886 is 1-indexed and gives a pair list, so build a both-way adjacency list of size n + 1 first.',
+      'LC 2493: a bipartite check isn\'t enough. BFS from every node in each component and sum the deepest layers.',
     ],
     pointsToPonder: [
       'For DISCONNECTED graphs, why must you restart BFS from every uncolored node?',
@@ -268,14 +588,45 @@ for s in range(n):
             elif color[v] == color[u]:
                 return False
 return True`,
+    practice: [785, 886, 1042, 2493],
+    snippet: '9-bipartite-graph-check',
   },
 
   '11. Strongly Connected Components (Tarjan / Kosaraju)': {
     crux: 'Tarjan: one DFS, track disc/low + a stack of current SCC. Kosaraju: 2 DFS passes (original + reversed graph).',
+    signals: [
+      '"Every city can reach every other" along directed roads, or "mutually reachable".',
+      '"Group nodes so that any two in a group reach each other": each group is one SCC.',
+      '"Treat each cycle as one node", then solve on what remains, which is a DAG.',
+      'Clauses like "if a then b" or "a or b must hold": 2-SAT builds an implication graph.',
+    ],
+    notThis: [
+      'The graph is undirected: reachability is symmetric, so components from DFS or Union-Find are enough.',
+      'You need edges or nodes whose removal disconnects the graph, as in LC 1192: that is the bridge variant of low-link (next section).',
+      'You only need to know whether any cycle exists: 3-color DFS or Kahn is simpler.',
+    ],
     concepts: [
       'SCCs partition a directed graph; the condensation (one node per SCC) is a DAG — solve harder problems on the DAG.',
       'Tarjan: SCC closes when node\'s low == disc; pop stack until the node itself.',
       'Kosaraju: postorder on G; reverse edges; DFS in reverse postorder — each tree = one SCC.',
+    ],
+    example: {
+      problem: 'Tarjan on directed edges 0→1, 1→2, 2→0, 2→3',
+      walkthrough: [
+        'dfs(0), dfs(1) and dfs(2) give disc = 0, 1, 2, with all three on the stack.',
+        'At 2, neighbor 0 is on the stack, so low[2] = min(2, disc[0]) = 0.',
+        'At 2, neighbor 3 is new. dfs(3) gives disc[3] = 3. It has no edges, so low[3] == disc[3] and it pops as the SCC [3].',
+        'Back at 2, low[2] stays 0, because low[3] = 3. low[2] != disc[2], so no SCC closes here.',
+        'Back at 1, low[1] = 0, so no SCC closes. Back at 0, low[0] = 0 == disc[0], so pop until 0 to get the SCC [2,1,0].',
+        'The result is [[3],[2,1,0]].',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space, for both Tarjan and Kosaraju. Kosaraju also needs O(V + E) for the reversed graph.',
+    pitfalls: [
+      'Dropping the `on_stk` check: a neighbor in an already finished SCC would wrongly pull low[u] down.',
+      'Calling dfs from one node only: the entry code shows the visit, and you must loop over all nodes with disc == -1.',
+      'Kosaraju: running the second pass in plain order instead of reverse finishing order merges components wrongly.',
+      'Deep recursion on a long chain: use an iterative version, or raise the recursion limit.',
     ],
     pointsToPonder: [
       'What does low[u] mean intuitively — "earliest disc reachable via this subtree"?',
@@ -301,14 +652,46 @@ def dfs(u):
             x = stk.pop(); on_stk[x] = False; scc.append(x)
             if x == u: break
         sccs.append(scc)`,
+    practice: [802, 2360, 1192],
+    snippet: '24-tarjan-scc',
   },
 
   '12. Articulation Points & Bridges': {
     crux: 'DFS with disc/low timestamps. Bridge: low[v] > disc[u]. Articulation point: root with ≥2 children OR non-root with a child v where low[v] ≥ disc[u].',
+    signals: [
+      '"Critical connection": an edge whose removal leaves some server unable to reach another (LC 1192).',
+      '"Single point of failure" in a network, as either a node or a link.',
+      '"Minimum number of days to disconnect" a grid island: an articulation cell means the answer is 1 (LC 1568).',
+      '"Must pass through" queries on an undirected graph.',
+    ],
+    notThis: [
+      'The graph is directed: low-link here assumes undirected edges, so think in terms of SCCs instead.',
+      'The graph is tiny, as in LC 1568 with at most 30 x 30 cells: trying each removal with a flood fill is simpler. The answer is never above 2.',
+      'You must disconnect specific nodes at minimum total cost: that is a min-cut (see Network Flow).',
+    ],
     concepts: [
       'Bridge = edge whose removal disconnects the graph; articulation point = vertex whose removal does.',
       'Block-cut tree compresses biconnected components into a tree — solves "must-pass" queries elegantly.',
       'Critical Connections (LC 1192) is the textbook bridge-finding problem.',
+    ],
+    example: {
+      problem: 'Critical Connections with n = 4, connections = [[0,1],[1,2],[2,0],[1,3]]',
+      lc: 1192,
+      walkthrough: [
+        'g[0] = [1,2], g[1] = [0,2,3], g[2] = [1,0], g[3] = [1]. dfs(0,-1) gives disc[0] = 0.',
+        'dfs(1,0) gives disc[1] = 1. Neighbor 0 is the parent, so skip it. Then dfs(2,1) gives disc[2] = 2.',
+        'At 2, neighbor 1 is the parent. Neighbor 0 is already visited, so low[2] = disc[0] = 0.',
+        'Back at 1, low[1] = 0. Check low[2] > disc[1]: 0 > 1 is false, so 1-2 isn\'t a bridge.',
+        'dfs(3,1) gives disc[3] = 3 and low[3] = 3. Back at 1, low[3] > disc[1] is 3 > 1, so [1,3] is a bridge.',
+        'Back at 0, low[1] > disc[0] is 0 > 0, which is false. The answer is [[1,3]].',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V + E) space.',
+    pitfalls: [
+      'Mixing up the two conditions: a bridge needs low[v] > disc[u], while an articulation point needs low[v] >= disc[u].',
+      'Treating the root like any other node: the root is an articulation point only with 2 or more DFS children.',
+      'Skipping by parent node when parallel edges exist: a second copy of an edge means it isn\'t a bridge, so track the edge id.',
+      'Starting from node 0 only when the graph can be disconnected.',
     ],
     pointsToPonder: [
       'Why is the root case (≥2 DFS children ⇒ articulation point) different from non-root nodes?',
@@ -330,6 +713,8 @@ def dfs(u, parent):
             low[u] = min(low[u], disc[v])
 dfs(0, -1)
 return bridges`,
+    practice: [1192, 1568],
+    snippet: '21-bridges-in-graph-tarjan',
   },
 
   '13. Euler Path / Circuit': {
