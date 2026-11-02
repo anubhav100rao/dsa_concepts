@@ -9,6 +9,42 @@ order: 90
 ---
 # Trees — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a section below.
+
+| The problem says                                                | Think                                     | Section |
+| --------------------------------------------------------------- | ----------------------------------------- | ------- |
+| "inorder / preorder traversal", "all root-to-leaf paths"        | DFS with a stack or shared path           | 1       |
+| "level by level", "each row", "right side view"                 | BFS with a level-size loop                | 2       |
+| "construct from preorder and inorder", "serialize"              | Root from one sequence, split by another  | 3       |
+| "kth smallest in a BST", "two nodes swapped by mistake"         | BST inorder is sorted                     | 4       |
+| "lowest common ancestor", "directions from node s to node t"    | First node where the targets split        | 5       |
+| "path sum", "path need not pass through the root"               | Return one arm, record the bent path      | 6       |
+| "longest path between any two nodes", "height-balanced"         | Height plus a global best                 | 7       |
+| "mirror of itself", "same structure and values"                 | Recurse on a pair of nodes                | 8       |
+| "return the root of the trimmed tree", "in place"               | Assign the recursive result back          | 9       |
+| "column by column", "top view", "boundary"                      | Give each node a coordinate               | 10      |
+| "directly-linked houses", "minimum cameras"                     | Each node reports states to its parent    | 11      |
+| "for each node, the sum of distances to all others"             | Rerooting in two passes                   | 12      |
+| "no greater value on the path from the root"                    | Pass state down, collect results up       | 13      |
+| "all nodes at distance k", "infection spreads each minute"      | Add parent links, then BFS                | 14      |
+| "downward paths summing to target, starting anywhere"           | Prefix sums on the root path              | 15      |
+| "implement next() and hasNext()", "O(h) memory"                 | Paused traversal on a stack               | 16      |
+| "startsWith", "words sharing a prefix"                          | Trie                                      | 17      |
+| "update a value, then query a range", many times                | Segment tree                              | 18      |
+| "how many smaller elements after this one"                      | Fenwick tree over ranks                   | 19      |
+| "each node has a list of children", "manager[i]"                | Loop over children, keep the top two      | 20      |
+| "n nodes and n - 1 edges", "edge added to a tree"               | Root it anywhere, or peel leaves          | 21      |
+| "update a node, sum over its subtree", many queries             | Euler tour to array ranges                | 22      |
+| "k-th ancestor", many queries on a fixed tree                   | Binary lifting                            | 23      |
+| "update a node, query the path from u to v"                     | Heavy-light decomposition                 | 24      |
+| "count pairs at distance exactly k"                             | Centroid decomposition                    | 24      |
+| "O(1) extra space" on a tree traversal                          | Morris threads                            | 25      |
+| "book if it doesn't overlap", "median of a sliding window"      | Ordered map or multiset                   | 26      |
+| "implement the class" with several tree operations              | Choose state for the hot operation        | 27      |
+| "a permutation of the path is a palindrome", "maximum XOR"      | Bitmask on the path, or binary trie       | 28      |
+| "populate next pointers in O(1) space", "flip to match voyage"  | Known traversal with one twist            | 29      |
+| A Hard problem that fits nothing above                          | Split it into two earlier ideas           | 30      |
+
 ---
 
 ## 1. Tree Traversal — DFS (Preorder / Inorder / Postorder)
