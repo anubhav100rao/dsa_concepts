@@ -757,10 +757,36 @@ def deleteDuplicateFolder(paths):
 
   '13. Persistent Trie': {
     crux: 'Each update creates only the O(log W) nodes on the affected root-to-leaf path; old versions stay queryable.',
+    signals: [
+      '"For each query (L, R, x), the maximum XOR of x with any element in nums[L..R]": subtract two versions to see only that range.',
+      '"Answer the query as of version k" or "undo to an earlier state": old versions have to stay readable.',
+      '"Queries are encoded with the previous answer": you can\'t sort them, so offline tricks are ruled out.',
+    ],
+    notThis: [
+      'Maximum XOR With an Element From Array (LC 1707): the queries can be sorted, so a normal trie built up offline is enough.',
+      'Maximum Genetic Difference Query (LC 1938): the queries group by tree node, so insert and erase during one DFS without keeping versions.',
+    ],
     concepts: [
       'For XOR-on-subarray queries, persistent BINARY trie over prefix XORs lets you query max/count XOR in a range [L,R].',
       'Each "version" is a root pointer; query at version v walks ONLY that version\'s nodes.',
       'Space: O((N + Q) · B) where B is bit width — manageable for B ≈ 30 and N, Q ≤ 10^5.',
+    ],
+    example: {
+      problem: 'Build versions for [5, 3] with B = 2, then check the top bit of range [1, 1]',
+      walkthrough: [
+        'v0 = insert(None, 5), and 5 is 101. It makes a new path 1 -> 0 -> 1 with cnt = 1 on every node.',
+        'v1 = insert(v0, 3), and 3 is 011. At the top bit b = 0, so the new root copies v0\'s child 1 by reference and creates a new child 0. Its cnt is 1 + 1 = 2.',
+        'Going down the 0 side, v0 has nothing (src becomes None), so the rest of the path 1 -> 1 is all new nodes with cnt = 1.',
+        'v0 is unchanged: v0.cnt = 1, v1.cnt = 2, and both share the same child 1 node for 5.',
+        'Range [1, 1] holds only the 3, which lies between v0 and v1. Does any number there have top bit 1? v1.ch[1].cnt - v0.ch[1].cnt = 1 - 1 = 0, so no. A max-XOR query must take child 0 at this level.',
+      ],
+    },
+    complexity: 'O(B) time and O(B) new nodes per insert, so O(n·B) in all. A range query walks two versions at once in O(B).',
+    pitfalls: [
+      'Modifying an old node: every node on the update path must be new, or earlier versions change too.',
+      'Reading only one version in a range query: the count for [L, R] is cnt(version R + 1) minus cnt(version L).',
+      'Off-by-one on versions: version i holds the first i numbers, so keep an empty version 0.',
+      'Forgetting that src can be None once the old version has no such path.',
     ],
     pointsToPonder: [
       'Why does path-copying preserve O(log W) per update — and how does it differ from copy-on-write at node granularity?',
@@ -783,14 +809,44 @@ def insert(prev, x, B=30):
         src = src.ch[b] if src else None
     cur.cnt = (src.cnt if src else 0) + 1
     return root`,
+    practice: [1938],
+    snippet: '13-persistent-trie-versioned-bitwise-insert',
   },
 
   '14. Trie on Tree (Trie + Tree Traversal)': {
     crux: 'Do a DFS over the (binary / general) tree while maintaining a TRIE of "values seen on the current root-to-node path".',
+    signals: [
+      '"For each query [node, val], find the maximum XOR of val with any ancestor of node, including itself": the set is exactly the root-to-node path.',
+      '"Along the path from the root to the node": a set that grows going down and shrinks coming back.',
+      '"The characters on the path can be rearranged to form a palindrome": only letter parity matters, so a mask replaces the trie.',
+    ],
+    notThis: [
+      'Count Paths That Can Form Palindrome in Tree (LC 2791): pairs of root masks are counted in a hash map, with no real trie.',
+      'Sum of Prefix Scores of Strings (LC 2416) has no tree input: it only reads counts in a word trie, as in Section 17.',
+    ],
     concepts: [
       'Insert on the way down, delete on the way back up — the trie always reflects the path from the root.',
       'Max Genetic Difference (LC 1938): bitwise trie on ancestor genes; query each node\'s gene for max XOR with any ancestor.',
       'Count Palindromic Paths in Tree (LC 2791): bitmask of character parities along the path; "trie" is implicit via a HashMap.',
+    ],
+    example: {
+      problem: 'Max Genetic Difference with parents = [-1,0,1,1] and queries [[0,2],[3,2],[2,5]]',
+      lc: 1938,
+      walkthrough: [
+        'The tree is 0 -> 1 -> {2, 3}, and each node\'s gene is its own number. DFS starts at the root.',
+        'At 0: add 0. The trie holds {0}. Query [0,2]: 2 XOR 0 = 2.',
+        'At 1: add 1. Then at 2: add 2. The trie holds {0,1,2}. Query [2,5]: 5 XOR 2 = 7 is the best, so 7.',
+        'Leave 2: add(2, -1) drops its counts to 0. The trie holds {0,1}.',
+        'At 3: add 3. The trie holds {0,1,3}. Query [3,2]: 2 XOR 1 = 3 is the best, so 3. The answer in query order is [2, 3, 7].',
+        'The erase matters: a query [3,5] gets 5 XOR 3 = 6 here, but would wrongly get 7 if node 2 were still counted.',
+      ],
+    },
+    complexity: 'O((n + q)·B) time, with B = 18 levels here. At most O(n·B) nodes, and recursion as deep as the tree.',
+    pitfalls: [
+      'Inserting going down but never erasing: nodes from other branches would count as ancestors.',
+      'Following a child that exists but has count 0: erased paths stay in the trie, so best() must check the count.',
+      'Answering queries before adding the node itself: the ancestor set includes the node.',
+      'Deep recursion: a chain of 10^5 nodes passes Python\'s default limit, so raise it or use an explicit stack.',
     ],
     pointsToPonder: [
       'Why must you BOTH insert (going down) AND remove (going back up) — what breaks if you only insert?',
@@ -835,14 +891,45 @@ def maxGeneticDifference(parents, queries):
         add(u, -1)
     dfs(root)
     return ans`,
+    practice: [2416, 1938, 2791],
+    snippet: '6-bitwise-trie-maximum-xor-pair',
   },
 
   '15. Trie + Bit Manipulation': {
     crux: 'Binary trie (children[0], children[1]) lets you do bit-by-bit GREEDY queries — max XOR, count XOR in range, k-th XOR.',
+    signals: [
+      '"Return the number of nice pairs, where low <= (nums[i] XOR nums[j]) <= high": turn the range into two "less than" counts.',
+      '"The k-th smallest XOR of any pair": count pairs below a bound, bit by bit.',
+      '"Maximum XOR with an element that doesn\'t exceed m": a bit-level walk with an extra constraint.',
+      'Values up to about 10^9 or less, where only 15 to 31 levels are needed, whatever the array size.',
+    ],
+    notThis: [
+      'Minimum XOR Sum of Two Arrays (LC 1879) pairs elements one to one: the trie can\'t enforce that, so use bitmask DP.',
+      'Power of Two (LC 231) or Single Number (LC 136): one number or one fold of XOR, with no partner to search for.',
+    ],
     concepts: [
       'Same template as Section 4 but the bit-manipulation lens emphasizes COUNTING / range queries, not just max.',
       'Count Pairs With XOR in Range (LC 1803): at each bit, the K-bound and X-bit determine "definitely in / out / recurse".',
       'Min XOR Sum (LC 1879) uses bitmask DP, NOT a trie — recognize the distinction.',
+    ],
+    example: {
+      problem: 'Count Pairs With XOR in a Range: nums = [1, 4, 2], low = 2, high = 4',
+      lc: 1803,
+      walkthrough: [
+        'The answer is f(high + 1) - f(low), where f(k) counts pairs with XOR below k. Process each x by querying first, then inserting it. Only the low 3 bits matter here, since k has no bits above them.',
+        'f(5), x = 1: the trie is empty, so 0. Then insert 1 (001).',
+        'f(5), x = 4 (100), k = 101: at bit 2, kb = 1 and xb = 1, so child 1 is empty and adds nothing; go to child 0. At bit 1, kb = 0, so follow xb = 0. At bit 0, kb = 1 and xb = 0, so child 0 is empty and adds nothing. The count is 0 (1 XOR 4 = 5 isn\'t below 5). Then insert 4.',
+        'f(5), x = 2 (010): at bit 2, kb = 1 and xb = 0, so child 0 holds {1} and adds 1; go to child 1, which holds {4}. At bit 1, kb = 0 and xb = 1, but {4} has no child 1, so the walk ends. The count is 1 (2 XOR 1 = 3).',
+        'So f(5) = 0 + 0 + 1 = 1. For f(2), k = 010: every pair has XOR 5, 3 or 6, none below 2, so f(2) = 0.',
+        'The answer is 1 - 0 = 1, and the only pair is 1 XOR 2 = 3.',
+      ],
+    },
+    complexity: 'O(B) per insert or count_less, so O(n·B) in all, with B = 15 levels here. Up to O(n·B) nodes.',
+    pitfalls: [
+      'Using f(high) - f(low): count_less is strict, so the top of the range needs high + 1.',
+      'Inserting x before querying it: that counts x with itself and counts each pair twice.',
+      'Forgetting cnt += 1 on each node during insert: count_less reads those counts, so it would always be 0.',
+      'Not stopping when node becomes None: the code guards this with the check at the top of the loop.',
     ],
     pointsToPonder: [
       'Why is the MSB the natural pivot for every bitwise greedy / counting problem?',
@@ -865,14 +952,44 @@ def count_less(root, x, k, B=14):
         else:
             node = node.ch[xb]
     return cnt`,
+    practice: [421, 1707, 1803, 1938],
+    snippet: '7-bitwise-trie-count-pairs-with-xor-limit',
   },
 
   '16. Aho-Corasick (Multi-Pattern Matching on Trie)': {
     crux: 'Build a trie of all patterns; BFS to add FAILURE links (longest proper suffix that is also a prefix) → walk the text once, in O(N + total matches).',
+    signals: [
+      '"Find all occurrences of these patterns in the text": many patterns against one text.',
+      '"After each new character, report whether any word ends here": matching that never rescans the input.',
+      '"Wrap every matching substring in bold" when both the word list and the string are long.',
+      'Keyword filters and DNA motif sets: total pattern length and text length are each large, so per-pattern scans are too slow.',
+    ],
+    notThis: [
+      'One pattern, as in Find the Index of the First Occurrence (LC 28): KMP or a simple scan does it with no automaton.',
+      'Word Search II (LC 212) searches a grid, which is not one linear text. The failure links have nothing to follow, so use a trie with backtracking.',
+      'Stream of Characters (LC 1032) in an interview: a reversed trie is much less code when words are short.',
+    ],
     concepts: [
       'Failure link from u points to the trie node spelling the longest proper suffix of u\'s string that is also a trie prefix — KMP generalized to many patterns.',
       'Output links: at each node, walk failure pointers to collect all patterns ending here (or precompute the closest end-marker).',
       'Stream of Characters (LC 1032) is the cleanest interview-scale Aho-Corasick problem.',
+    ],
+    example: {
+      problem: 'Build Aho-Corasick for ["a","ab","bab"], then scan "bab"',
+      walkthrough: [
+        'The trie: 0 -a-> 1, 1 -b-> 2, 0 -b-> 3, 3 -a-> 4, 4 -b-> 5. out[1] = [a], out[2] = [ab], out[5] = [bab].',
+        'Depth 1 nodes 1 and 3 get fail = 0. The BFS then handles node 1\'s child 2 by edge b: from fail[1] = 0, the root has b, so fail[2] = 3.',
+        'Node 3\'s child 4 by edge a: from fail[3] = 0, the root has a, so fail[4] = 1. out[4] inherits out[1], becoming [a].',
+        'Node 4\'s child 5 by edge b: from fail[4] = 1, node 1 has b, so fail[5] = 2. out[5] inherits out[2], becoming [bab, ab].',
+        'Scan "bab" with the returned tables: b goes to 3 (no output), a goes to 4 (reports a), b goes to 5 (reports bab and ab). The text pointer never moved back.',
+      ],
+    },
+    complexity: 'O(total pattern length) to build, then O(text length + matches) to scan. Space is O(total pattern length) nodes plus the output lists.',
+    pitfalls: [
+      'Building failure links by DFS: a node needs the links of shallower nodes first, so it has to be BFS.',
+      'Not inheriting out through the failure link: "ab" inside "bab" would be missed, the classic overlapping-match bug.',
+      'Letting a depth 1 node fail to itself: its failure must be the root.',
+      'Copying long output lists on dense pattern sets: store one link to the nearest output node when memory matters.',
     ],
     pointsToPonder: [
       'How do failure links generalize the KMP failure function — what is the single-pattern special case?',
@@ -904,14 +1021,44 @@ def build_ac(patterns):
             out[v].extend(out[fail[v]])
             q.append(v)
     return trie, fail, out`,
+    practice: [758, 616, 1032, 3291],
+    snippet: '12-aho-corasick-multi-pattern-matching',
   },
 
   '17. Trie + Counting / Frequency': {
     crux: 'Augment each trie node with counts (words passing through, sum of values, top-k) to answer aggregate queries in O(L).',
+    signals: [
+      '"Return the sum of all the pairs\' values whose key starts with the prefix": store a running sum on each node.',
+      '"The score of a term is the number of words it is a prefix of; return the sum of scores for each word\'s prefixes": add up counts along the path.',
+      '"Count the words starting with this prefix": a pass count on every node.',
+      '"Number of distinct substrings": the answer is simply how many trie nodes exist.',
+    ],
+    notThis: [
+      'Top K Frequent Words (LC 692) needs no prefix: a hash map of counts plus a heap or a sort is less code.',
+      'Count Pairs With XOR in a Range (LC 1803) counts on a binary trie by bits: use Section 15 for the walk rule.',
+    ],
     concepts: [
       'Map Sum Pairs (LC 677): each node stores SUM OF VALUES of all words passing through; insert delta-updates the path.',
       'Sum of Prefix Scores (LC 2416): node.cnt = #words sharing this prefix; answer for word = sum of cnt along its insertion path.',
       'Top-K Frequent Words (LC 692): trie + bucket (or count→list) gives an alternative to heap-based ranking.',
+    ],
+    example: {
+      problem: 'Map Sum Pairs: insert apple = 3, read, insert app = 2, read, then overwrite apple = 1',
+      lc: 677,
+      walkthrough: [
+        'insert("apple", 3): delta = 3 - 0 = 3, so every node on a, p, p, l, e gains 3.',
+        'sum("ap"): the walk lands on the second node, and its $ holds 3.',
+        'insert("app", 2): delta = 2, so a, p, p each gain 2. Now the "ap" node holds 5, and sum("ap") = 5.',
+        'insert("apple", 1): the old value was 3, so delta = -2. Every node on the path loses 2, and the "ap" node holds 3.',
+        'sum("ap") = 3, which matches app = 2 plus apple = 1.',
+      ],
+    },
+    complexity: 'O(L) per insert or sum. O(total characters) space, plus O(number of keys) for the old-value map.',
+    pitfalls: [
+      'Adding the new value when a key is overwritten: only the difference from the old value belongs on the path.',
+      'Reading counts while still inserting, in LC 2416: finish all the inserts first, or early words see too-low counts.',
+      'Returning a stale value for a missing prefix: if the walk fails, the sum is 0.',
+      'Assuming an empty prefix works here: this code never updates the root\'s total, so sum("") returns 0. LC 677 never asks for it, but a general API would.',
     ],
     pointsToPonder: [
       'For Map Sum Pairs, why must you store the DELTA when updating an existing key (not just the new value)?',
@@ -936,14 +1083,43 @@ class MapSum:
             if c not in node: return 0
             node = node[c]
         return node['$']`,
+    practice: [677, 2416, 820, 440, 1803],
+    snippet: '9-trie-with-counts-prefix-frequency-count-words',
   },
 
   '18. Trie vs HashMap — When Trie Wins': {
     crux: 'Trie wins when you need PREFIX semantics, ORDERED iteration, or PRUNING during traversal — HashMap loses all three.',
+    signals: [
+      '"Starts with" or "prefix" in the query: a hash set can\'t list keys by prefix without scanning.',
+      '"Shortest root" or "longest matching prefix": a trie finds it in one walk, instead of hashing each prefix.',
+      '"As each character arrives" or "as the user types": the trie position carries over, and a hash starts again.',
+      'A DFS that should stop as soon as no word can continue: only a trie can answer "can anything continue from here?"',
+    ],
+    notThis: [
+      'Only exact matches on a small set: a hash set is less code and has far less memory overhead.',
+      'Longest Common Prefix (LC 14) asked once: a vertical scan is simpler and needs no extra memory.',
+      'Maximum XOR (LC 421) also has a hash-set solution at the same O(n·32), building candidate prefixes bit by bit, so a trie is a choice there, not a requirement.',
+    ],
     concepts: [
       'Prefix queries (startsWith, autocomplete, longest-common-prefix) are O(L) in trie vs O(N·L) in HashMap.',
       'Pruning during DFS (Word Search II) — trie cuts dead branches that HashMap cannot see.',
       'Ordered / ranked retrieval (top-k autocomplete) — trie nodes can cache top-k cheaply.',
+    ],
+    example: {
+      problem: 'Prefix check on words ["car","cat","dog"] with prefixes "ca" and "cb"',
+      walkthrough: [
+        'The trie has c -> a -> {r, t} and d -> o -> g.',
+        'startsWith_trie(root, "ca"): c exists, then a exists, and the prefix is used up, so True after 2 steps.',
+        'startsWith_trie(root, "cb"): c exists, but b doesn\'t, so False after 2 steps.',
+        'A hash set answers either query only by checking all 3 words for that prefix, and that cost grows with the word count.',
+        'The trie cost depends only on the prefix length, even with a million words.',
+      ],
+    },
+    complexity: 'Trie prefix query: O(L). Hash-set scan: O(N·L) per query. Storing every prefix in a set gives O(L) queries, but takes O(sum of L²) characters of space.',
+    pitfalls: [
+      'Assuming a trie always saves memory: pointer overhead per node often makes it larger than a hash set of the same strings.',
+      'Ignoring cache behavior: following one pointer per character is slower in practice than one hash, even at the same O(L).',
+      'Reaching for a trie by reflex: if no query uses prefix, order or pruning, it adds code with no benefit.',
     ],
     pointsToPonder: [
       'For pure exact-match dictionary, when does HashMap actually win (small N, no prefix queries, no ordering)?',
@@ -959,14 +1135,44 @@ def startsWith_trie(root, prefix):
         if c not in node: return False
         node = node[c]
     return True`,
+    practice: [14, 648, 421, 1032, 212],
+    snippet: '1-basic-trie-array-children-lowercase-a-z',
   },
 
   '19. Trie in System Design Context': {
     crux: 'Trie is the canonical structure for autocomplete, typeahead, DNS resolution, IP routing, spell-check — anywhere prefix or hierarchical matching dominates.',
+    signals: [
+      '"Design typeahead" or "show the top 3 suggestions as the user types": a trie with top-k stored per node.',
+      '"Route to the longest matching prefix": IP tables and URL routers.',
+      '"Did you mean...?": a trie walk with an edit budget for spell check.',
+      'Hierarchical names such as DNS zones or file paths, where each level hands off to the next.',
+    ],
+    notThis: [
+      'Full-text search matches words anywhere in a document: use an inverted index, with a trie at most for its term dictionary.',
+      'A URL shortener looks up exact short codes: a key-value store is simpler and easier to scale.',
+    ],
     concepts: [
       'Autocomplete: trie + per-node top-k cache; updates propagate top-k upward on insert.',
       'DNS / URL routing: trie on path components (radix tree) gives longest-prefix match in O(W).',
       'Spell check: trie + DFS with edit-distance budget gives "did you mean" suggestions.',
+    ],
+    example: {
+      problem: 'Autocomplete with K = 2: insert car = 5, cat = 9, cab = 1, then suggest "ca"',
+      lc: 642,
+      walkthrough: [
+        'insert("car", 5): the c and a nodes each get top = [(-5, car)].',
+        'insert("cat", 9): after sorting, those nodes hold [(-9, cat), (-5, car)]. The most frequent word comes first because its negative is smallest.',
+        'insert("cab", 1): the list is [(-9, cat), (-5, car), (-1, cab)]. del top[2:] drops cab, the least frequent.',
+        'suggest("ca"): walk c, a, then read the cache. The result is ["cat", "car"] with no subtree search.',
+        'suggest("x"): x isn\'t in the root, so the result is [].',
+      ],
+    },
+    complexity: 'Insert: O(L·K log K) to keep each node\'s cache sorted. Suggest: O(L + K log K). Space: O(total characters · K), since every node stores K entries.',
+    pitfalls: [
+      'Evicting the wrong end: with (-freq, word) entries, the smallest tuple is the most frequent word, so a min-heap pop would drop the best one.',
+      'Re-inserting a word with a new frequency: this sketch would keep both entries, so real code must update or remove the old one.',
+      'Updating the cache on every keystroke event at scale: production systems usually rebuild offline from logs and swap it in.',
+      'Forgetting sharding: split by prefix range, not a plain hash, or prefix queries have to reach every shard.',
     ],
     pointsToPonder: [
       'When does sharding the trie matter (huge dictionaries)? What hash key — prefix, first-char, range?',
@@ -991,14 +1197,45 @@ def suggest(root, prefix):
         if c not in node.ch: return []
         node = node.ch[c]
     return [w for _, w in sorted(node.top)]`,
+    practice: [208, 211, 1166, 588, 642],
+    snippet: '3-autocomplete-collect-all-words-with-a-prefix',
   },
 
   '20. Advanced / Contest-Level Trie Problems': {
     crux: 'Most "hard" trie problems COMBINE the trie with another technique: backtracking, bitmask, DP, hashing, Euler tour, or Aho-Corasick failure links.',
+    signals: [
+      '"The concatenation of the two words is a palindrome": reversed words let you compare one word\'s start with the other\'s end.',
+      '"Sum of word lengths is at most 3·10^5": the constraint is on total length, so per-character trie work is affordable.',
+      '"Offline queries" or "for each query, only elements up to a bound": sort the queries, then grow the trie.',
+      'A brute force that repeats the same prefix work across many strings or pairs.',
+    ],
+    notThis: [
+      'Palindrome Partitioning (LC 131) works on one string with no dictionary: backtracking with a palindrome check is the whole solution.',
+      'Longest Palindromic Substring (LC 5) needs no word list: expand around centers or use Manacher.',
+    ],
     concepts: [
       'Palindrome Pairs (LC 336): reverse-insert + palindrome-suffix probe at every node along the walk.',
       'Word Squares (LC 425): prefix → words map + DFS row by row, consistency check via the partial square.',
       'Min Valid Strings to Form Target (LC 3291): Aho-Corasick on patterns + greedy interval covering on the target.',
+    ],
+    example: {
+      problem: 'Palindrome Pairs with words = ["ab","cba","c"]',
+      lc: 336,
+      walkthrough: [
+        'Insert "ab" reversed: before consuming b, "ab" isn\'t a palindrome. Before consuming a, "a" is, so the node after b gets pal = [0]. The node b -> a gets $ = 0.',
+        'Insert "cba" reversed (a, b, c): "cba" and "cb" aren\'t palindromes, but "c" is, so the node a -> b gets pal = [1]. The node a -> b -> c gets $ = 1.',
+        'Insert "c": it is a palindrome before consuming c, so the root gets pal = [2]. The node c gets $ = 2.',
+        'Query "ab": no $ at the root or at a. The word finishes at a -> b, which has no $ but has pal = [1]. So add [0, 1], since "ab" + "cba" = "abcba".',
+        'Query "cba": node c has $ = 2, but the rest of the word "ba" isn\'t a palindrome, and b isn\'t a child, so stop.',
+        'Query "c": it finishes at node c, where $ is itself, and pal is empty. The answer is [[0, 1]].',
+      ],
+    },
+    complexity: 'O(N·L²) for Palindrome Pairs: each of the N words does O(L) palindrome checks of O(L) each, on both insert and query. O(N·L) trie space, plus the pal lists.',
+    pitfalls: [
+      'Checking the palindrome after consuming a letter on insert: the part left over is w[0..j] before consuming w[j], and off by one finds false pairs.',
+      'Missing equal-length pairs like "bat" and "tab": check $ at the node where the word finishes as well as along the way.',
+      'Skipping the empty string: "" pairs with every palindrome, in both orders, and it is a valid input in LC 336.',
+      'Pairing a word with itself: every match needs the check that the two indices differ.',
     ],
     pointsToPonder: [
       'Which canonical lens does THIS problem combine with — backtracking? bitmask? failure links? DSU?',
@@ -1033,5 +1270,6 @@ def palindromePairs(words):
             for j in node.get('pal', []):
                 if j != i: out.append([i, j])
     return out`,
+    practice: [1032, 745, 440, 336, 1938],
   },
 }
