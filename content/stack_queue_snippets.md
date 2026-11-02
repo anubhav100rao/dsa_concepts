@@ -1,5 +1,7 @@
 ## 1. Basic Stack — array-backed
 
+**Use when:** The newest item is the next one to act on: undo, cancel, or pair with the previous item.
+
 ```cpp
 stack<int> st;
 
@@ -26,9 +28,19 @@ if (!st.empty()) {
 }
 ```
 
+**Complexity:** `O(1)` per operation, `O(n)` space.
+
+**Example:** `push 1`, `push 2`, `top` -> `2`; after `pop`, `top` -> `1`.
+
+**Pitfalls:** Calling `top()` or `pop()` on an empty stack is undefined behavior, so check `empty()` first. `std::stack::pop()` returns nothing, so read `top()` before popping.
+
+**Used in:** LC 682, LC 844, LC 1047, LC 1544, LC 1598
+
 ---
 
 ## 2. Parentheses / Bracket Matching
+
+**Use when:** The problem says "valid" or "balanced" and there is more than one bracket type.
 
 ```cpp
 bool isValid(string s) {
@@ -51,9 +63,19 @@ bool isValid(string s) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(n)` space.
+
+**Example:** `"()[]{}"` -> `true`; `"([)]"` -> `false`; `"(("` -> `false`.
+
+**Pitfalls:** Check for an empty stack before reading the top, or `")"` crashes. Return `st.empty()` at the end, or `"(("` passes.
+
+**Used in:** LC 20, LC 921, LC 1249, LC 32, LC 678
+
 ---
 
 ## 3. Monotonic Stack — Next Greater Element (to the right)
+
+**Use when:** You need the "next greater", "next smaller" or "how many days until" answer for every position.
 
 Returns index of next strictly greater element, or `-1`.
 
@@ -83,9 +105,19 @@ Variants — flip the comparison / direction:
 // Previous smaller-> iterate right to left, a[st.top()] > a[i]
 ```
 
+**Complexity:** `O(n)` time, since each index is pushed and popped once. `O(n)` space.
+
+**Example:** `a = [2, 1, 2, 4, 3]` -> `[3, 2, 3, -1, -1]`, which are indices, not values.
+
+**Pitfalls:** `<` leaves equal values waiting for something strictly greater, and `<=` lets an equal value answer them. Choose by what the problem says about ties.
+
+**Used in:** LC 496, LC 503, LC 739, LC 1475, LC 1019
+
 ---
 
 ## 4. Monotonic Stack — Largest Rectangle in Histogram
+
+**Use when:** You want the "largest rectangle" under bars, or per-row heights in a binary matrix.
 
 ```cpp
 long long largestRectangle(vector<int>& h) {
@@ -111,9 +143,19 @@ long long largestRectangle(vector<int>& h) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(n)` space.
+
+**Example:** `h = [2, 1, 5, 6, 2, 3]` -> `10`.
+
+**Pitfalls:** The loop must reach `i == n` with height 0, or bars still on the stack are never measured. Width after a pop uses the new top, with `-1` when the stack is empty.
+
+**Used in:** LC 84, LC 85, LC 1504
+
 ---
 
 ## 5. Monotonic Stack — Stock Span
+
+**Use when:** You need the count of consecutive earlier values that are less than or equal to the current one.
 
 Consecutive days (including today) with price `<=` today's price.
 
@@ -135,9 +177,19 @@ vector<int> stockSpan(vector<int>& price) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(1)` amortized per price. `O(n)` space.
+
+**Example:** `price = [100, 80, 60, 70, 60, 75, 85]` -> `[1, 1, 1, 2, 1, 4, 6]`.
+
+**Pitfalls:** Pop on `<=`, not `<`, because equal prices belong in the span. With an empty stack the span is `i + 1`, not `i`.
+
+**Used in:** LC 901, LC 739, LC 1944
+
 ---
 
 ## 6. Monotonic Stack — Sum of Subarray Minimums
+
+**Use when:** You need the "sum of the minimum" over every subarray and `n` is too large for `O(n²)`.
 
 Contribution of each element as the minimum, over all subarrays.
 
@@ -173,9 +225,19 @@ long long sumSubarrayMins(vector<int>& a) {
 }
 ```
 
+**Complexity:** `O(n)` time for two passes, `O(n)` space.
+
+**Example:** `a = [3, 1, 2, 4]` -> `17`.
+
+**Pitfalls:** One side must be strict and the other not, or `[2, 2]` counts its full subarray twice. Keep products in `long long` and reduce as you add.
+
+**Used in:** LC 907, LC 2104, LC 2281
+
 ---
 
 ## 7. Monotonic Stack — Lexicographic / Greedy Removal
+
+**Use when:** The problem asks for the "lexicographically smallest" result after removing characters that keep their order.
 
 Remove `k` digits to make the smallest number.
 
@@ -202,9 +264,19 @@ string removeKdigits(string num, int k) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(n)` space.
+
+**Example:** `num = "1432219"`, `k = 3` -> `"1219"`; `num = "10"`, `k = 2` -> `"0"`.
+
+**Pitfalls:** Rising input like `"1234"` never pops, so spend leftover `k` from the end. Strip leading zeros, and return `"0"` if nothing is left.
+
+**Used in:** LC 402, LC 1673, LC 321
+
 ---
 
 ## 8. Expression Evaluation — Basic Calculator (+ - * /)
+
+**Use when:** You evaluate a string with `+ - * /` and need precedence but have no parentheses.
 
 ```cpp
 int calculate(string s) {
@@ -233,9 +305,19 @@ int calculate(string s) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(n)` space.
+
+**Example:** `"3+2*2"` -> `7`; `" 3/2 "` -> `1`.
+
+**Pitfalls:** The last number has no operator after it, so the `i == size - 1` check must flush it. This version has no parentheses: LC 224 and LC 772 need context saved at each `(`.
+
+**Used in:** LC 227, LC 224, LC 772
+
 ---
 
 ## 9. Stack for Iterative DFS
+
+**Use when:** You need depth-first order, but the depth could overflow the call stack.
 
 ```cpp
 void dfsIterative(int src, vector<vector<int>>& g) {
@@ -261,9 +343,19 @@ void dfsIterative(int src, vector<vector<int>>& g) {
 }
 ```
 
+**Complexity:** `O(V + E)` time. `O(V + E)` space, because a vertex can be pushed once per incoming edge.
+
+**Example:** `g = {0: [1, 2], 1: [3], 2: [], 3: []}`, `src = 0` -> visits `0, 2, 1, 3`.
+
+**Pitfalls:** Neighbors pop in reverse order, so push them reversed if the order matters. Marking on pop means duplicates can sit on the stack, so keep the `visited` check after the pop.
+
+**Used in:** LC 144, LC 114, LC 200
+
 ---
 
 ## 10. Decode Nested String
+
+**Use when:** The input has nested "k[...]" parts, or any context to save at an opener and combine at a closer.
 
 `3[a2[c]]` -> `accaccacc`.
 
@@ -297,9 +389,19 @@ string decodeString(string s) {
 }
 ```
 
+**Complexity:** Roughly `O(L)` time and space, where `L` is the decoded length.
+
+**Example:** `"3[a2[c]]"` -> `"accaccacc"`; `"2[ab]3[c]"` -> `"ababccc"`.
+
+**Pitfalls:** Counts can have several digits, so build `k` as `k * 10 + digit`. Reset both `k` and `cur` after pushing them.
+
+**Used in:** LC 394, LC 726, LC 385, LC 1190
+
 ---
 
 ## 11. Monotonic Deque — Sliding Window Maximum
+
+**Use when:** You need the "maximum of each window of size k", or a DP that takes the best of the last `k` states.
 
 `O(n)` window max over window size `k`.
 
@@ -323,9 +425,19 @@ vector<int> maxSlidingWindow(vector<int>& a, int k) {
 
 For window **minimum**, flip to `a[dq.back()] >= a[i]`.
 
+**Complexity:** `O(n)` time, since each index enters and leaves once. `O(k)` space.
+
+**Example:** `a = [1, 3, -1, -3, 5]`, `k = 3` -> `[3, 3, 5]`.
+
+**Pitfalls:** The window is `i - k + 1..i`, so expire the front when `dq.front() <= i - k`. Only output once `i >= k - 1`.
+
+**Used in:** LC 239, LC 1696, LC 1425, LC 1438, LC 862
+
 ---
 
 ## 12. BFS Queue — Level-Order Traversal
+
+**Use when:** The problem talks about "levels" of a tree: level order, zigzag, right side view, or minimum depth.
 
 ```cpp
 void levelOrder(TreeNode* root) {
@@ -349,6 +461,14 @@ void levelOrder(TreeNode* root) {
     }
 }
 ```
+
+**Complexity:** `O(n)` time, `O(w)` space, where `w` is the widest level.
+
+**Example:** `[3, 9, 20, null, null, 15, 7]` -> levels `[3]`, `[9, 20]`, `[15, 7]`.
+
+**Pitfalls:** Save `q.size()` before the inner loop, since children change it. Handle a null root before pushing.
+
+**Used in:** LC 102, LC 103, LC 199, LC 637, LC 111
 
 ---
 
