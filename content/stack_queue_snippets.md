@@ -474,6 +474,8 @@ void levelOrder(TreeNode* root) {
 
 ## 13. BFS on Grid — shortest path in unweighted grid
 
+**Use when:** You want the "fewest steps" on a grid where every move costs the same.
+
 ```cpp
 int bfsGrid(vector<vector<int>>& grid, int sr, int sc) {
     int n = grid.size(), m = grid[0].size();
@@ -505,9 +507,19 @@ int bfsGrid(vector<vector<int>>& grid, int sr, int sc) {
 }
 ```
 
+**Complexity:** `O(R × C)` time and space.
+
+**Example:** `grid = [[0, 0], [1, 0]]` with 1 as a wall, from `(0, 0)` -> `2`. It returns `-1` if the corner can't be reached.
+
+**Pitfalls:** Set `dist` when you push, not when you pop, or cells enter the queue many times. The start cell isn't checked, so handle a blocked start before calling.
+
+**Used in:** LC 1091, LC 1926, LC 994, LC 542
+
 ---
 
 ## 14. Deque — 0-1 BFS
+
+**Use when:** Every edge costs exactly 0 or 1 and you want the minimum total cost.
 
 Edge weights are only 0 or 1; push 0-weight to front, 1-weight to back.
 
@@ -537,9 +549,19 @@ vector<int> zeroOneBFS(int src, vector<vector<pair<int,int>>>& g) {
 }
 ```
 
+**Complexity:** `O(V + E)` time, `O(V)` space.
+
+**Example:** Edges `0->1` (cost 0), `0->2` (cost 1), `1->2` (cost 1), from `src = 0` -> `[0, 0, 1]`.
+
+**Pitfalls:** Don't mark vertices visited on push, since a later 0-cost edge can improve them. Unreachable vertices stay `INT_MAX`, so check before using them.
+
+**Used in:** LC 1368, LC 2290
+
 ---
 
 ## 15. Circular Queue — fixed capacity design
+
+**Use when:** You need a FIFO queue with a fixed capacity and no shifting.
 
 ```cpp
 struct CircularQueue {
@@ -570,9 +592,19 @@ struct CircularQueue {
 };
 ```
 
+**Complexity:** `O(1)` per operation, `O(k)` space.
+
+**Example:** With `k = 2`: `enqueue(1)`, `enqueue(2)`, `enqueue(3)` -> `false`; `dequeue()`, `enqueue(3)` -> `true`; `front()` -> `2`, `rear()` -> `3`.
+
+**Pitfalls:** `head == tail` can't tell full from empty, which is why this keeps `count`. The rear is `head + count - 1`, not `head + count`.
+
+**Used in:** LC 622, LC 641, LC 346
+
 ---
 
 ## 16. Stack for Path Simplification
+
+**Use when:** Tokens cancel the previous token, as with `..` in a Unix path.
 
 `/a/./b/../../c/` -> `/c`.
 
@@ -597,9 +629,19 @@ string simplifyPath(string path) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(n)` space.
+
+**Example:** `"/a/./b/../../c/"` -> `"/c"`; `"/../"` -> `"/"`.
+
+**Pitfalls:** Splitting produces empty tokens from `//` and a trailing `/`, so skip them. Guard the pop on `..` at the root, and treat `...` as an ordinary name.
+
+**Used in:** LC 71, LC 1598
+
 ---
 
 ## 17. Stack-Based Greedy — Remove Duplicate Letters
+
+**Use when:** You want the "smallest order" in which each letter appears exactly once.
 
 Smallest lexicographic result with each letter once.
 
@@ -629,9 +671,19 @@ string removeDuplicateLetters(string s) {
 }
 ```
 
+**Complexity:** `O(n)` time, `O(1)` space beyond the result, since the stack holds at most 26 letters.
+
+**Example:** `"bcabc"` -> `"abc"`; `"cbacdcbc"` -> `"acdb"`.
+
+**Pitfalls:** Skip a letter already on the stack before any popping. Pop only if the top appears again later, with `last[top] > i`.
+
+**Used in:** LC 316, LC 1081
+
 ---
 
 ## 18. Asteroid Collision
+
+**Use when:** Objects move left or right along a line, and the incoming one collides with the newest survivor.
 
 ```cpp
 vector<int> asteroidCollision(vector<int>& a) {
@@ -658,9 +710,19 @@ vector<int> asteroidCollision(vector<int>& a) {
 }
 ```
 
+**Complexity:** `O(n)` time, since each asteroid is pushed and popped at most once. `O(n)` space.
+
+**Example:** `[10, 2, -5]` -> `[10]`; `[5, -5]` -> `[]`; `[-2, 1]` -> `[-2, 1]`.
+
+**Pitfalls:** Use `while`, not `if`, because one asteroid can destroy several. A collision needs top `> 0` and incoming `< 0`; a left-mover followed by a right-mover never meet.
+
+**Used in:** LC 735, LC 2751
+
 ---
 
 ## 19. Queue via Two Stacks
+
+**Use when:** You must build FIFO order from LIFO stacks.
 
 Amortized `O(1)` per operation.
 
@@ -695,9 +757,19 @@ struct MyQueue {
 };
 ```
 
+**Complexity:** Amortized `O(1)` per operation, `O(n)` space.
+
+**Example:** `push 1`, `push 2`, `peek` -> `1`, `pop` -> `1`, `empty` -> `false`.
+
+**Pitfalls:** Move items only when `out` is empty. Moving earlier puts newer items ahead of older ones still in `out`.
+
+**Used in:** LC 232
+
 ---
 
 ## 20. Min Stack — O(1) minimum
+
+**Use when:** You need the "minimum in constant time" along with ordinary push and pop.
 
 ```cpp
 struct MinStack {
@@ -719,9 +791,19 @@ struct MinStack {
 };
 ```
 
+**Complexity:** `O(1)` per operation, `O(n)` space.
+
+**Example:** `push -2`, `push 0`, `push -3`, `getMin` -> `-3`; after `pop`, `top` -> `0` and `getMin` -> `-2`.
+
+**Pitfalls:** A single minimum variable can't recover the previous value after a pop. That is why the running minimum is stored once per entry.
+
+**Used in:** LC 155, LC 716
+
 ---
 
 ## 21. Bidirectional BFS
+
+**Use when:** You want the fewest moves between one known start and one known target, and each state has many neighbors.
 
 Meet in the middle from both ends; expand the smaller frontier.
 
@@ -754,9 +836,19 @@ int biBFS(string start, string target,
 }
 ```
 
+**Complexity:** About `O(b^(d/2))` states instead of `O(b^d)`, for branching factor `b` and distance `d`. The same order of space.
+
+**Example:** `start = "hit"`, `target = "cog"`, `dict = {hot, dot, dog, lot, log, cog}` -> `5`.
+
+**Pitfalls:** `neighbors` is yours to write. Check that `target` is in `dict` first, or an unreachable word can look reachable. The result counts words, so subtract 1 for problems that count moves (LC 433, LC 752).
+
+**Used in:** LC 127, LC 433, LC 752, LC 773
+
 ---
 
 ## 22. Round-Robin / Queue Simulation
+
+**Use when:** Items take turns and go to the back of the line until they finish.
 
 ```cpp
 // Tasks served in cycles; re-enqueue if work remains.
@@ -779,9 +871,19 @@ while (!q.empty()) {
 }
 ```
 
+**Complexity:** `O(sum of work / quantum + n)` time, `O(n)` space.
+
+**Example:** `work = [3, 1]`, `quantum = 2` -> `finish = [4, 3]`.
+
+**Pitfalls:** Charge `min(rem, quantum)`, not the full quantum, when an item finishes early. `n`, `work`, `quantum` and `finish` must already exist.
+
+**Used in:** LC 2073, LC 1700, LC 649
+
 ---
 
 ## 23. Monotonic Stack + DP — Sum of Subarray Ranges
+
+**Use when:** You need the "sum of max minus min" over every subarray.
 
 Range = max - min; sum contributions of max and min separately.
 
@@ -821,9 +923,19 @@ long long subArrayRanges(vector<int>& a) {
 }
 ```
 
+**Complexity:** `O(n)` time for four passes, `O(n)` space.
+
+**Example:** `a = [1, 2, 3]` -> `4`, from `[1, 2]`, `[2, 3]` and `[1, 2, 3]`, whose ranges are 1, 1 and 2.
+
+**Pitfalls:** Flip both comparisons together between the max and min versions, and keep one side strict so ties count once. Totals can exceed `int`, so use `long long`.
+
+**Used in:** LC 2104, LC 907, LC 2281
+
 ---
 
 ## Common Choose-What Pattern
+
+**Use when:** You have read a problem and haven't yet decided which pattern fits.
 
 ```cpp
 // Balanced brackets / matching       -> stack
@@ -838,3 +950,11 @@ long long subArrayRanges(vector<int>& a) {
 // Queue from stacks / O(1) min       -> two-stack / aux-stack design
 // FIFO with fixed capacity           -> circular queue
 ```
+
+**Complexity:** Most of these run in `O(n)`, or `O(V + E)` for the graph patterns. Each template above gives its exact bound.
+
+**Example:** Daily Temperatures asks "how many days until a warmer day", which is next greater, so use a monotonic stack (LC 739).
+
+**Pitfalls:** Check BFS assumptions first: it needs equal move costs, and otherwise you want 0-1 BFS or Dijkstra.
+
+**Used in:** LC 20, LC 739, LC 84, LC 907, LC 402, LC 394, LC 239, LC 102, LC 1368, LC 232, LC 155, LC 622
