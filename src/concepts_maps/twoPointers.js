@@ -688,4 +688,771 @@ def check_inclusion(p, s):
     practice: [567, 438, 3, 424, 76],
     snippet: '13-sliding-window-find-all-anagrams',
   },
+
+  '13. Sliding Window + Hash Map / Frequency Counter': {
+    crux: 'The map is the window\'s memory: decide what it stores (counts, last index or distinct total) so that validity is one O(1) check.',
+    signals: [
+      '"Without repeating characters" or "all the elements of the subarray are distinct": a set, or a map of last positions.',
+      '"Contains at most k distinct" or "you can only pick from two baskets": the map\'s size is the constraint.',
+      '"Minimum number of consecutive cards ... to have a pair of matching cards": map each value to where you last saw it.',
+      '"At least k pairs (i, j) such that arr[i] == arr[j]": adding x creates count[x] new pairs, so keep a running pair total.',
+    ],
+    notThis: [
+      'Max Consecutive Ones III (LC 1004) and LC 1248 are listed here, but one integer counter is enough: don\'t pay for a map.',
+      'Lowercase-only strings: a 26-element array is faster and simpler than a hash map.',
+      'Windows that need the maximum or the median, such as LC 1438: a map has no order, so use a deque or a multiset.',
+    ],
+    concepts: [
+      'Count map: use it when validity depends on how many of each value are inside. Delete keys at zero so that its size equals the distinct count.',
+      'Last-index map: left can jump straight past a repeat instead of walking there one step at a time.',
+      'Keep derived totals (distinct, pairs, formed) alongside the map, and update them only on the transitions 0 → 1 and 1 → 0.',
+    ],
+    example: {
+      problem: 'Longest Substring Without Repeating Characters with s = "abba"',
+      lc: 3,
+      walkthrough: [
+        'right = 0, a: unseen. last[a] = 0, and the length is 1, so best = 1.',
+        'right = 1, b: unseen. last[b] = 1, and the length is 2, so best = 2.',
+        'right = 2, b: last[b] = 1 is inside the window, so left = 2. last[b] = 2, and the length is 1.',
+        'right = 3, a: last[a] = 0 is before left, so it\'s stale and left stays 2. last[a] = 3, and the length is 2.',
+        'The answer is 2.',
+      ],
+    },
+    code: `# Longest Substring Without Repeating Characters
+def length_of_longest(s):
+    last = {}
+    left = best = 0
+    for right, c in enumerate(s):
+        if c in last and last[c] >= left:
+            left = last[c] + 1
+        last[c] = right
+        best = max(best, right - left + 1)
+    return best`,
+    complexity: 'O(n) expected time. O(min(n, alphabet)) space, or O(k) when the map is capped at k distinct keys.',
+    pitfalls: [
+      'Jumping left without checking last[c] >= left: on "abba", the final a would move left backwards to 1 and report a window containing two b\'s.',
+      'Leaving zero-count keys in the map, so len(map) overcounts the distinct values.',
+      'In LC 2537, updating in the wrong order: add count[x] pairs before incrementing on entry, and decrement before subtracting on exit.',
+      'Looking up a missing key in a C++ unordered_map inserts it, which can quietly inflate its size.',
+    ],
+    pointsToPonder: [
+      'When does a last-index map beat a count map, and when can\'t it replace one?',
+      'Can a hash map make the worst case worse than O(n), and when would that matter?',
+      'In Minimum Window Substring (LC 76), why is one "formed" integer enough to know the whole map is satisfied?',
+    ],
+    practice: [3, 904, 2260, 438, 76],
+    snippet: '12-sliding-window-minimum-window-substring',
+  },
+
+  '14. Sliding Window + Monotonic Deque': {
+    crux: 'Keep only the candidates that could still become the window\'s best, in sorted order, so the answer is always at the front.',
+    signals: [
+      '"Return the max sliding window": the direct form.',
+      '"You can jump at most k steps" or "j − i <= k": dp[i] needs the best of the last k values.',
+      '"The absolute difference between any two elements ... is less than or equal to limit": a window that needs both its max and its min.',
+      '"Shortest subarray with sum at least K", where values can be negative: a deque over prefix sums.',
+    ],
+    notThis: [
+      'Median or k-th of a window (LC 480): a deque only exposes the extreme, so use two heaps or a multiset.',
+      'Number of Visible People in a Queue (LC 1944) has no window to expire: a monotonic stack is enough.',
+      'Maximum Sum Circular Subarray (LC 918) is usually simpler with Kadane: take the larger of the best subarray and the total minus the worst subarray.',
+    ],
+    concepts: [
+      'Before pushing x, pop every back element that is no better than x: it is older and weaker, so it can never be the answer again.',
+      'Store indices, not values, so that you can tell when the front has left the window.',
+      'DP optimization: dp[i] = a[i] + max(dp[i − k..i − 1]) drops from O(nk) to O(n) with a deque of dp values.',
+    ],
+    example: {
+      problem: 'Sliding Window Maximum with a = [1,3,-1,-3,5], k = 3',
+      lc: 239,
+      walkthrough: [
+        'i = 0, x = 1: the deque holds indices [0].',
+        'i = 1, x = 3: 3 beats 1, so pop index 0. The deque is [1].',
+        'i = 2, x = -1: push, giving [1,2]. The window is full and the front is a[1] = 3, so the result is [3].',
+        'i = 3, x = -3: push, giving [1,2,3]. Index 1 is still inside, so the result is [3,3].',
+        'i = 4, x = 5: pop all three, giving [4]. The result is [3,3,5].',
+      ],
+    },
+    code: `# Sliding Window Maximum
+def max_sliding_window(a, k):
+    dq = deque()  # indices, with values decreasing
+    res = []
+    for i, x in enumerate(a):
+        while dq and a[dq[-1]] <= x:
+            dq.pop()
+        dq.append(i)
+        if dq[0] <= i - k:
+            dq.popleft()
+        if i >= k - 1:
+            res.append(a[dq[0]])
+    return res`,
+    complexity: 'O(n) time, since each index is pushed and popped at most once. O(k) space.',
+    pitfalls: [
+      'Storing values instead of indices: you can\'t tell whether the front has expired, and duplicates get confused.',
+      'Off-by-one on expiry: the front is out when dq[0] <= i − k.',
+      'In DP versions, reading the front before removing expired indices uses a state that\'s out of reach.',
+      'In LC 1438, moving left by checking values rather than indices: compare the front index with left before popping.',
+    ],
+    pointsToPonder: [
+      'Why does each pop never lose an answer? State it as "older and weaker".',
+      'LC 862 pops from both ends for different reasons. What does each pop mean?',
+      'When is a deque DP possible? What must the transition look like for the optimization to apply?',
+    ],
+    practice: [1696, 1438, 239, 1425, 862],
+    snippet: '14-sliding-window-monotonic-deque',
+  },
+
+  '15. Sliding Window + Heap / Multiset': {
+    crux: 'When you need more than the extreme, such as a median or k-th value, keep the window in an ordered structure that supports deletion.',
+    signals: [
+      '"Median of each window": the classic reason to use two heaps or a multiset.',
+      '"Each price ... may be corrected" with "current", "maximum" and "minimum" queries (LC 2034): heap entries can go stale.',
+      '"Smallest range that includes at least one number from each of the k lists": a heap of one pointer per list.',
+      '"Add a number" and "find the median" with no removals (LC 295): two heaps, without the expiry work.',
+    ],
+    notThis: [
+      'You only need the maximum or minimum of a window: a monotonic deque is O(n) and has no log factor.',
+      'Only a sum or a count matters: subtract the element that leaves, and no ordered structure is needed.',
+      'Values come from a small range: a frequency array with a moving median pointer can avoid the log factor entirely.',
+    ],
+    concepts: [
+      'Ordered multiset: insert and erase in O(log k). In C++, erase by iterator so that only one copy goes.',
+      'Two heaps: a max-heap for the lower half and a min-heap for the upper half, with sizes differing by at most 1.',
+      'Lazy deletion: heaps can\'t delete from the middle, so note what expired and discard it only when it reaches the top.',
+    ],
+    example: {
+      problem: 'Sliding Window Median with a = [1,3,-1,-3,5], k = 3',
+      lc: 480,
+      walkthrough: [
+        'i = 0 and 1: the sorted window grows to [1,3], which isn\'t full yet.',
+        'i = 2: insert -1, giving [-1,1,3]. The median is 1.',
+        'i = 3: insert -3, then remove a[0] = 1, giving [-3,-1,3]. The median is -1.',
+        'i = 4: insert 5, then remove a[1] = 3, giving [-3,-1,5]. The median is -1.',
+        'The result is [1,-1,-1].',
+      ],
+    },
+    code: `# Sliding Window Median — sorted list version
+def median_window(a, k):
+    win, res = [], []
+    for i, x in enumerate(a):
+        insort(win, x)
+        if i >= k:
+            win.pop(bisect_left(win, a[i - k]))
+        if i >= k - 1:
+            res.append((win[k // 2] + win[(k - 1) // 2]) / 2)
+    return res`,
+    complexity: 'O(n log k) time with a balanced tree or indexable sorted structure, and O(k) space. The plain sorted list above is O(nk) because inserting shifts elements, while heaps with lazy deletion are O(n log n).',
+    pitfalls: [
+      'multiset.erase(value) in C++ removes every copy: use erase(find(value)).',
+      'Adding two 32-bit values for an even-sized median can overflow: LC 480 allows values up to 2^31 − 1, so widen first.',
+      'With lazy deletion, the heaps\' actual sizes include dead entries: balance using counts of live elements.',
+      'Advancing a multiset iterator from begin() on every step costs O(k), which silently makes the loop O(nk).',
+    ],
+    pointsToPonder: [
+      'Why can heaps get away with deleting late? What must be true of an expired element before it reaches the top?',
+      'How would you move a median iterator by one position after each insert and erase, rather than recomputing it?',
+      'For LC 1438, the deque and multiset both work. What would make you pick the slower one?',
+    ],
+    practice: [2034, 1438, 295, 632, 480],
+    snippet: '15-sliding-window-multiset',
+  },
+
+  '16. Sliding Window on Circular Array': {
+    crux: 'Handle wraparound by walking indices modulo n, or turn it inside out and work on the complement.',
+    signals: [
+      '"Circular array", "the next element of the last is the first", or "swap to group ... in a circular array".',
+      '"Take one card from the beginning or the end": the k cards form a window across the wrap point.',
+      '"Remove the character at the start and append it to the end": any rotation is allowed, which is the same as a circle.',
+      '"Infinitely appending the elements of nums": whole copies plus one wrapped window.',
+    ],
+    notThis: [
+      'Next Greater Element II (LC 503) wraps but has no window: walk twice with a monotonic stack.',
+      'Maximum Sum Circular Subarray (LC 918) has no fixed size: use Kadane on the total minus the minimum subarray, or a deque over prefix sums.',
+      'House Robber II (LC 213) is circular only through a constraint: run the DP twice, once excluding each end.',
+    ],
+    concepts: [
+      'Walk i from 0 to n + k − 2 and read a[i % n]: that visits each of the n windows exactly once, with no need to copy the array.',
+      'Complement: choosing a wrapping window of size k is the same as leaving a linear window of size n − k.',
+      'Grouping: to gather all m ones, slide a window of size m. The swaps needed equal the zeros inside it.',
+    ],
+    example: {
+      problem: 'Minimum Swaps to Group All 1\'s Together II with a = [0,1,0,1,1,0,0]',
+      lc: 2134,
+      walkthrough: [
+        'There are three 1s, so k = 3. Slide a size-3 window and keep the most 1s seen.',
+        'i = 2: the window [0,1,0] has count = 1, so best = 1.',
+        'i = 3: the window [1,0,1] has count = 2, so best = 2.',
+        'i = 4 and 5: the windows [0,1,1] and [1,1,0] both have count = 2.',
+        'i = 6: [1,0,0] has count = 1. i = 7 wraps: [0,0,0] has count = 0. i = 8: [0,0,1] has count = 1.',
+        'Best is 2, so one zero sits inside the best window. The answer is 3 − 2 = 1.',
+      ],
+    },
+    code: `# Minimum Swaps to Group All 1's Together II
+def min_swaps(a):
+    n, k = len(a), sum(a)
+    count = best = 0
+    for i in range(n + k - 1):
+        count += a[i % n]
+        if i >= k:
+            count -= a[(i - k) % n]
+        if i >= k - 1:
+            best = max(best, count)
+    return k - best`,
+    complexity: 'O(n + k) time, which is O(n) when k <= n. O(1) space when you use indices rather than a doubled array.',
+    pitfalls: [
+      'Looping to 2n when you want one pass per start: some windows are counted twice, which is harmless for a maximum but wrong for a count.',
+      'If k can exceed n, a window would hold the same element twice: handle whole cycles separately, as LC 2875 does.',
+      'Writing (i − k) % n in C++ when i − k could be negative: the result is negative too. Python doesn\'t have this problem.',
+      'LC 1652 has k > 0, k < 0 and k = 0 as separate cases: the window\'s direction flips.',
+    ],
+    pointsToPonder: [
+      'When is modulo indexing clearer than doubling, and when is doubling clearer?',
+      'How could you solve LC 1423 by sliding the complement and also by a wrapped window? Which is less error-prone?',
+      'Why does the number of zeros in the window equal the swaps needed in LC 2134?',
+    ],
+    practice: [1652, 1423, 2134, 918, 1888],
+    snippet: '16-sliding-window-on-circular-array',
+  },
+
+  '17. Multi-Pointer / K-Pointer': {
+    crux: 'Reduce the problem to two pointers by fixing the others, or keep one pointer per sorted run and always advance the one that\'s behind.',
+    signals: [
+      '"All the triplets" or "all unique quadruplets": nested anchors around one pair search.',
+      '"Sort ... with values 0, 1 and 2, in-place": three pointers separate three regions.',
+      '"Smallest range that includes at least one number from each of the k lists": one pointer per list.',
+      '"The number of smaller elements to the right" or "reverse pairs": pointers across the sorted halves of merge sort.',
+    ],
+    notThis: [
+      'Combination Sum (LC 39), or k-Sum with a large k: nested pointers grow as n^(k−1), so use DP or backtracking.',
+      'Two Sum (LC 1) on unsorted input where you need original indices: use a hash map.',
+      'Closest Subsequence Sum (LC 1755) has too many subsets to enumerate: meet in the middle first, then use two pointers on the sums.',
+    ],
+    concepts: [
+      'Each extra anchor costs a factor of n, and sorting pays for both the search and the duplicate skipping.',
+      'Merge-sort counting: both halves are sorted, so for each left element the matching boundary on the right only moves forward. Count before you merge.',
+      'k lists: a min-heap holds each list\'s current value, and the range runs from the heap\'s minimum to the largest value it currently holds.',
+    ],
+    example: {
+      problem: '3Sum with a = [-1,0,1,2,-1,-4]',
+      lc: 15,
+      walkthrough: [
+        'Sort to get [-4,-1,-1,0,1,2].',
+        'Anchor -4: the best possible sum is -4 + 1 + 2 = -1, so l walks to r with no match.',
+        'Anchor -1 at i = 1: l = 2, r = 5 gives -1 − 1 + 2 = 0, so add [-1,-1,2]. Move to l = 3, r = 4.',
+        'l = 3, r = 4 gives -1 + 0 + 1 = 0, so add [-1,0,1]. The pointers cross.',
+        'Anchor -1 at i = 2 repeats the previous anchor, so skip it.',
+        'Anchor 0: l = 4, r = 5 gives 0 + 1 + 2 = 3, too big, so r moves to l. The answer is [[-1,-1,2],[-1,0,1]].',
+      ],
+    },
+    code: `# 3Sum
+def three_sum(a):
+    a.sort()
+    res = []
+    for i in range(len(a) - 2):
+        if i > 0 and a[i] == a[i - 1]:
+            continue
+        l, r = i + 1, len(a) - 1
+        while l < r:
+            s = a[i] + a[l] + a[r]
+            if s < 0:
+                l += 1
+            elif s > 0:
+                r -= 1
+            else:
+                res.append([a[i], a[l], a[r]])
+                l += 1
+                r -= 1
+                while l < r and a[l] == a[l - 1]:
+                    l += 1
+    return res`,
+    complexity: '3Sum is O(n²) time and O(1) extra space beyond sorting. Merge-sort counting is O(n log n) time and O(n) space. The k-list heap is O(N log k) for N total elements.',
+    pitfalls: [
+      'Checking a[i] == a[i + 1] instead of a[i − 1] for the anchor: that skips valid triplets such as [-1,-1,2].',
+      'In 4Sum, the sum of four 32-bit values can overflow: use a wider type.',
+      'In Reverse Pairs (LC 493), merging while counting: the 2 × a[j] test has a different order from the merge, so count in a separate pass.',
+      'In Sort Colors, using i < hi rather than i <= hi leaves the last unknown value unchecked.',
+    ],
+    pointsToPonder: [
+      'Why doesn\'t r need its own duplicate skip after a match in this code?',
+      'What early exits can you add to 3Sum using the sorted order?',
+      'Why does a merge sort give you a monotonic pointer that a plain nested loop doesn\'t have?',
+    ],
+    practice: [75, 15, 16, 259, 18],
+    snippet: '17-multi-pointer-3sum',
+  },
+
+  '18. Two Pointers on Strings': {
+    crux: 'Give each string its own pointer and match greedily, moving through both once instead of building new strings.',
+    signals: [
+      '"Typed into empty text editors" and "# means a backspace", especially with "O(1) space": scan from the right.',
+      '"Is a subsequence of" or "formed by deleting some characters": one greedy matching pass.',
+      '"Your friend ... long pressed" or "stretchy words": compare runs of equal characters.',
+      '"Exactly one edit distance apart": find the first difference, then the rest must match.',
+    ],
+    notThis: [
+      'Edit Distance (LC 72) allows any number of edits, and each mismatch branches three ways: use DP.',
+      'Find the First Occurrence (LC 28) on adversarial input: restarting after a mismatch is O(nm), so use KMP.',
+      'Number of Matching Subsequences (LC 792) has many words: rescanning s for each is slow, so bucket words by their next character.',
+    ],
+    concepts: [
+      'Greedy subsequence matching takes the earliest match, because this leaves the most room for the rest.',
+      'Scan right to left when later characters change the meaning of earlier ones, as backspaces do.',
+      'Run comparison: consume a whole run from each string, then compare characters and lengths.',
+    ],
+    example: {
+      problem: 'Backspace String Compare with s = "ab#c", t = "ad#c"',
+      lc: 844,
+      walkthrough: [
+        'Start at i = 3, j = 3. Neither c is erased, and c equals c, so move to i = 2, j = 2.',
+        'In s: index 2 is #, so skip = 1 and we move to index 1. b uses up the skip, and we stop on a at index 0.',
+        'In t: index 2 is #, and d uses up the skip, so we also stop on a at index 0.',
+        'a equals a, so move both to -1. The loop ends, and the answer is true.',
+      ],
+    },
+    code: `# Backspace String Compare — O(1) space
+def backspace_compare(s, t):
+    def prev_char(x, i):
+        skip = 0
+        while i >= 0:
+            if x[i] == '#':
+                skip += 1
+            elif skip:
+                skip -= 1
+            else:
+                break
+            i -= 1
+        return i
+
+    i, j = len(s) - 1, len(t) - 1
+    while i >= 0 or j >= 0:
+        i, j = prev_char(s, i), prev_char(t, j)
+        if i < 0 or j < 0:
+            return i < 0 and j < 0
+        if s[i] != t[j]:
+            return False
+        i -= 1
+        j -= 1
+    return True`,
+    complexity: 'O(n + m) time and O(1) space. The naive first-occurrence search and word-list problems like LC 524 cost O(n × m) in the worst case.',
+    pitfalls: [
+      'In LC 844, stopping when one pointer runs out: the other string may still have only erased characters left.',
+      'In LC 925, accepting extra characters in typed that continue no run.',
+      'In LC 161, treating equal strings as a match: they\'re zero edits apart, and the answer must be false.',
+      'In LC 165, comparing versions as strings: "1.01" equals "1.001", and "1.0" equals "1".',
+    ],
+    pointsToPonder: [
+      'Why is the earliest match always safe in subsequence checking?',
+      'Why can\'t you scan LC 844 from the left in O(1) space?',
+      'What preprocessing would turn LC 392 into a fast check for many queries?',
+    ],
+    practice: [344, 125, 392, 844, 680],
+    snippet: '18-two-pointers-on-strings-backspace-compare',
+  },
+
+  '19. Two Pointers on Linked Lists': {
+    crux: 'A list has no indices, so use a gap between two pointers to measure distance, and a dummy head so the first node isn\'t a special case.',
+    signals: [
+      '"Remove the n-th node from the end of the list": hold a gap of n.',
+      '"Reorder L0 → Ln → L1 → Ln−1": find the middle, reverse the second half, then weave.',
+      '"All nodes less than x come before nodes greater than or equal to x", keeping "relative order": two output lists.',
+      '"The node at which the two lists intersect": switch heads so that both walk the same total.',
+    ],
+    notThis: [
+      'Merge k Sorted Lists (LC 23) has too many heads to compare one by one: use a heap.',
+      'Reverse Nodes in k-Group (LC 25) is mostly rewiring: the pointers just mark group boundaries.',
+      'Copy List with Random Pointer (LC 138) depends on node identity: use a hash map or interleave copies.',
+    ],
+    concepts: [
+      'Gap: advance fast n steps first, and when fast reaches the last node, slow is just before the target.',
+      'Dummy node: it gives the head a predecessor, so that removing the head needs no extra branch.',
+      'Many hard list problems combine three steps: find the middle, reverse a part, then merge.',
+    ],
+    example: {
+      problem: 'Remove Nth Node From End with 1→2→3→4→5, n = 2',
+      lc: 19,
+      walkthrough: [
+        'Add a dummy before 1. Start with fast and slow both on dummy.',
+        'Move fast 2 steps, to node 2. Slow stays on dummy.',
+        'Move both: fast 3, slow 1. Then fast 4, slow 2. Then fast 5, slow 3.',
+        'fast.next is empty, so stop. Slow is on 3, just before the target node 4.',
+        'Set 3.next to 5. The result is 1→2→3→5.',
+      ],
+    },
+    code: `# Remove Nth Node From End of List
+def remove_nth(head, n):
+    dummy = ListNode(0, head)
+    fast = slow = dummy
+    for _ in range(n):
+        fast = fast.next
+    while fast.next:
+        fast = fast.next
+        slow = slow.next
+    slow.next = slow.next.next
+    return dummy.next`,
+    complexity: 'O(n) time and O(1) space. Recursive solutions and Sort List\'s top-down merge sort use extra call stack space.',
+    pitfalls: [
+      'Not using a dummy: removing the head when n equals the length crashes or needs a special case.',
+      'Stopping slow on the target rather than just before it: you need the predecessor to unlink.',
+      'In Reorder List, forgetting to cut the list at the middle creates a cycle.',
+      'In Rotate List (LC 61), not taking k modulo the length: k can be far larger than the list.',
+    ],
+    pointsToPonder: [
+      'Why does the gap method use one pass, and is it actually cheaper than walking twice?',
+      'In LC 160, why do the two pointers meet at the intersection, or both reach null at the same moment?',
+      'Which of these problems can you solve without changing any next pointers?',
+    ],
+    practice: [21, 83, 876, 19, 143],
+    snippet: '19-two-pointers-on-linked-lists-nth-from-end',
+  },
+
+  '20. Two Pointers + Binary Search': {
+    crux: 'Binary search chooses a candidate answer, and a linear two-pointer pass counts or checks it, or one pointer is replaced with a binary search per element.',
+    signals: [
+      '"K-th smallest distance among all the pairs": search on the distance, and count the pairs at or below it.',
+      '"Minimize the maximum difference" among p pairs: search on the limit, and check it greedily.',
+      '"The minimum magnetic force ... is maximum": search on the gap, and place balls greedily.',
+      '"For each spell, the number of potions that ... at least success": sort one side, then search for each query.',
+    ],
+    notThis: [
+      'A sorted pair search with a fixed target: two pointers alone are O(n), and a search per element only adds a log factor.',
+      'Count of Range Sum (LC 327) counts prefix-sum pairs where index order matters, and sorting would lose it: use merge sort or a Fenwick tree.',
+      'K-th Largest Element (LC 215) has its values on hand: a heap or quickselect is simpler than a search on the answer.',
+    ],
+    concepts: [
+      'The search on the answer needs a monotonic check: if a limit d works, then every larger limit also works.',
+      'Counting pairs in a sorted array within d is O(n), because left never moves back as right increases.',
+      'A per-element binary search costs O(n log n), and it\'s a replacement for a second pointer when the targets aren\'t monotonic.',
+    ],
+    example: {
+      problem: 'Find K-th Smallest Pair Distance with a = [1,2,4,7], k = 3',
+      lc: 719,
+      walkthrough: [
+        'It\'s sorted already, so lo = 0 and hi = 7 − 1 = 6.',
+        'mid = 3: right = 1 adds 1, right = 2 adds 2, and right = 3 moves left to 2 and adds 1. The count is 4, at least k, so hi = 3.',
+        'mid = 1: right = 1 adds 1, and the others add 0. The count is 1, below k, so lo = 2.',
+        'mid = 2: right = 1 adds 1, right = 2 moves left to 1 and adds 1, and right = 3 adds 0. The count is 2, below k, so lo = 3.',
+        'lo = hi = 3. The sorted distances are 1,2,3,3,5,6, so the third is indeed 3.',
+      ],
+    },
+    code: `# Find K-th Smallest Pair Distance
+def kth_distance(a, k):
+    a.sort()
+
+    def count_within(d):
+        left = total = 0
+        for right in range(len(a)):
+            while a[right] - a[left] > d:
+                left += 1
+            total += right - left
+        return total
+
+    lo, hi = 0, a[-1] - a[0]
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if count_within(mid) >= k:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo`,
+    complexity: 'O(n log n + n log W) time for LC 719, where W is the value range. O(1) extra space beyond sorting. Search-per-query problems cost O((n + m) log m).',
+    pitfalls: [
+      'Using lo = mid when searching for the smallest valid answer: the loop can run forever.',
+      'Counting with right − left + 1 includes the element paired with itself, but pairs need two different indices.',
+      'Setting hi to a[n − 1] instead of the largest distance, or forgetting to sort before computing hi.',
+      'In LC 2300, spell × potion overflows 32 bits, and floor division gives the wrong threshold: use 64-bit products or ceiling division.',
+    ],
+    pointsToPonder: [
+      'Why is the final lo guaranteed to be an actual distance, even though mid values often aren\'t?',
+      'How do you decide between a search on the answer and a heap of k candidates?',
+      'If the queries were sorted, how could LC 2300 drop its binary search?',
+    ],
+    practice: [2300, 15, 16, 1552, 719],
+    snippet: '20-two-pointers-binary-search',
+  },
+
+  '21. Two Pointers + Greedy': {
+    crux: 'Sort, then let the two pointers decide who to match next, with an exchange argument showing that the extreme choice is always safe.',
+    signals: [
+      '"Each boat carries at most two people at the same time": pair the heaviest with the lightest, if they fit.',
+      '"Each child ... at most one cookie" or "each player ... at most one trainer": maximize matches between two sorted lists.',
+      '"Minimize the maximum pair sum": pair the smallest with the largest.',
+      '"Play a token face up or face down" (LC 948): buy with the cheapest and sell the dearest.',
+    ],
+    notThis: [
+      'Boats that hold more than two people: that\'s bin packing, which has no such greedy solution.',
+      'Partition to K Equal Sum Subsets (LC 698) has to fill exactly equal groups: use backtracking or a bitmask DP.',
+      'Maximum Distance Between a Pair of Values (LC 1855) is listed here, but both arrays are already sorted and the pointers move the same way, with no pairing argument.',
+    ],
+    concepts: [
+      'Exchange argument: take any optimal answer, swap in the greedy choice, and show that it\'s no worse.',
+      'The heaviest person has to go somewhere. If they can\'t fit with the lightest, they can\'t fit with anyone.',
+      'Same-direction matching: when a resource is too small for the current need, it\'s too small for all later ones.',
+    ],
+    example: {
+      problem: 'Boats to Save People with people = [3,2,2,1], limit = 3',
+      lc: 881,
+      walkthrough: [
+        'Sort to get [1,2,2,3], with l = 0, r = 3.',
+        '1 + 3 = 4 is over the limit, so 3 goes alone. r = 2 and boats = 1.',
+        '1 + 2 = 3 fits, so they share. l = 1, r = 1 and boats = 2.',
+        'l = r = 1: 2 + 2 = 4 is over the limit, because that\'s one person counted twice, so they go alone. r = 0 and boats = 3.',
+        'The answer is 3.',
+      ],
+    },
+    code: `# Boats to Save People
+def num_boats(people, limit):
+    people.sort()
+    l, r = 0, len(people) - 1
+    boats = 0
+    while l <= r:
+        if people[l] + people[r] <= limit:
+            l += 1
+        r -= 1
+        boats += 1
+    return boats`,
+    complexity: 'O(n log n) time for the sort and O(n) for the pass. O(1) extra space, or O(log n) for the sort\'s stack.',
+    pitfalls: [
+      'Using l < r in Boats: the last single person never gets a boat.',
+      'Moving the wrong pointer when a pair doesn\'t fit: the heavy person must leave, because the light one might still fit with someone else.',
+      'In Bag of Tokens (LC 948), playing the last token face down for no gain: stop when the trade can\'t raise the score.',
+      'Assuming every sort-and-pair problem pairs opposite ends: LC 455 and LC 2410 match small with small.',
+    ],
+    pointsToPonder: [
+      'Can you write out the exchange argument for pairing the heaviest with the lightest?',
+      'When is it best to pair opposite ends, and when should you pair neighbors?',
+      'In Advantage Shuffle (LC 870), why give up your weakest card on their strongest when you can\'t beat it?',
+    ],
+    practice: [455, 2410, 881, 11, 948],
+    snippet: '21-two-pointers-greedy-boats-to-save-people',
+  },
+
+  '22. Sliding Window + Prefix Sum': {
+    crux: 'A subarray sum is the difference of two prefix sums, so with negatives you look up the partner prefix instead of moving a window.',
+    signals: [
+      '"Total number of subarrays whose sum equals k", where values may be negative: a hash map of prefix counts.',
+      '"Sum at least K", where values may be negative: a monotonic deque over prefix sums.',
+      '"Two non-overlapping subarrays with lengths firstLen and secondLen": prefix sums plus the best block so far.',
+      '"The sum of left is less than or equal to the sum of mid": two boundaries on a prefix array that only move forward.',
+    ],
+    notThis: [
+      'All values are positive and you want a sum threshold: a plain window needs only O(1) space.',
+      'Maximum Subarray (LC 53) has no target: Kadane\'s algorithm is simpler.',
+      'Values change between queries (LC 307): a prefix array would need rebuilding, so use a Fenwick or segment tree.',
+    ],
+    concepts: [
+      'sum(i..j) = P[j + 1] − P[i], so for each end you want the number of earlier prefixes equal to P − k.',
+      'Seed the map with {0: 1}, which stands for the empty prefix, so that a subarray starting at index 0 gets counted.',
+      'Negatives break a window because the sum no longer rises and falls predictably as the window grows and shrinks.',
+    ],
+    example: {
+      problem: 'Subarray Sum Equals K with a = [1,-1,1,1], k = 1',
+      lc: 560,
+      walkthrough: [
+        'Start with seen = {0: 1}, prefix = 0 and count = 0.',
+        'x = 1: prefix = 1. seen[0] = 1, so count = 1. Now seen = {0: 1, 1: 1}.',
+        'x = -1: prefix = 0. seen[-1] = 0, so count stays 1. Now seen = {0: 2, 1: 1}.',
+        'x = 1: prefix = 1. seen[0] = 2, so count = 3. Now seen = {0: 2, 1: 2}.',
+        'x = 1: prefix = 2. seen[1] = 2, so count = 5. The answer is 5.',
+      ],
+    },
+    code: `# Subarray Sum Equals K
+def subarray_sum(a, k):
+    seen = Counter({0: 1})
+    prefix = count = 0
+    for x in a:
+        prefix += x
+        count += seen[prefix - k]
+        seen[prefix] += 1
+    return count`,
+    complexity: 'O(n) expected time and O(n) space for the map. A deque version is also O(n), and a fixed-length block needs only the prefix array.',
+    pitfalls: [
+      'Forgetting the {0: 1} seed misses every subarray that starts at index 0.',
+      'Updating seen before the lookup with k = 0 counts the empty subarray.',
+      'Using a window on LC 560 because it "looks like" LC 209: a negative makes it miss answers.',
+      'Prefix sums can overflow 32-bit when the array is long and values are large.',
+    ],
+    pointsToPonder: [
+      'For LC 930 and LC 1248, the window and prefix approaches both work. Which needs less memory?',
+      'What should the map store if you want the longest subarray rather than a count? (See LC 325.)',
+      'Why does LC 862 use a deque rather than a map, even though both look at prefix sums?',
+    ],
+    practice: [2483, 560, 930, 1248, 862],
+    snippet: '22-sliding-window-prefix-sum-subarray-sum-equals-k',
+  },
+
+  '23. Sliding Window on Matrix / 2D': {
+    crux: 'Fix a band of rows to squash the 2D problem into one array of column values, then run a 1D technique on it.',
+    signals: [
+      '"Number of non-empty submatrices that sum to target": fix top and bottom rows, then count as in 1D.',
+      '"Sum of a rectangle ... no larger than k": the same squash, then a sorted set of prefixes.',
+      '"Calculate the sum of the elements ... inside the rectangle", with many queries: a 2D prefix sum.',
+      '"Largest rectangle containing only 1\'s": heights per row, which is a histogram.',
+    ],
+    notThis: [
+      'Maximal Rectangle (LC 85) and Count Submatrices With All Ones (LC 1504) are listed here but use row heights with a monotonic stack.',
+      'Maximal Square (LC 221) is a DP: dp[r][c] depends on three neighbors.',
+      'Word Search (LC 79) on a grid needs paths, not rectangles: use DFS.',
+    ],
+    concepts: [
+      'With R rows, there are O(R²) bands. Each one adds its new row to a running array of column sums in O(C).',
+      'Run the loop over the smaller dimension: O(min(R,C)² × max(R,C)).',
+      '2D prefix: P[r+1][c+1] = a[r][c] + P[r][c+1] + P[r+1][c] − P[r][c], with inclusion-exclusion for each rectangle query.',
+    ],
+    example: {
+      problem: 'Number of Submatrices That Sum to Target with m = [[1,-1],[-1,1]], target = 0',
+      lc: 1074,
+      walkthrough: [
+        'Row 0 only, columns [1,-1]: the prefixes are 1 and 0. The prefix 0 matches the seed, so total = 1.',
+        'Rows 0 to 1, columns [0,0]: the prefixes are 0 and 0. The first matches once and the second twice, so total = 4.',
+        'Row 1 only, columns [-1,1]: the prefixes are -1 and 0. The prefix 0 matches the seed, so total = 5.',
+        'The answer is 5.',
+      ],
+    },
+    code: `# Number of Submatrices That Sum to Target
+def num_submatrix(m, target):
+    R, C = len(m), len(m[0])
+    total = 0
+    for top in range(R):
+        col = [0] * C
+        for bottom in range(top, R):
+            for c in range(C):
+                col[c] += m[bottom][c]
+            seen = Counter({0: 1})
+            prefix = 0
+            for v in col:
+                prefix += v
+                total += seen[prefix - target]
+                seen[prefix] += 1
+    return total`,
+    complexity: 'O(R² × C) time and O(C) space, with expected-time hashing. LC 363 adds a log factor for its sorted set.',
+    pitfalls: [
+      'Resetting col only when bottom changes: it must reset for each new top, and accumulate as bottom grows.',
+      'Forgetting a fresh seen map for each band: prefixes from another band mean nothing here.',
+      'Off-by-one in 2D prefix queries: subtract at r1 and c1, and add back the corner P[r1][c1].',
+      'Looping bands over the larger dimension when R and C differ a lot: this can turn a pass into a timeout.',
+    ],
+    pointsToPonder: [
+      'Why does squashing rows lose nothing for a rectangle problem?',
+      'Which 1D technique does each problem reduce to: Kadane, hash map, sorted set or stack?',
+      'LC 2132 combines a prefix sum with a difference array. What does each one answer?',
+    ],
+    practice: [304, 221, 1504, 1074, 363],
+    snippet: '23-sliding-window-on-matrix-best-row-band-1d-window',
+  },
+
+  '24. Shrinkable vs Non-Shrinkable Window Templates': {
+    crux: 'For a longest window, you never need a smaller one, so you can slide at the current size instead of shrinking back to valid.',
+    signals: [
+      '"Longest" or "maximum length" and you only return the length: the non-shrinkable form applies.',
+      '"Minimum length" or "smallest window": record while shrinking with a while loop.',
+      '"After performing at most k operations": a cost that makes the window invalid, and validity is restored by moving left.',
+      '"Number of subarrays": you need each right\'s exact valid boundary, so shrink fully.',
+    ],
+    notThis: [
+      'Counting problems such as LC 992: non-shrinkable windows can be invalid, so right − left + 1 isn\'t a count of valid subarrays.',
+      'Shortest-window problems such as LC 76: using `if` moves left only once per step, which can miss the minimum.',
+      'Anything where the window itself is the answer: the final non-shrinkable window may be invalid, so record the start whenever the size grows.',
+    ],
+    concepts: [
+      'Shrinkable: `while invalid: move left`. The window is always valid after the loop, and left can move many steps.',
+      'Non-shrinkable: `if invalid: move left`. Right and left move together when invalid, so the size never decreases, and its final value is the answer.',
+      'In LC 424, max_freq never decreases. A stale value is safe, because the size can only grow when a truly higher frequency appears.',
+    ],
+    example: {
+      problem: 'Longest Repeating Character Replacement with s = "AABABBA", k = 1',
+      lc: 424,
+      walkthrough: [
+        'right = 0 to 3 ("AABA"): max_freq reaches 3 and the size is 4. Changes needed = 4 − 3 = 1, which is allowed.',
+        'right = 4 ("AABAB"): size 5, needing 2 changes. Slide: drop A, so left = 1 and the size stays 4.',
+        'right = 5 ("ABABB"): size 5, needing 2 changes. Slide: drop A, so left = 2.',
+        'right = 6 ("BABBA"): B has count 3, so size 5 needs 2 changes. Slide: drop B, so left = 3.',
+        'The final window [3..6] is "ABBA", which needs 2 changes and so isn\'t itself valid, but its size is the answer: 7 − 3 = 4.',
+      ],
+    },
+    code: `# Longest Repeating Character Replacement — non-shrinkable
+def character_replacement(s, k):
+    cnt = Counter()
+    left = max_freq = 0
+    for right, c in enumerate(s):
+        cnt[c] += 1
+        max_freq = max(max_freq, cnt[c])
+        if right - left + 1 - max_freq > k:
+            cnt[s[left]] -= 1
+            left += 1
+    return len(s) - left`,
+    complexity: 'Both are O(n) time. Non-shrinkable moves left at most once per step, so it has a smaller constant, and it lets LC 424 skip rescanning for the frequency.',
+    pitfalls: [
+      'Reading the final non-shrinkable window as the answer itself: "ABBA" above isn\'t valid, and only its length is meaningful.',
+      'Using `if` on a shortest-window problem: left must move as far as it can on each step.',
+      'Mixing the two: an `if` shrink with right − left + 1 counted as subarrays gives wrong totals.',
+      'Trying to decrease max_freq in LC 424 when characters leave: this costs a rescan and doesn\'t change the answer.',
+    ],
+    pointsToPonder: [
+      'Why does the window size never decrease in the `if` form, and why does that prove the final size is the maximum?',
+      'What would you record to recover an actual longest window rather than just its length?',
+      'When would you still prefer the `while` form for a "longest" problem?',
+    ],
+    practice: [3, 209, 1004, 424, 76],
+    snippet: '24-shrinkable-vs-non-shrinkable-templates',
+  },
+
+  '25. Advanced / Contest-Level Two Pointers & Sliding Window': {
+    crux: 'Hard problems are a basic window plus one twist, so name the base template first, then ask what breaks it and what fixes that.',
+    signals: [
+      '"The minimum value equals minK and the maximum equals maxK": track the last position of each requirement.',
+      '"Shortest subarray with sum at least K", where values may be negative: monotonicity is gone, so use a deque over prefix sums.',
+      '"max(chargeTimes) + k × sum(runningCosts) <= budget": a window with a monotonic deque for the max term.',
+      '"Product of its sum and its length is strictly less than k": a positive cost that grows with size, so a plain window still works.',
+    ],
+    notThis: [
+      'Sum of Total Strength of Wizards (LC 2281) is listed here, but it\'s a monotonic stack for the range where each minimum applies, plus a prefix of prefix sums.',
+      'Count of Smaller Numbers After Self (LC 315) has no window: count while merging, or use a Fenwick tree.',
+      'Minimum Number of Moves to Make Palindrome (LC 2193) is a greedy adjacent-swap simulation, even though it pairs both ends.',
+    ],
+    concepts: [
+      'First test: is validity monotonic? If so, a plain window works. If negatives break that, use prefix sums.',
+      'Second test: what does the window summary need? Sum needs a variable, max needs a deque, median needs heaps, and distinct needs a map.',
+      'Third test: are you counting? If so, count by right endpoint, and use atMost or last positions.',
+    ],
+    example: {
+      problem: 'Count Subarrays With Fixed Bounds with a = [1,3,5,2,7,5], minK = 1, maxK = 5',
+      lc: 2444,
+      walkthrough: [
+        'Start with bad = last_min = last_max = -1 and total = 0.',
+        'i = 0, x = 1: last_min = 0. min(0, -1) − (-1) = 0, so total stays 0.',
+        'i = 1, x = 3: nothing changes, so total stays 0.',
+        'i = 2, x = 5: last_max = 2. min(0, 2) − (-1) = 1, so total = 1.',
+        'i = 3, x = 2: nothing changes, and it adds 1 again, so total = 2.',
+        'i = 4, x = 7: out of range, so bad = 4. min(0, 2) − 4 is negative, which adds 0.',
+        'i = 5, x = 5: last_max = 5. min(0, 5) − 4 is negative, which adds 0. The answer is 2.',
+      ],
+    },
+    code: `# Count Subarrays With Fixed Bounds
+def count_fixed_bounds(a, min_k, max_k):
+    bad = last_min = last_max = -1
+    total = 0
+    for i, x in enumerate(a):
+        if x < min_k or x > max_k:
+            bad = i
+        if x == min_k:
+            last_min = i
+        if x == max_k:
+            last_max = i
+        total += max(0, min(last_min, last_max) - bad)
+    return total`,
+    complexity: 'O(n) time and O(1) space here. Elsewhere in this section, deque problems are O(n), heap problems are O(n log k), and binary search on the answer adds O(log W).',
+    pitfalls: [
+      'Forgetting max(0, ...): a stale last_min before the bad index would subtract from the total.',
+      'Using shrink logic on LC 2444: the count depends on three positions, not on one window boundary.',
+      'When min_k equals max_k, both last positions must update from the same element: use two separate `if`s, not `elif`.',
+      'Totals for subarray counts can reach about n²/2: use a 64-bit type in C++.',
+    ],
+    pointsToPonder: [
+      'Pick any problem here and name the base template. What single thing stops the base template from working?',
+      'What do Fixed Bounds (LC 2444) and Subarrays with K Different Integers (LC 992) share in how they count?',
+      'What does an interviewer learn when you say why a plain window fails before you fix it?',
+    ],
+    practice: [239, 76, 2444, 992, 862],
+    snippet: '14-sliding-window-monotonic-deque',
+  },
 }
