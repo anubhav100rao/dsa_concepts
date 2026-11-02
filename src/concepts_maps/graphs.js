@@ -914,9 +914,9 @@ return result`,
       walkthrough: [
         'Search in reverse from each ocean, climbing only to cells of equal or greater height.',
         'Pacific starts are the top row and left column: (0,0), (0,1), (1,0).',
-        'From there, the only new cell is (1,1) with height 1. It is lower than its neighbors of height 2, so pac = {(0,0), (0,1), (1,0)}.',
+        'The only unvisited cell is (1,1) with height 1. It is lower than its neighbors of height 2, so the search can\'t climb to it, and pac = {(0,0), (0,1), (1,0)}.',
         'Atlantic starts are the bottom row and right column: (1,0), (1,1), (0,1).',
-        'The only new cell is (0,0) with height 1, which is lower than its neighbors of height 2, so atl = {(0,1), (1,0), (1,1)}.',
+        'The only unvisited cell is (0,0) with height 1, which is also lower than its neighbors, so atl = {(0,1), (1,0), (1,1)}.',
         'The intersection is (0,1) and (1,0), so those are the answer.',
       ],
     },
@@ -1432,10 +1432,41 @@ return [i for i in range(n) if indeg[i] == 0]`,
 
   '25. LCA / Ancestor Queries': {
     crux: 'LCA = deepest node that is an ancestor of both u and v. Compute via parent pointers + depth, binary lifting, or Euler tour + RMQ.',
+    signals: [
+      '"Lowest common ancestor" of two nodes, stated outright (LC 236, LC 235).',
+      '"Find the k-th ancestor of a node", with many queries: use binary lifting (LC 1483).',
+      '"Shortest path between two nodes in a tree": the route goes up to the LCA and back down (LC 2096).',
+      '"Each node has a parent pointer" and you must find where two upward paths meet (LC 1650).',
+    ],
+    notThis: [
+      'The graph is a DAG, as in LC 2192: a node has many ancestors and no single lowest one, so use toposort or DFS from each node.',
+      'The tree is a BST, as in LC 235: compare values and walk down in O(h), with no recursion into both sides.',
+      'The path carries updates between queries: LCA alone isn\'t enough, so use heavy-light decomposition.',
+    ],
     concepts: [
       'Naive LCA: walk both up to the same depth, then walk together until they meet — O(h) per query.',
       'Binary lifting: precompute up[v][k] = 2^k-th ancestor in O(n log n); LCA in O(log n) per query.',
       'Tarjan offline LCA: process all queries in a single DFS with DSU — O((n + q) α).',
+    ],
+    example: {
+      problem: 'LCA of a Binary Tree with root 3, children 5 and 1, and 5\'s children 6 and 2. Find the LCA of p = 6 and q = 2',
+      lc: 236,
+      walkthrough: [
+        'lca(3) isn\'t p or q, so it recurses into lca(5).',
+        'lca(5) isn\'t p or q either. lca(6) equals p and returns 6, and lca(2) equals q and returns 2.',
+        'Both sides of 5 returned a node, so lca(5) returns 5.',
+        'lca(1) has empty children, and both return None, so lca(1) returns None.',
+        'At 3, L = 5 and R = None, so it returns 5. The answer is 5.',
+        'With p = 5 and q = 6 instead, lca(5) returns 5 straight away without looking below it. That is right, as a node counts as its own ancestor.',
+      ],
+    },
+    complexity: 'The recursive version is O(n) per query with O(h) stack. Binary lifting is O(n log n) to build and O(log n) per query.',
+    pitfalls: [
+      'The early return assumes both nodes exist in the tree, which LC 236 guarantees. If one can be missing, you must check that it was actually found.',
+      'Comparing values when they can repeat: compare node identity.',
+      'Binary lifting: first bring both nodes to the same depth, then jump together while their ancestors differ. The answer is then the parent, not the node itself.',
+      'Binary lifting: an ancestor past the root must be a sentinel such as -1 or the root itself, or a large k crashes (LC 1483).',
+      'LC 1650: walking both pointers without switching heads never meets if the depths differ. Switch to the other head at the top.',
     ],
     pointsToPonder: [
       'When is binary lifting worth the preprocessing — typically many queries on a static tree.',
@@ -1449,14 +1480,44 @@ def lca(root, p, q):
     R = lca(root.right, p, q)
     return root if L and R else (L or R)
 return lca(root, p, q)`,
+    practice: [235, 236, 1650, 2096, 1483],
   },
 
   '26. Centroid Decomposition / Heavy-Light Decomposition': {
     crux: 'Decompose a tree into O(log n) layers so path / subtree queries become O(log² n).',
+    signals: [
+      '"Count pairs of nodes whose path has length k" on a tree with n up to 10^5.',
+      '"Update the value at a node, then query the max or sum on the path from u to v".',
+      '"For each query, find the nearest marked node" on a large tree.',
+      'A tree problem where a simple per-node DFS is O(n²) and the limits demand polylog.',
+    ],
+    notThis: [
+      'n is small enough for O(n²): run a DFS from each node.',
+      'You only query subtrees: an Euler tour plus a Fenwick or segment tree is much simpler.',
+      'The path property works with a prefix from the root, as in LC 2791: a hash map of XOR masks solves it with no decomposition.',
+    ],
     concepts: [
       'Centroid decomposition: recursively pick the centroid (max-subtree-size minimized); good for "all paths" / distance problems.',
       'HLD: split tree into heavy chains; map each chain to a segment tree segment; path queries traverse O(log n) chains.',
       'Both give a clean way to answer "sum/max on path u→v" or "all paths of length k" in polylog per query.',
+    ],
+    example: {
+      problem: 'Find the centroid of the path 0-1-2-3-4',
+      walkthrough: [
+        'calc(0,-1) gives size = [5,4,3,2,1], so tree_size // 2 = 2.',
+        'centroid(0): child 1 has size 4 > 2, so move to 1.',
+        'centroid(1): child 2 has size 3 > 2, so move to 2.',
+        'centroid(2): child 3 has size 2, which isn\'t > 2, and 1 is the parent. So return 2.',
+        'Removing node 2 leaves pieces of size 2 and 2, so each is at most half the tree.',
+      ],
+    },
+    complexity: 'Centroid decomposition builds in O(n log n) with depth O(log n). HLD is O(n) to build and O(log² n) per path query with a segment tree.',
+    pitfalls: [
+      'Reusing old sizes: recompute size for the piece after removing a centroid, since `tree_size` changes each time.',
+      'Counting a pair from the same child subtree when combining paths through a centroid: subtract those pairs, or merge the subtrees one at a time.',
+      'HLD: always move up from the chain whose head is deeper, not the node which is deeper.',
+      'Recursion depth on a path-shaped tree: both sizing passes can go n levels deep.',
+      'The entry code assumes `removed` is a boolean array you keep up to date as centroids get taken.',
     ],
     pointsToPonder: [
       'Centroid decomposition vs HLD — when is each natural (centroid for path-counting, HLD for path-aggregation with updates)?',
@@ -1475,14 +1536,47 @@ def centroid(u, p, tree_size):
         if v != p and not removed[v] and size[v] > tree_size // 2:
             return centroid(v, u, tree_size)
     return u`,
+    practice: [2791],
   },
 
   '27. Functional Graph (Successor Graph)': {
     crux: 'Every node has exactly one outgoing edge (next[u]); the graph is a forest of "rho-shaped" components — a tree feeding into a cycle.',
+    signals: [
+      '"Each node has at most one outgoing edge", given as edges[i] (LC 2360, LC 2876).',
+      '"Each employee has one favorite person": favorite[i] is the single edge (LC 2127).',
+      '"n + 1 values in the range 1 to n, with one repeated, using O(1) space": index → value is a next pointer (LC 287).',
+      '"Where does the cycle begin?" in a linked list (LC 142).',
+      '"Where do you end up after k steps?" with a huge k: use binary lifting.',
+    ],
+    notThis: [
+      'Nodes can have several outgoing edges: this structure is gone, so use 3-color DFS or SCCs.',
+      'You can spare O(n) memory and need only one cycle check: a visited set is easier than Floyd.',
+      'Many nodes share a successor but you need paths from the root: reverse the edges to get a tree and solve it there.',
+    ],
     concepts: [
       'Floyd\'s tortoise-and-hare finds the cycle in O(n) time, O(1) space (Linked List Cycle II, Find Duplicate).',
       'Binary lifting on next[] gives O(log n) k-th-ancestor / k-th-successor queries.',
       'Maximum Employees Invited (LC 2127): each employee → favorite forms a functional graph; sum of biggest 2-cycles + tail handling.',
+    ],
+    example: {
+      problem: 'Linked List Cycle II with 3 → 2 → 0 → -4, where -4 points back to 2',
+      lc: 142,
+      walkthrough: [
+        'slow and fast start at 3.',
+        'Step 1: slow = 2, fast = 0.',
+        'Step 2: slow = 0, and fast moves through -4 to 2.',
+        'Step 3: slow = -4, and fast moves through 0 to -4. They meet at -4.',
+        'Reset slow to the head and keep fast at -4, then move both one step at a time.',
+        'Both land on node 2 after one step, so the cycle starts at node 2.',
+      ],
+    },
+    complexity: 'Floyd is O(n) time and O(1) space. Finding all cycles with timestamps is O(n) time and space. Binary lifting is O(n log k) to build and O(log k) per query.',
+    pitfalls: [
+      'Moving fast by 2 in the second phase: both pointers must move by 1 after the reset.',
+      'LC 2360: edges[i] can be -1, so stop the walk there.',
+      'LC 2360: a node seen in an earlier walk isn\'t a new cycle, so keep the walk id and only count hits from the current one.',
+      'LC 287: start at index 0, which nothing points to, because values are 1 to n. Then treat nums[i] as next.',
+      'LC 2127 has two separate cases: the largest single cycle, or the sum over all 2-cycles with their longest tails. The answer is the larger of the two.',
     ],
     pointsToPonder: [
       'Why does every functional graph component have EXACTLY ONE cycle (with trees hanging off)?',
@@ -1500,14 +1594,43 @@ slow = head
 while slow != fast:
     slow = slow.next; fast = fast.next
 return slow`,
+    practice: [142, 287, 2360, 2876, 2127],
   },
 
   '28. Graph Simulation / Degree-Based': {
     crux: 'Many problems collapse to counting in/out degrees and applying a small algebraic rule — no traversal needed.',
+    signals: [
+      '"Trusted by everyone, and trusts nobody": that describes in-degree n - 1 and out-degree 0 (LC 997).',
+      '"Network rank of two cities": the sum of their degrees, adjusted for a shared road (LC 1615).',
+      '"Everyone knows the celebrity, who knows no one", with a limited `knows` API (LC 277).',
+      '"Connected trio with minimum degree": count edges leaving a triangle (LC 1761).',
+    ],
+    notThis: [
+      'The answer depends on reachability, as in LC 2316: degrees can\'t tell you component size, so use Union-Find or DFS.',
+      'A path has to be followed, as in LC 1443 (apples in a tree): subtree information is needed, so use DFS.',
+      'Edges have weights that change the outcome: counting edges isn\'t enough.',
+    ],
     concepts: [
       'Find the Town Judge (LC 997): the judge has in-degree n-1 and out-degree 0.',
       'Maximal Network Rank (LC 1615): for each pair (u,v), rank = deg[u] + deg[v] - (1 if edge u-v else 0).',
       'Min Degree of a Connected Trio (LC 1761): enumerate triangles, sum (deg-2) for each vertex.',
+    ],
+    example: {
+      problem: 'Find the Town Judge with n = 3, trust = [[1,3],[2,3]]',
+      lc: 997,
+      walkthrough: [
+        '[1,3] gives outdeg[1] = 1 and indeg[3] = 1.',
+        '[2,3] gives outdeg[2] = 1 and indeg[3] = 2.',
+        'i = 1: indeg is 0, not 2, so no. i = 2: indeg is 0, so no.',
+        'i = 3: indeg = 2 = n - 1 and outdeg = 0, so return 3.',
+      ],
+    },
+    complexity: 'LC 997 is O(n + E) time and O(n) space. LC 1615 is O(n²) with an adjacency set or matrix. LC 1761 is O(n³) with a matrix.',
+    pitfalls: [
+      'Sizing arrays as n on 1-indexed input: LC 997 needs n + 1.',
+      'LC 997 with n = 1 and no trust pairs: person 1 is the judge, and the check handles it because indeg = 0 = n - 1.',
+      'LC 1615: a road between the two cities is counted in both degrees, so subtract 1 when they are adjacent.',
+      'LC 277: the elimination pass only produces a candidate, so a second pass must verify it, as there may be no celebrity.',
     ],
     pointsToPonder: [
       'When does the problem ONLY need degrees — and what info would you lose by traversing instead?',
@@ -1521,14 +1644,44 @@ for a, b in trust:
 for i in range(1, n + 1):
     if indeg[i] == n - 1 and outdeg[i] == 0: return i
 return -1`,
+    practice: [997, 1557, 1615, 277, 1761],
   },
 
   '29. Advanced — Complement Graph / Virtual Graph': {
     crux: 'When the real graph is dense / huge, work on its complement (or via virtual super-nodes) to keep BFS/DFS cheap.',
+    signals: [
+      '"Two nodes are connected unless the pair is listed", with n around 10^5: the real graph is nearly complete.',
+      '"Change at most one 0 to 1 and find the largest island": label islands so you can sum them (LC 827).',
+      '"A grid with a side of 10^6 and at most 200 blocked squares": only the area near blocks matters (LC 1036).',
+      '"Swap any listed pair any number of times": each component sorts as one unit (LC 1202).',
+    ],
+    notThis: [
+      'The graph is sparse: run plain BFS on it directly.',
+      'The grid is small enough to visit every cell: coordinate compression only adds risk.',
+      'Components are the only thing you need, with no merge step: use normal Union-Find or DFS.',
+    ],
     concepts: [
       'Complement-graph BFS: keep a "not visited" set; for each popped node, iterate the unvisited set and remove neighbors in the original graph from it.',
       'Virtual node merge (LC 827 Making A Large Island): treat each island as a virtual super-node so merging is O(1) per land cell.',
       'Coordinate compression (Escape a Large Maze, LC 1036): the meaningful grid is bounded by O(blocked²), not 10^6 × 10^6.',
+    ],
+    example: {
+      problem: 'Complement BFS with n = 4 and original edges 0-1, 0-2, starting from 0',
+      walkthrough: [
+        'unvisited starts as {0,1,2,3}, and removing the source leaves {1,2,3}. q = [0].',
+        'Pop 0. Nodes 1 and 2 are neighbors in the original graph, so they aren\'t complement neighbors and stay. Node 3 is, so it moves to q, leaving {1,2}.',
+        'Pop 3. g[3] is empty, so both 1 and 2 are complement neighbors. They move to q, leaving {}.',
+        'Pop 1, then 2: nothing is left to scan.',
+        'All 4 nodes were reached, so the complement graph has one component.',
+      ],
+    },
+    complexity: 'Complement BFS is O(V + E) expected: a scanned node either leaves unvisited for good, or is charged to an original edge. LC 827 is O(R x C). LC 1036 is O(B²) for B blocks.',
+    pitfalls: [
+      'Modifying the set while iterating over it: the entry code loops over list(unvisited) for this reason.',
+      'Storing g[u] as a list: each membership check becomes O(deg), so use a hash set.',
+      'LC 827: a 0 next to the same island twice must count its size only once, so collect neighboring island ids in a set.',
+      'LC 827: if the grid has no 0, the answer is the whole grid.',
+      'LC 1036: check from both the source and the target. One side escaping doesn\'t prove the other side isn\'t enclosed.',
     ],
     pointsToPonder: [
       'Why does the complement-graph BFS achieve O(V + E) amortized (each node removed from the "unvisited" set at most once)?',
@@ -1547,14 +1700,45 @@ def bfs(src):
             if v not in g[u]:    # edge exists in complement
                 nxt.append(v); unvisited.discard(v)
         q.extend(nxt)`,
+    practice: [1202, 827, 1036, 2493],
   },
 
   '30. Design / Online Graph Problems': {
     crux: 'Maintain an evolving graph; pick a structure (DSU for connectivity, adj-list + Dijkstra for distances) that updates cheaply.',
+    signals: [
+      '"After each operation, return the number of..." with operations arriving in order (LC 305).',
+      '"Implement addEdge and shortestPath" as a class (LC 2642).',
+      '"Find the earliest time when everyone is connected", given time-stamped logs (LC 1101).',
+      '"Process requests in order, and reject one if it breaks a restriction" (LC 2076).',
+    ],
+    notThis: [
+      'The graph is fixed and all queries come together: sort them offline and sweep (LC 1697 is the classic).',
+      'Edges can be deleted online: plain Union-Find can\'t split groups, so process in reverse or use offline rollback.',
+      'Only a single answer at the end is required: build the full graph, then run the usual algorithm once.',
+    ],
     concepts: [
       'Number of Islands II (LC 305): online DSU — for each addLand, union with 4 neighbors and update component count.',
       'Design Graph with SPC (LC 2642): rebuild adjacency on addEdge; Dijkstra per shortestPath query (or maintain APSP if queries dominate).',
       'Earliest Moment Everyone Becomes Friends (LC 1101): sort logs by time, DSU union, return time when components == 1.',
+    ],
+    example: {
+      problem: 'Number of Islands II on a 3 x 3 grid with positions = [[0,0],[0,1],[1,2],[2,1]]',
+      lc: 305,
+      walkthrough: [
+        'Add (0,0): count = 1, no land neighbors. out = [1].',
+        'Add (0,1): count = 2. Its left neighbor (0,0) is land, and union merges them, so count = 1. out = [1,1].',
+        'Add (1,2): count = 2. Neighbors (0,2), (2,2) and (1,1) are all water. out = [1,1,2].',
+        'Add (2,1): count = 3. Neighbors (1,1), (2,0) and (2,2) are all water. out = [1,1,2,3].',
+        'The answer is [1,1,2,3].',
+      ],
+    },
+    complexity: 'LC 305 is O(k α(k)) for k positions and O(k) space. LC 2642 is O(1) per addEdge and O(E log V) per Dijkstra query.',
+    pitfalls: [
+      'LC 305: the same position can repeat. Without the check, count goes up for land that already exists.',
+      'Decrementing for every land neighbor: two neighbors can already share an island, so reduce the count only when the roots differ.',
+      'Encoding cells as r x C + c with the wrong width: distinct cells then collide.',
+      'LC 1101: sort the logs by time first, as they aren\'t guaranteed to be in order.',
+      'LC 2076: check the restrictions against the roots before merging, as you can\'t undo a union.',
     ],
     pointsToPonder: [
       'Is the workload READ-heavy or WRITE-heavy — and does that change which structure dominates?',
@@ -1579,6 +1763,8 @@ for r, c in positions:
         if nb in parent: union((r, c), nb)
     out.append(count)
 return out`,
+    practice: [261, 1101, 305, 2642, 2076],
+    snippet: '35-number-of-islands-ii-dynamic-dsu',
   },
 }
 
