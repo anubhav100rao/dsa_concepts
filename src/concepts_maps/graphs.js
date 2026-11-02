@@ -719,10 +719,39 @@ return bridges`,
 
   '13. Euler Path / Circuit': {
     crux: 'Hierholzer: DFS that consumes edges and APPENDS to the path on the way out — reverse final list.',
+    signals: [
+      '"Use all the tickets exactly once" (LC 332).',
+      '"Rearrange the pairs so that the end of one equals the start of the next" (LC 2097).',
+      '"Shortest string that contains every combination as a substring": a de Bruijn sequence (LC 753).',
+      '"Draw this without lifting the pen", or "traverse every road once".',
+    ],
+    notThis: [
+      'You must visit every node once rather than every edge: that is Hamiltonian, so use bitmask DP.',
+      'Edges can be skipped, and you only want some route from A to B: use BFS or Dijkstra.',
+      'Plain backtracking over tickets can work on small inputs, but it can take exponential time. Hierholzer never gets stuck for good.',
+    ],
     concepts: [
       'Euler circuit exists ⇔ connected + all vertices have even degree (undirected) / in-deg == out-deg (directed).',
       'Euler path exists ⇔ exactly 0 or 2 odd-degree vertices (undirected) / one vertex with out-in = +1, one with -1 (directed).',
       'Reconstruct Itinerary (LC 332): visit edges in lexicographic order via a min-heap per node.',
+    ],
+    example: {
+      problem: 'Reconstruct Itinerary with tickets = [["JFK","KUL"],["JFK","NRT"],["NRT","JFK"]]',
+      lc: 332,
+      walkthrough: [
+        'The heaps are g[JFK] = [KUL, NRT] and g[NRT] = [JFK]. Call dfs(JFK).',
+        'JFK pops KUL, the smallest. dfs(KUL) has no tickets, so path = [KUL]. This dead end has to come last.',
+        'Back at JFK, pop NRT, then dfs(NRT) pops JFK, and dfs(JFK) now has nothing left. So path = [KUL, JFK].',
+        'NRT finishes, so path = [KUL, JFK, NRT]. Then the first JFK finishes, so path = [KUL, JFK, NRT, JFK].',
+        'Reverse it to get JFK → NRT → JFK → KUL, which uses all 3 tickets.',
+      ],
+    },
+    complexity: 'O(E) time for Hierholzer, or O(E log E) with a heap at each node for lexical order. O(V + E) space.',
+    pitfalls: [
+      'Appending when entering a node instead of when leaving: a dead end lands in the middle of the route.',
+      'Forgetting to reverse the final list.',
+      'LC 2097: starting from any node fails. Start from the node where out-degree minus in-degree is 1, if there is one.',
+      'Popping tickets from a list front in a loop: use a heap or sort in reverse and pop from the end, or it costs O(E²).',
     ],
     pointsToPonder: [
       'Why does the "append on the way out" trick give the correct order (when reversed)?',
@@ -740,14 +769,46 @@ def dfs(u):
     path.append(u)
 dfs('JFK')
 return path[::-1]`,
+    practice: [332, 2097, 753],
+    snippet: '32-euler-path-itinerary-style',
   },
 
   '14. Hamiltonian Path / TSP': {
     crux: 'Bitmask DP: dp[mask][i] = best cost to visit exactly the nodes in mask, ending at i.',
+    signals: [
+      '"Visit every node" with n ≤ 12, 15 or 20: the small limit is the biggest hint.',
+      '"Shortest path that visits all nodes", where you may reuse nodes and edges (LC 847).',
+      '"Shortest string containing every word as a substring": words are nodes and overlaps are edges (LC 943).',
+      '"Count the orderings in which each adjacent pair satisfies a rule" (LC 996).',
+    ],
+    notThis: [
+      'You must use every edge rather than every node: Euler path takes linear time, while this takes exponential time.',
+      'n is above about 20: 2^n states won\'t fit, so look for a greedy or other structure.',
+      'The order of visits doesn\'t change the cost: a simple tree or component count is usually enough.',
+    ],
     concepts: [
       'Held-Karp TSP: O(2^n · n²) — feasible up to ~n ≤ 20.',
       'Shortest Path Visiting All Nodes (LC 847): BFS on (mask, node) states; first time mask == full ⇒ shortest.',
       'Hamiltonian path/cycle existence is NP-complete in general; bitmask DP is the standard "small-n" tractable variant.',
+    ],
+    example: {
+      problem: 'Shortest Path Visiting All Nodes with graph = [[1],[0,2],[1]], the path 0-1-2',
+      lc: 847,
+      walkthrough: [
+        'full = 111 in binary. Seed every start: (0, 001, 0), (1, 010, 0), (2, 100, 0).',
+        'Popping the seeds pushes (1, 011, 1), (0, 011, 1), (2, 110, 1) and (1, 110, 1).',
+        'Pop (1, 011, 1). Neighbor 0 gives (0, 011), which is already seen. Neighbor 2 gives (2, 111, 2), which is new.',
+        'Pop (0, 011, 1) and (2, 110, 1): their only neighbor gives a state already seen.',
+        'Pop (1, 110, 1). Neighbor 0 gives (0, 111, 2), which is new. Neighbor 2 is already seen.',
+        'Pop (2, 111, 2). The mask is full, so return 2.',
+      ],
+    },
+    complexity: 'LC 847 has n x 2^n states and takes O(2^n x E) time and O(n x 2^n) space. Held-Karp TSP takes O(n² x 2^n) time.',
+    pitfalls: [
+      'Tracking visited by node alone: LC 847 must revisit nodes, so visited has to be (node, mask).',
+      'Starting BFS from node 0 only: the best walk can start anywhere, so seed all nodes.',
+      'Hamiltonian path problems forbid revisiting: only move to nodes not already in the mask, unlike LC 847.',
+      'LC 996 has duplicate values: skip equal values at the same step, or you count the same arrangement twice.',
     ],
     pointsToPonder: [
       'Why does the state need BOTH mask and current node (not just mask)?',
@@ -767,14 +828,45 @@ while q:
         if (v, nmask) not in seen:
             seen.add((v, nmask))
             q.append((v, nmask, d + 1))`,
+    practice: [847, 996, 943],
+    snippet: '29-bfs-with-extra-state',
   },
 
   '15. Network Flow / Matching': {
     crux: 'Max-flow = min-cut. Build residual graph; augment via BFS (Edmonds-Karp) or layered DFS (Dinic\'s).',
+    signals: [
+      '"Assign each X to at most one Y" to maximize the number of pairs (LC 1820).',
+      '"Maximum number of students / workers / invitations" with a compatibility list.',
+      '"Pick the most items so that no two conflict" on a bipartite graph: that equals nodes minus matching (LC 1349).',
+      '"Minimum edges to cut so that s can\'t reach t": min-cut equals max-flow.',
+      '"Send as much as possible through pipes with capacities."',
+    ],
+    notThis: [
+      'n is at most about 12: a bitmask DP over who is taken is usually shorter, as in LC 465.',
+      'Only a ratio or top-k matters, as in LC 857: sort and use a heap. It\'s listed in this section but isn\'t a flow problem.',
+      'The graph is not bipartite: Kuhn\'s algorithm doesn\'t apply, since general matching needs the blossom algorithm.',
+    ],
     concepts: [
       'Bipartite matching ⇔ max-flow on a unit-capacity bipartite graph (Hopcroft-Karp is O(E√V)).',
       'Many problems reduce to flow by clever modeling: project selection, image segmentation, assignment.',
       'For interview-scale problems, bitmask DP or Hungarian usually beats raw flow code.',
+    ],
+    example: {
+      problem: 'Maximum bipartite matching with left node 0 → {0,1} and left node 1 → {0}',
+      walkthrough: [
+        'match = [-1, -1], where match[v] is the left node holding right node v.',
+        'try_match(0): right 0 is free, so match[0] = 0 and result = 1.',
+        'try_match(1) with fresh visited: right 0 is taken by left 0, so try to move left 0 elsewhere.',
+        'try_match(0) again: right 0 is already visited, so it moves on to right 1, which is free. So match[1] = 0.',
+        'That frees right 0, so match[0] = 1. result = 2, and both left nodes are matched.',
+      ],
+    },
+    complexity: 'Kuhn is O(V x E) time and O(V) space. Hopcroft-Karp is O(E x √V), and Dinic is O(V² x E) in general.',
+    pitfalls: [
+      'Reusing visited between left nodes: it must be fresh for each attempt, or augmenting paths get missed.',
+      'Marking left nodes rather than right nodes as visited: the recursion moves through right nodes, so they are what needs marking.',
+      'Treating greedy pairing as optimal: without moving earlier pairs, left 0 taking right 0 would leave left 1 with nothing.',
+      'Max-flow: forgetting the reverse edges in the residual graph, which are what let a later path undo an earlier choice.',
     ],
     pointsToPonder: [
       'How do you MODEL the problem as a flow network — what are sources, sinks, capacities?',
@@ -794,14 +886,46 @@ result = 0
 for u in range(n_left):
     if try_match(u, [False] * n_right): result += 1
 return result`,
+    practice: [1820, 1349, 465],
+    snippet: '33-bipartite-matching-dfs-augmenting-path',
   },
 
   '16. Graph on Grid (Matrix as Graph)': {
     crux: 'Each cell is a node; neighbors = 4 (or 8) adjacent cells satisfying the problem constraint. BFS/DFS/Dijkstra as appropriate.',
+    signals: [
+      '"m x n grid" with "4-directionally connected" cells: each cell is a node.',
+      '"Island", "region", "surrounded" or "enclosed" (LC 200, LC 130).',
+      '"Water can flow to a neighbor with equal or lower height" (LC 417).',
+      '"Path from the top-left to the bottom-right" where you can move in all four directions, including back.',
+    ],
+    notThis: [
+      'You can only move right and down: there are no cycles, so plain DP on the table is simpler.',
+      'A cell\'s value comes only from sums or counts over a rectangle: that is prefix sums, not graph search.',
+      'Cost is on the path and differs by cell, as in LC 1631: the grid is still a graph, but pick Dijkstra rather than BFS.',
+    ],
     concepts: [
       'Cells become "implicit" graph nodes — no need to materialize an edge list.',
       'For "shortest path with obstacles / cost", use Dijkstra or 0-1 BFS; for plain reachability, BFS/DFS.',
       'Mutate the grid in place (mark with sentinel) when allowed — saves a visited set.',
+    ],
+    example: {
+      problem: 'Pacific Atlantic Water Flow with heights = [[1,2],[2,1]]',
+      lc: 417,
+      walkthrough: [
+        'Search in reverse from each ocean, climbing only to cells of equal or greater height.',
+        'Pacific starts are the top row and left column: (0,0), (0,1), (1,0).',
+        'From there, the only new cell is (1,1) with height 1. It is lower than its neighbors of height 2, so pac = {(0,0), (0,1), (1,0)}.',
+        'Atlantic starts are the bottom row and right column: (1,0), (1,1), (0,1).',
+        'The only new cell is (0,0) with height 1, which is lower than its neighbors of height 2, so atl = {(0,1), (1,0), (1,1)}.',
+        'The intersection is (0,1) and (1,0), so those are the answer.',
+      ],
+    },
+    complexity: 'O(R x C) time and space for BFS or DFS. Dijkstra on a grid is O(R x C x log(R x C)).',
+    pitfalls: [
+      'Mixing up the row and column limits on a non-square grid: this often passes on square test cases.',
+      'Indexing before checking bounds: check 0 <= nr < R and 0 <= nc < C first.',
+      'LC 417: the reverse search climbs, so the comparison is >=, not the <= of the actual water flow.',
+      'Mutating the grid when you still need its values later, or when the input must stay unchanged.',
     ],
     pointsToPonder: [
       'Is the problem direction-agnostic (4 vs 8) — and does diagonal movement change the BFS/Dijkstra setup?',
@@ -822,14 +946,46 @@ def bfs(starts):
 pac = bfs([(0,c) for c in range(C)] + [(r,0) for r in range(R)])
 atl = bfs([(R-1,c) for c in range(C)] + [(r,C-1) for r in range(R)])
 return list(pac & atl)`,
+    practice: [200, 130, 994, 417, 1091],
+    snippet: '4-multi-source-bfs',
   },
 
   '17. Multi-Source BFS': {
     crux: 'Enqueue ALL sources with distance 0; one BFS computes the nearest source for every cell in O(N).',
+    signals: [
+      '"Distance to the nearest 0 / gate / land" for every cell.',
+      '"Each minute, every rotten orange infects its neighbors": everything spreads at the same time (LC 994).',
+      '"As far from land as possible": the farthest cell from its nearest source (LC 1162).',
+      '"Assign heights so that adjacent cells differ by at most 1": water cells are sources at height 0 (LC 1765).',
+    ],
+    notThis: [
+      'You need the sum of distances to all sources rather than the nearest one, as in LC 317: run one BFS per source.',
+      'There is one start and one goal: plain BFS, or bidirectional BFS if it is huge.',
+      'Sources or edges have different costs: seed all sources into Dijkstra instead.',
+    ],
     concepts: [
       'Equivalent to BFS from a virtual super-source connected to every real source by zero-cost edges.',
       'Walls and Gates / 01 Matrix / Rotting Oranges / As Far From Land — all the SAME multi-source template.',
       'In-place marking with the actual distance (instead of a separate `dist` array) is a common trick.',
+    ],
+    example: {
+      problem: '01 Matrix with mat = [[0,0,0],[0,1,0],[1,1,1]]',
+      lc: 542,
+      walkthrough: [
+        'All five 0s go in the queue at distance 0: (0,0), (0,1), (0,2), (1,0), (1,2).',
+        'Pop (0,0): nothing to improve. Pop (0,1): (1,1) becomes 1. Pop (0,2): nothing.',
+        'Pop (1,0): (2,0) becomes 1. Pop (1,2): (2,2) becomes 1.',
+        'Pop (1,1): (2,1) becomes 2. Pop (2,0) and (2,2): 1 + 1 doesn\'t beat 2, so nothing changes.',
+        'Pop (2,1): nothing improves, and the queue is now empty.',
+        'The result is [[0,0,0],[0,1,0],[1,2,1]].',
+      ],
+    },
+    complexity: 'O(R x C) time and space: each cell is enqueued once, however many sources there are.',
+    pitfalls: [
+      'Running one BFS per source: that is O(k x R x C) and times out, whereas a single seeded BFS gives the same nearest distances.',
+      'LC 994: return -1 if a fresh orange remains, and 0 if there was none to begin with.',
+      'LC 1162: return -1 when the grid is all land or all water.',
+      'LC 994: counting minutes by pops rather than by layers gives the wrong time. Track each cell\'s distance, or snapshot the queue length.',
     ],
     pointsToPonder: [
       'Why does multi-source BFS give per-cell NEAREST source (not all-source distances)?',
@@ -853,14 +1009,46 @@ while q:
             dist[nr][nc] = dist[r][c] + 1
             q.append((nr, nc))
 return dist`,
+    practice: [542, 994, 286, 1162, 1765],
+    snippet: '4-multi-source-bfs',
   },
 
   '18. 0-1 BFS (Deque BFS)': {
     crux: 'Edges have weight 0 or 1: appendLEFT for 0-edges, append for 1-edges → Dijkstra in O(V+E) without a heap.',
+    signals: [
+      '"Minimum number of obstacles / walls to remove" to get through (LC 2290).',
+      '"Minimum changes to the arrows so that a valid path exists": following an arrow is free, and changing it costs 1 (LC 1368).',
+      'Some moves are free and the others cost exactly 1.',
+      'Shortest path where the graph is too large for the log factor of Dijkstra, and weights are only 0 or 1.',
+    ],
+    notThis: [
+      'You have a budget and must minimize steps, as in LC 1293: every move costs 1, so use plain BFS over (r, c, removals left).',
+      'Weights go beyond 0 and 1: the deque order no longer holds, so use Dijkstra.',
+      'All weights are 1: a normal queue already does this.',
+    ],
     concepts: [
       'Invariant: deque front always has the smallest known distance — same as Dijkstra without log factor.',
       'Minimum Cost to Make Valid Path (LC 1368): moving with the arrow = 0, against = 1.',
       'Generalizes to bucket-BFS for weights in {0..k}; beyond that, use Dijkstra.',
+    ],
+    example: {
+      problem: 'Minimum Obstacle Removal with grid = [[0,1,0],[0,1,0]]',
+      lc: 2290,
+      walkthrough: [
+        'dist[0][0] = 0 and dq = [(0,0)].',
+        'Pop (0,0). (1,0) is free, so dist = 0 and it goes to the front. (0,1) is a wall, so dist = 1 and it goes to the back. dq = [(1,0),(0,1)].',
+        'Pop (1,0). (1,1) is a wall, so dist = 1 and it goes to the back. dq = [(0,1),(1,1)].',
+        'Pop (0,1) at distance 1. (1,1) stays at 1. (0,2) is free, so dist = 1 and it goes to the front. dq = [(0,2),(1,1)].',
+        'Pop (0,2). (1,2) is free, so dist = 1 and it goes to the front. dq = [(1,2),(1,1)].',
+        'Pop (1,2), then (1,1): nothing improves. dist[1][2] = 1, so the answer is 1.',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space. On a grid that is O(R x C).',
+    pitfalls: [
+      'Pushing every edge to the back: the deque stops being sorted by distance, and nodes get reprocessed.',
+      'Using "visited on push" as in plain BFS: a node pushed at distance d + 1 can later improve to d through a 0-edge, so compare distances instead.',
+      'Taking the weight from the wrong cell: in LC 2290, the cost is that of the cell you enter, not the one you leave.',
+      'LC 1368: the free direction depends on the cell\'s arrow, so compute w for each of the four moves.',
     ],
     pointsToPonder: [
       'Why is appendleft (front) for 0-edges essential — what breaks if you append both kinds to the back?',
@@ -884,14 +1072,47 @@ while dq:
                 if w == 0: dq.appendleft((nr, nc))
                 else:      dq.append((nr, nc))
 return dist[R-1][C-1]`,
+    practice: [959, 2290, 1368],
+    snippet: '12-0-1-bfs',
   },
 
   '19. Bidirectional BFS': {
     crux: 'Expand from both source AND target, always growing the smaller frontier; meet in the middle ⇒ O(b^(d/2)) vs O(b^d).',
+    signals: [
+      '"Shortest transformation sequence from beginWord to endWord" (LC 127).',
+      '"Minimum turns to open the lock", with a known target and many options per move (LC 752).',
+      'Both the start and the goal are given, and each state has many neighbors.',
+      'Plain BFS is logically right but times out or runs out of memory.',
+    ],
+    notThis: [
+      'There are many acceptable goals, or the goal is only a condition: you can\'t search backward from it.',
+      'Edges are weighted: this stop rule assumes each layer has the same cost, so use Dijkstra.',
+      'Moves can\'t be reversed, or the reverse is hard to compute: the backward search needs the reverse edges.',
+    ],
     concepts: [
       'Use two sets (or two queues) — expand the SMALLER set each iteration.',
       'Word Ladder (LC 127) is the canonical use; transformations are the implicit edges.',
       'Detect "meet" via set intersection: any neighbor of front that lies in back ⇒ done.',
+    ],
+    example: {
+      problem: 'Word Ladder with beginWord = "hit", endWord = "cog", wordList = [hot,dot,dog,lot,log,cog]',
+      lc: 127,
+      walkthrough: [
+        'front = {hit}, back = {cog}, steps = 1. Expanding hit finds hot, so front = {hot} and steps = 2.',
+        'Sizes tie. Expanding hot finds dot and lot, so front = {dot,lot} and steps = 3.',
+        'front is larger than back, so they swap: front = {cog}, back = {dot,lot}.',
+        'Expanding cog finds dog and log. cog itself also counts, because the loop tries the unchanged letter and it\'s still in words. That is harmless. So the next set is {cog,dog,log} and steps = 4.',
+        'That set is larger than {dot,lot}, so they swap: front = {dot,lot}, back = {cog,dog,log}.',
+        'Expanding dot produces dog, which is in back, so return steps + 1 = 5.',
+      ],
+    },
+    complexity: 'About O(b^(d/2)) states rather than O(b^d). For Word Ladder, each word costs O(26 x L²) to expand, because each candidate takes O(L) to build and hash.',
+    pitfalls: [
+      'Returning 0 only after a search when endWord isn\'t in the list: check this up front, since LC 127 requires it.',
+      'Off by one: LC 127 counts words, so a two-word ladder returns 2.',
+      'Testing `in words` before `in back`: a meeting word may already be removed from words, and the two searches would pass each other.',
+      'LC 752: check whether the start itself is in deadends, and skip the search if so.',
+      'Word Ladder II (LC 126) needs parent links. Removing words only after finishing a layer keeps every shortest path.',
     ],
     pointsToPonder: [
       'Why is expanding the smaller frontier always correct (not just heuristic)?',
@@ -915,14 +1136,45 @@ while front and back:
                     nxt.add(cand); words.discard(cand)
     front = nxt; steps += 1
 return 0`,
+    practice: [433, 752, 127, 773, 126],
+    snippet: '30-word-ladder-bfs',
   },
 
   '20. A* / Heuristic Search': {
     crux: 'Priority queue keyed on f(n) = g(n) + h(n); admissible h (never overestimates) guarantees optimality.',
+    signals: [
+      '"Minimum moves to solve the board", with a huge state space (LC 773).',
+      '"Shortest path to a known target" where you can estimate the remaining distance.',
+      '"Knight on an infinite board": the search has no borders, so a goal direction is important (LC 1197).',
+      'Plain BFS works but explores far too many states in the wrong direction.',
+    ],
+    notThis: [
+      'The state space fits comfortably: BFS or Dijkstra is simpler, and interviews rarely require A*.',
+      'You have no target or no cheap estimate: with h = 0, A* is just Dijkstra.',
+      'You want all nearest targets, or a distance from many sources: multi-source BFS fits better.',
+    ],
     concepts: [
       'A* = Dijkstra + a goal-directed heuristic that prunes the search frontier.',
       'For grid-with-diagonal-moves, Chebyshev distance is admissible; for 4-direction, Manhattan.',
       'For Sliding Puzzle (LC 773), sum of Manhattan distances of each tile to its goal is admissible.',
+    ],
+    example: {
+      problem: 'Grid A* with grid = [[0,0,0],[1,1,0],[0,0,0]], from (0,0) to (2,0)',
+      walkthrough: [
+        'h is the Manhattan distance to (2,0). Start with h(0,0) = 2, so pq = [(f=2, g=0, (0,0))].',
+        'Pop (0,0). The cell below is a wall, so the only push is (0,1) with g = 1, h = 3, f = 4.',
+        'Pop (0,1). Push (0,2) with g = 2, h = 4, f = 6. The wall forced the search away from the goal, so f went up.',
+        'Pop (0,2). Push (1,2) with g = 3, h = 3, f = 6.',
+        'Pop (1,2), then (2,2), then (2,1). Each step adds 1 to g and removes 1 from h, so f stays at 6.',
+        'Pop (2,0) with g = 6. It is the target, so return 6.',
+      ],
+    },
+    complexity: 'Worst case matches Dijkstra: O(E log V) time and O(V) space. A strong heuristic visits far fewer states in practice.',
+    pitfalls: [
+      'A heuristic that overestimates: A* can return a longer path. For instance, Manhattan distance overestimates when diagonal moves are allowed, as in LC 1091.',
+      'Returning when the target is pushed: stop only when it is popped.',
+      'Marking nodes as final on the first push: a cheaper route may arrive later, so compare g values before pushing.',
+      'LC 773: the state must be hashable, so store the board as a string or tuple.',
     ],
     pointsToPonder: [
       'Admissibility (never overestimate) vs consistency (triangle inequality) — which matters when, and why?',
@@ -945,14 +1197,47 @@ while pq:
                 seen[(nr, nc)] = ng
                 heapq.heappush(pq, (ng + h(nr, nc), ng, nr, nc))
 return -1`,
+    practice: [1197, 1091, 773, 675],
+    snippet: '38-a-search-skeleton',
   },
 
   '21. Graph Construction / Implicit Graphs': {
     crux: 'Define nodes and edges by the problem RULES (not by an adjacency list); explore on demand via BFS/DFS/Dijkstra.',
+    signals: [
+      '"In one move, you can...": nothing in the input looks like a graph (LC 752).',
+      '"Given a / b = 2 and b / c = 3, find a / c": variables are nodes and ratios are edge weights (LC 399).',
+      '"Minimum buses to take" where the routes are lists: routes can be the nodes (LC 815).',
+      '"You can jump to any index with the same value": equal values share edges (LC 1345).',
+      '"Two players move, and who wins?" on a small board: each state with its turn is a node (LC 913).',
+    ],
+    notThis: [
+      'The input is already an edge list: pick the matching algorithm directly.',
+      'The state has a natural order and no way back: DP is simpler than a graph search.',
+      'The state space is far too big to enumerate: look for a formula or prune with a smarter representation.',
+    ],
     concepts: [
       'States = nodes (lock combos, board configs, word strings, bus stops); transitions = edges produced on the fly.',
       'Evaluate Division (LC 399): weighted graph of variable equalities; DFS multiplies edge weights along the path.',
       'For Word Ladder, the adjacency-via-wildcard-pattern trick avoids the O(V²) naive edge list.',
+    ],
+    example: {
+      problem: 'Evaluate Division with a / b = 2, b / c = 3, queries a / c, c / a, a / x',
+      lc: 399,
+      walkthrough: [
+        'g[a] = {b: 2}, g[b] = {a: 0.5, c: 3}, g[c] = {b: 1/3}.',
+        'query(a, c): the stack starts with (a, 1). Pop a and push (b, 2). Pop b and push (c, 2 x 3 = 6). Pop c, which is the target, so the result is 6.0.',
+        'query(c, a): pop c and push (b, 1/3). Pop b and push (a, 1/3 x 1/2 = 1/6). Pop a, so the result is about 0.1667.',
+        'query(a, x): x isn\'t in g, so the result is -1.0 straight away.',
+        'The answer is [6.0, 0.16667, -1.0].',
+      ],
+    },
+    complexity: 'O(S x T) time, for S reachable states and T moves per state, with O(S) space. For LC 399 that is O(Q x (V + E)).',
+    pitfalls: [
+      'Using a list as the state: it can\'t be hashed, so convert it to a tuple or string.',
+      'LC 399: x / x is -1.0 when x is unknown, so check that the node exists before anything else.',
+      'LC 815: using stops as nodes builds a huge graph, whereas using routes as nodes stays small.',
+      'LC 1345: clear a value\'s index list after first use, or the same list gets rescanned and you hit O(n²).',
+      'LC 909: the board is numbered in alternating directions from the bottom, so converting a square number to (r, c) is its own step.',
     ],
     pointsToPonder: [
       'What is a node — a string, a tuple, a state, a position? Will it hash properly for the visited set?',
@@ -975,14 +1260,46 @@ def query(s, t):
                 seen.add(v); stk.append((v, acc * w))
     return -1.0
 return [query(a, b) for a, b in queries]`,
+    practice: [399, 752, 1197, 909, 815],
+    snippet: '37-evaluate-division-weighted-graph-dfs',
   },
 
   '22. Tree-Specific Graph Problems': {
     crux: 'Trees have no cycles ⇒ DFS without visited-tracking (just avoid the parent edge) and unique paths between pairs.',
+    signals: [
+      '"n nodes and n - 1 edges": this confirms a tree when the graph is connected.',
+      '"Longest path between any two nodes": that is the tree diameter (LC 1245).',
+      '"For each node, return the sum of distances to all others": this calls for rerooting (LC 834).',
+      '"Pick the root that minimizes height": peel leaves toward the center (LC 310).',
+      '"Longest path in a tree with a rule on adjacent nodes": keep the best two child chains (LC 2246, LC 124).',
+    ],
+    notThis: [
+      'The graph can have cycles: unique paths and the parent-only check no longer hold, so use a visited set.',
+      'You are answering many two-node queries on the tree: use LCA.',
+      'You only need to compute something simple from the children with no global answer: plain tree recursion is enough, without any graph setup.',
+    ],
     concepts: [
       'Diameter: 2 BFS / DFS — pick any node, find farthest u; from u, find farthest v; dist(u,v) = diameter.',
       'Minimum Height Trees (LC 310): peel leaves layer by layer until 1 or 2 centers remain.',
       'Rerooting (Sum of Distances, LC 834): one DFS for subtree info, one for transferring "up" info → answer for every root.',
+    ],
+    example: {
+      problem: 'Tree Diameter with edges = [[0,1],[1,2],[1,3],[3,4]]',
+      lc: 1245,
+      walkthrough: [
+        'far(0) finds dist = {0:0, 1:1, 2:2, 3:2, 4:3}, so the farthest node is 4.',
+        'Node 4 must be one end of some longest path. This holds for any starting node in a tree.',
+        'far(4) finds dist = {4:0, 3:1, 1:2, 0:3, 2:3}, so the farthest distance is 3.',
+        'The answer is 3 edges, for example 4-3-1-0.',
+      ],
+    },
+    complexity: 'O(n) time and space for diameter, peeling leaves and rerooting.',
+    pitfalls: [
+      'Diameter by edges vs nodes: LC 1245 counts edges, while some versions count nodes.',
+      'The 2-BFS trick works only on trees with non-negative weights. On general graphs it can be wrong.',
+      'LC 310 with n = 1: there are no leaves to peel, so return [0] up front.',
+      'Rerooting: answer[child] = answer[parent] - size[child] + (n - size[child]). Forgetting the second term gives wrong sums.',
+      'Deep recursion on a path-shaped tree: use BFS order or an explicit stack.',
     ],
     pointsToPonder: [
       'Why does the 2-BFS diameter algorithm work — what tree property guarantees correctness?',
@@ -1003,14 +1320,46 @@ def far(src):
 u, _ = far(0)
 v, d = far(u)
 return d`,
+    practice: [559, 310, 1245, 863, 834],
   },
 
   '23. Graph + DP (DP on Graphs / DAGs)': {
     crux: 'Toposort the DAG, then a linear DP fills answers in dependency order. Memoized DFS gives the same thing implicitly.',
+    signals: [
+      '"Longest path" where the values strictly increase, so you can\'t loop (LC 329).',
+      '"Number of ways to reach" or "number of paths": counts combine in dependency order (LC 1976, LC 1786).',
+      '"Minimum time for all tasks", where each task waits for its slowest prerequisite (LC 2050).',
+      '"Within maxTime" or "after exactly k moves": add the limit to the state (LC 1928, LC 688).',
+    ],
+    notThis: [
+      'The graph has cycles and you want a shortest path: DP has no valid order, so use Dijkstra or Bellman-Ford.',
+      'You need the longest simple path in a general graph: that is NP-hard, so check the constraints for a DAG or a small n.',
+      'You must list the paths rather than count them, as in LC 797: use DFS, since the output itself can be exponential.',
+    ],
     concepts: [
       'For longest path in a DAG, DP wins — BFS finds shortest, not longest.',
       'Cheapest Flights with K Stops (LC 787): DP with state (node, edges_used) — Bellman-Ford-style.',
       'Knight Probability / Frog Jump: state = (position, time-step or other resource).',
+    ],
+    example: {
+      problem: 'Longest Increasing Path in a Matrix with grid = [[1,2],[4,3]]',
+      lc: 329,
+      walkthrough: [
+        'Edges only go to larger values, so no cycle is possible and memoization is safe.',
+        'dfs(0,0) with value 1 looks at (1,0) with value 4 first. No neighbor is larger than 4, so dfs(1,0) = 1 and best = 2 for now.',
+        'dfs(0,0) next looks at (0,1) with value 2, which calls dfs(1,1) with value 3.',
+        'dfs(1,1) looks at (1,0). It is cached at 1, so dfs(1,1) = 2. That makes dfs(0,1) = 3.',
+        'So dfs(0,0) = max(2, 1 + 3) = 4. Later calls just read the cache.',
+        'The answer is 4, along the path 1 → 2 → 3 → 4.',
+      ],
+    },
+    complexity: 'O(V + E) times the number of extra state values. LC 329 is O(R x C) time and space.',
+    pitfalls: [
+      'Memoizing on a graph with cycles: the recursion re-enters a state before it is finished, and the result is wrong or infinite.',
+      'Base value: best = 1 counts cells, while best = 0 counts edges. Check what the problem counts.',
+      'LC 1976 and LC 1786: the counts need modulo 10^9 + 7, and the order comes from Dijkstra distances.',
+      'Using a cache across test cases, such as a global lru_cache: clear it, because the grid has changed.',
+      'Deep recursion on a long increasing path: raise the limit or use Kahn\'s order.',
     ],
     pointsToPonder: [
       'Is the graph really a DAG — if cycles exist with non-negative weights, you need Dijkstra instead.',
@@ -1028,14 +1377,45 @@ def dfs(r, c):
             best = max(best, 1 + dfs(nr, nc))
     return best
 return max(dfs(r, c) for r in range(R) for c in range(C))`,
+    practice: [797, 688, 1786, 329, 2050],
+    snippet: '25-longest-path-in-dag',
   },
 
   '24. Graph + Greedy': {
     crux: 'Reduce the problem to "pick the locally-cheapest edge / vertex" and prove no later choice changes the optimum.',
+    signals: [
+      '"Smallest set of vertices from which all nodes are reachable" (LC 1557).',
+      '"Minimum number of operations to connect the network": the answer comes from a component count (LC 1319).',
+      '"Assign values 1 to n to maximize total importance": higher degree gets a larger value (LC 2285).',
+      '"Minimum edges to reverse so that all nodes reach the city": count edges that point the wrong way (LC 1466).',
+    ],
+    notThis: [
+      'The chosen starting point changes what gets reached, as in LC 2101: bomb reach is one-way, so try every start.',
+      'The graph needs a route with minimal cost: use a shortest-path algorithm, since no local count captures that.',
+      'You can\'t explain why a counting rule works: test it on small cases first, as many tempting graph greedy rules are wrong.',
+    ],
     concepts: [
       'Min Vertices to Reach All Nodes (LC 1557) = all nodes with in-degree 0 (in a DAG) — pure degree-based greedy.',
       'Min Ops to Make Network Connected (LC 1319): if #edges < n-1, impossible; else answer = components - 1.',
       'Reorder Routes (LC 1466): BFS/DFS from 0; count edges that POINT AWAY from 0 — they must be flipped.',
+    ],
+    example: {
+      problem: 'Minimum Number of Vertices to Reach All Nodes with n = 6, edges = [[0,1],[0,2],[2,5],[3,4],[4,2]]',
+      lc: 1557,
+      walkthrough: [
+        'Count incoming edges. 1 gets one from 0, 2 gets one from 0 and one from 4, 5 gets one from 2, and 4 gets one from 3.',
+        'So indeg = [0,1,2,0,1,1].',
+        'Nodes 0 and 3 have in-degree 0. Nothing can reach them, so they must be in the set.',
+        'In a DAG, every other node can be traced back to one of those two, so no more are needed.',
+        'The answer is [0,3].',
+      ],
+    },
+    complexity: 'O(V + E) time and O(V) space. LC 2285 adds a sort, for O(n log n + E).',
+    pitfalls: [
+      'LC 1557: the in-degree rule relies on the input being a DAG. With a cycle, a group could have no in-degree 0 node.',
+      'LC 1319: check edges < n - 1 first and return -1, before counting components.',
+      'LC 1466: store edges in both directions with a flag, so you can walk from 0 and still see the original direction.',
+      'Claiming a greedy rule without an argument: LC 2101 looks like "start from the bomb with the largest radius", which is wrong.',
     ],
     pointsToPonder: [
       'What is the exchange argument for the greedy choice — can you swap a "wrong" choice for the greedy one without worsening?',
@@ -1046,6 +1426,8 @@ return max(dfs(r, c) for r in range(R) for c in range(C))`,
 indeg = [0] * n
 for _, v in edges: indeg[v] += 1
 return [i for i in range(n) if indeg[i] == 0]`,
+    practice: [1557, 2285, 1319, 1466, 2101],
+    snippet: '18-number-of-connected-components-using-dsu',
   },
 
   '25. LCA / Ancestor Queries': {
