@@ -9,6 +9,34 @@ order: 60
 ---
 # Priority Queue / Heap — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a row, then open that section.
+
+| The problem says | Reach for | Section |
+| --- | --- | --- |
+| "kth largest", "k closest points", "top k frequent" | Size-k heap with the worst of the k on top | 1 |
+| "repeatedly take the largest", "until the sum is halved" | Heap simulation: pop, change, push back | 2 |
+| "median after each insertion", "median of each window" | Two heaps split at the middle | 3, 12 |
+| "merge k sorted", "at least one number from each list" | One head per source in a min-heap | 4 |
+| "minimum time for all nodes to receive", "effort is the maximum difference" | Dijkstra | 5 |
+| "jump at most k steps", "maximum of each window" | (value, index) heap that expires old tops | 6 |
+| "correct an earlier price", "changeRating, then highestRated" | Lazy deletion or an indexed heap | 7, 19 |
+| "minimum number of rooms", "the CPU picks the shortest available task" | Sort by start, heap of what is running | 8 |
+| "ladders or bricks", "fewest refueling stops", "finish before its deadline" | Greedy with a heap to undo the worst choice | 9 |
+| "sum of k chosen values times the minimum of another" | Sort one dimension, size-k heap on the other | 10 |
+| "connect all points at minimum cost" | Prim's algorithm | 11, 24 |
+| "no two adjacent characters are the same", "at least n apart" | Max-heap of counts plus a cooldown slot | 13 |
+| "how much water can it trap" on a 2D map, "lowest possible maximum on the route" | Boundary-seeded heap, or minimax Dijkstra | 14 |
+| "the cost to join two is their sum" | Merge the two smallest (Huffman) | 15 |
+| "kth smallest" with sorted rows or pairs, and k can be huge | Binary search on the value | 16 |
+| "least moves to reach the solved board" | BFS over states, or A\* | 17 |
+| "if tied, pick the smallest index" | Custom comparator | 18 |
+| "design a class", "after each call return" | Online heap kept between calls | 20 |
+| "remove n elements, then split the rest into two parts" | Heap sweeps over every prefix and suffix | 21 |
+| "merge k lists" without a heap, "kth largest" in O(n) average | Divide and conquer, or Quickselect | 22 |
+| "difference between the maximum and minimum" after changes | Max-heap plus a tracked min, or an ordered set | 23 |
+| "sum of a node's best k neighbours" | Per-node size-k heap | 24 |
+| "minimum possible maximum", "maximize the minimum" | Usually binary search on the answer, not a heap | 25 |
+
 ---
 
 ## 1. Basic Heap Operations / Kth Element
