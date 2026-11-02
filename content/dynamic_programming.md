@@ -9,6 +9,33 @@ order: 30
 ---
 # Dynamic Programming — Interview Question Bank
 
+**Which pattern do I use?** Match what the problem says to a section.
+
+| If the problem says... | Think about | Go to section |
+|------------------------|-------------|---------------|
+| "how many ways to climb", "cannot rob two adjacent", "segment into dictionary words" | dp[i] from the last few positions | 1. 1D Linear DP |
+| "can only move down or right", "minimum path sum", "largest square of 1's" | dp[i][j] from neighboring cells | 2. 2D Grid / Matrix DP |
+| "longest common subsequence", "minimum operations to convert word1 to word2", "longest increasing subsequence" | match or skip across sequences | 3. Subsequence DP |
+| "subset that sums to", "fewest coins", "at most m 0's and n 1's" | a budget, with items looped outside | 4. Knapsack Variants |
+| "burst all the balloons", "merge consecutive piles", n <= 500 | best split of a range, by length | 5. Interval DP |
+| "two directly-linked houses", "path doesn't need to pass through the root" | post-order, returning several values | 6. Tree DP |
+| "at most k transactions", "cooldown", "no two adjacent houses the same color" | a few modes per step | 7. State Machine / Stock Problems |
+| n <= 20, "visit every node", "assign each task to one worker" | a mask of what's used | 8. Bitmask DP |
+| "count integers in [1, n]" with n up to 10^18, "distinct digits" | build digit by digit with a tight flag | 9. Digit DP |
+| "support for '.' and '*'", "distinct subsequences of s which equal t" | two pointers into text and pattern | 10. DP on Strings |
+| "j - i <= k" with n up to 10^5, "jump at most k steps" | a range lookup in the transition | 11. DP with Data Structures |
+| "both players play optimally", "guarantee a win" | score lead for the player to move | 12. Game Theory DP |
+| "return the number of ways modulo 10^9 + 7" | add up predecessors | 13. Counting DP |
+| "return the probability", "within 10^-5 of the actual answer" | weighted sums of next states | 14. Probability DP |
+| "longest increasing path", "prerequisites", "at most k stops" | process nodes in topological order | 15. DP on DAGs |
+| "partition into two subsets", "split into k subarrays" | best way to divide into groups | 16. Partition / Subset DP |
+| "minimize the largest", "minimum speed to finish", "both width and height greater" | binary search on the answer or on tails | 17. Binary Search Optimization |
+| "at most n members and at least minProfit", "if the last jump was k" | add only the dimensions you need | 18. Multi-dimensional State |
+| "answer[i] for every node as root", "all roots with minimum height" | two passes, moving the root one edge | 19. Rerooting |
+| "tile an m x n board", "n x 3 grid", one side <= 12 | a mask of the boundary between rows | 20. Profile DP |
+| "for every mask, a sum over its subsets", x & y == 0 queries | one pass per bit | 21. SOS DP |
+| "subarray with the largest sum or product", "number of 1's for every i" | known short recurrences | 22. Classic Problems |
+
 ---
 
 ## 1. 1D Linear DP

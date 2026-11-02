@@ -1,10 +1,41 @@
 export const dynamicProgramming = {
   '1. 1D Linear DP': {
     crux: 'dp[i] depends on a constant number of prior states — usually dp[i-1], dp[i-2], or a small window.',
+    signals: [
+      '"How many distinct ways can you climb to the top?" or "the maximum amount you can rob": one number, and each position only cares about the last few.',
+      '"You cannot rob two adjacent houses" or "solving question i makes you skip the next brainpower[i]": choosing i locks out a stretch of positions.',
+      '"Can s be segmented into dictionary words?" or "the fewest perfect squares that sum to n": dp over the prefix length, trying each possible last piece.',
+      'The input is one array, one string or one integer n, usually up to about 10^5.',
+    ],
+    notThis: [
+      'The adjacency rule lives on a tree, as in House Robber III (LC 337): use Tree DP in section 6, because a node has two children rather than one neighbor.',
+      'Only reachability matters, as in Jump Game (LC 55): tracking the farthest index is O(n) with no table, while dp[i] is slower for the same answer.',
+      'Items can be picked in any order against a budget ("a subset that sums to..."): use Knapsack in section 4.',
+    ],
     concepts: [
       'Identify the state (what does dp[i] mean?) and the transition (how does it combine earlier states?).',
       'Most 1D problems compress to O(1) space using two rolling variables (Fibonacci-style).',
       'Reframe the problem as "at index i, what is the best/count/feasibility considering items 0..i".',
+    ],
+    example: {
+      problem: 'House Robber with nums = [2,7,9,3,1]',
+      lc: 198,
+      walkthrough: [
+        'Start with prev2 = 0 and prev1 = 0. prev1 is the best so far, and prev2 is the best up to the house before that.',
+        'x = 2: prev1 becomes max(0, 0 + 2) = 2 and prev2 becomes 0.',
+        'x = 7: prev1 becomes max(2, 0 + 7) = 7 and prev2 becomes 2.',
+        'x = 9: prev1 becomes max(7, 2 + 9) = 11 and prev2 becomes 7.',
+        'x = 3: prev1 stays max(11, 7 + 3) = 11 and prev2 becomes 11.',
+        'x = 1: prev1 becomes max(11, 11 + 1) = 12 and prev2 becomes 11.',
+        'The answer is 12, from robbing the houses worth 2, 9 and 1.',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space for rolling recurrences like House Robber. O(n * choices) time and O(n) space when dp[i] tries many earlier positions, as in Word Break or Perfect Squares.',
+    pitfalls: [
+      'Assigning prev1 first without a tuple swap: prev2 then copies the new value, so you add x to the wrong state.',
+      'Greedily taking every other house: [2,1,1,2] gives 3 with either alternating pick, but the answer is 4 from the two ends.',
+      'House Robber II (LC 213): the first and last houses touch, so run twice, on nums[1:] and nums[:-1], and handle one house separately.',
+      'Decode Ways (LC 91): "0" can\'t stand alone and "06" isn\'t a valid pair, so a string like "0" must return 0.',
     ],
     pointsToPonder: [
       'Is the state INDEX-based (dp[i] = best ending at/considering up to i) or VALUE-based (dp[v] = ways to make sum v)?',
@@ -16,14 +47,44 @@ prev2 = prev1 = 0
 for x in nums:
     prev2, prev1 = prev1, max(prev1, prev2 + x)
 return prev1`,
+    practice: [70, 198, 213, 91, 139],
+    snippet: '2-1d-dp-house-robber',
   },
 
   '2. 2D Grid / Matrix DP': {
     crux: 'dp[i][j] = best/count for cell (i,j), built from neighbors (top, left, diagonals).',
+    signals: [
+      '"A robot can only move either down or right" followed by "how many unique paths" or "minimum path sum".',
+      '"A falling path starts at any element in the first row and picks one in the next row": the moves between rows are restricted.',
+      '"Find the largest square containing only 1\'s": a cell\'s value is built from its top, left and top-left neighbors.',
+      '"Return the knight\'s minimum initial health so that he can rescue the princess": what you need now depends on what comes later, so fill from the bottom-right.',
+    ],
+    notThis: [
+      'Moves go in all four directions with weights: cycles leave no valid fill order, so use Dijkstra or BFS.',
+      'Moves go to any strictly larger neighbor, as in LC 329: there is no fixed row order, so use memoized DFS from section 15.',
+      'The answer is about a contiguous rectangle with no path at all: try a per-row histogram first, as in Maximal Rectangle (LC 85, section 11).',
+    ],
     concepts: [
       'Standard transition: dp[i][j] = f(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]).',
       'Direction of fill matters: top-left to bottom-right for path-sum problems; reversed for Dungeon Game (which needs future-cost knowledge).',
       'Often compresses to a single row (O(cols) space) since only the previous row is needed.',
+    ],
+    example: {
+      problem: 'Minimum Path Sum with grid = [[1,3,1],[1,5,1],[4,2,1]]',
+      lc: 64,
+      walkthrough: [
+        'Copy the first row, then take prefix sums because it can only be reached from the left: dp = [1,4,5].',
+        'Row [1,5,1]: dp[0] = 1 + 1 = 2. dp[1] = 5 + min(4, 2) = 7. dp[2] = 1 + min(5, 7) = 6. Now dp = [2,7,6].',
+        'Row [4,2,1]: dp[0] = 2 + 4 = 6. dp[1] = 2 + min(7, 6) = 8. dp[2] = 1 + min(6, 8) = 7. Now dp = [6,8,7].',
+        'The answer is dp[-1] = 7, along the path 1, 3, 1, 1, 1.',
+      ],
+    },
+    complexity: 'O(m * n) time. O(n) space with one row, or O(m * n) if you keep the table to rebuild the path. A second walker, as in Cherry Pickup II, adds a dimension: O(m * n^2) states.',
+    pitfalls: [
+      'Skipping the first row and column setup: those cells have only one predecessor, so a shared min() reads a value that doesn\'t exist.',
+      'In one-row form, dp[j] is the cell above and dp[j-1] is the cell to the left. A diagonal read, as in Maximal Square, needs a saved variable.',
+      'Unique Paths II (LC 63): an obstacle in the first row blocks every cell to its right, not just its own.',
+      'Dungeon Game (LC 174): filling from the top-left tracks the best sum, but health must stay at least 1 at every step, so fill backwards.',
     ],
     pointsToPonder: [
       'Does the answer require knowing the FUTURE (e.g., Dungeon Game) — if so, fill backwards.',
@@ -39,14 +100,47 @@ for i in range(1, m):
     for j in range(1, n):
         dp[j] = grid[i][j] + min(dp[j], dp[j-1])
 return dp[-1]`,
+    practice: [62, 64, 120, 221, 174],
+    snippet: '3-grid-dp-minimum-path-sum',
   },
 
   '3. Subsequence DP': {
     crux: 'dp[i][j] over positions of one or two sequences; transition compares characters/elements and either matches or skips.',
+    signals: [
+      '"Return the length of their longest common subsequence", "minimum deletions to make the two strings the same" or "the shortest string that has both as subsequences": two sequences, so compare their last characters.',
+      '"Minimum number of operations (insert, delete, replace) to convert word1 to word2."',
+      '"Longest strictly increasing subsequence", "longest string chain" or "arithmetic with a given difference": one sequence, with dp[i] = best ending at i.',
+      '"Formed by deleting some characters without changing the order of the remaining": that sentence defines a subsequence, even when the word isn\'t used.',
+    ],
+    notThis: [
+      'The problem says "subarray" or "substring", which must be contiguous: use a sliding window, or reset to 0 on a mismatch as in LC 718.',
+      'One Is Subsequence check (LC 392): two pointers solve it in O(n) with no table.',
+      'Order doesn\'t matter ("subset"): use Knapsack in section 4.',
+    ],
     concepts: [
       'LCS template: if s1[i]==s2[j]: dp[i][j] = dp[i-1][j-1] + 1; else: max(dp[i-1][j], dp[i][j-1]).',
       'Edit Distance: insert/delete/replace map directly to dp[i][j-1], dp[i-1][j], dp[i-1][j-1] + 1.',
       'For palindromic problems, run LCS between s and reverse(s), or use interval DP dp[i][j] over [i..j].',
+    ],
+    example: {
+      problem: 'Longest Common Subsequence with s1 = "abcde" and s2 = "ace"',
+      lc: 1143,
+      walkthrough: [
+        'Row 0 and column 0 are 0, because an empty prefix has nothing in common. The columns below are j = 0 to 3 for "", a, c, e.',
+        'i = 1 (a): a matches a, so dp[1][1] = 0 + 1 = 1, and the ones to its right carry it over. Row = [0,1,1,1].',
+        'i = 2 (b): nothing matches, so each cell takes max(top, left). Row = [0,1,1,1].',
+        'i = 3 (c): c matches at j = 2, so dp[3][2] = dp[2][1] + 1 = 2. Row = [0,1,2,2].',
+        'i = 4 (d): nothing matches. Row = [0,1,2,2].',
+        'i = 5 (e): e matches at j = 3, so dp[5][3] = dp[4][2] + 1 = 3. Row = [0,1,2,3].',
+        'The answer is dp[5][3] = 3, which is "ace".',
+      ],
+    },
+    complexity: 'O(m * n) time and space for two sequences, or O(min(m, n)) space with two rows if you only need the length. One-sequence LIS is O(n^2), or O(n log n) with a tails array.',
+    pitfalls: [
+      'Mixing up dp and string indices: dp[i][j] covers the first i and j characters, so compare s1[i-1] with s2[j-1].',
+      'Rolling the table down to two rows and then trying to rebuild the subsequence: walking back needs the full table.',
+      'Distinct Subsequences (LC 115): intermediate counts can overflow a C++ int even when the final answer fits.',
+      'LIS with "strictly" vs "non-decreasing": this changes `<` to `<=` in the O(n^2) form, and lower_bound to upper_bound in the tails form.',
     ],
     pointsToPonder: [
       'When is the state 1D (dp[i] = LIS ending at i) vs 2D (dp[i][j] over two strings)?',
@@ -63,14 +157,44 @@ for i in range(1, m+1):
         else:
             dp[i][j] = max(dp[i-1][j], dp[i][j-1])
 return dp[m][n]`,
+    practice: [392, 300, 1143, 72, 115],
+    snippet: '10-lcs-longest-common-subsequence',
   },
 
   '4. Knapsack Variants': {
     crux: 'dp[capacity] (or dp[i][capacity]) = best value achievable with that budget; iterate items, then capacities.',
+    signals: [
+      '"Partition the array into two subsets with equal sum" or "add + or - before each integer to reach target": each item is used once, so this is 0/1.',
+      '"The fewest coins needed to make up that amount" with "an infinite number of each kind": this is unbounded.',
+      '"At most m 0\'s and n 1\'s in the subset" (LC 474): two budgets give two capacity dimensions.',
+      '"There are count[i] questions of type i" (LC 2585): each item has a limited number of copies, so this is bounded.',
+    ],
+    notThis: [
+      'Weights reach 10^9 with few items: a capacity table can\'t fit, so try dp on value or meet in the middle.',
+      'You may take a fraction of an item: sort by value per unit of weight and be greedy.',
+      'Different orderings count as different answers, as in Combination Sum IV (LC 377): put the capacity loop on the outside and see section 13.',
+    ],
     concepts: [
       '0/1 knapsack: iterate capacities IN REVERSE so each item is used at most once.',
       'Unbounded knapsack (Coin Change): iterate capacities FORWARD so the same item can be reused.',
       'Coin Change II (count combos) vs Combination Sum IV (count permutations): the loop ORDER (item-outer vs capacity-outer) flips the answer.',
+    ],
+    example: {
+      problem: '0/1 knapsack with items (weight, value) = (1,15), (3,20), (4,30) and W = 4',
+      walkthrough: [
+        'Start with dp = [0,0,0,0,0], where dp[c] is the best value with capacity c.',
+        'Item (1,15), c from 4 down to 1: every capacity can hold it. Now dp = [0,15,15,15,15].',
+        'Item (3,20): c = 4 gives max(15, dp[1] + 20) = 35. c = 3 gives max(15, dp[0] + 20) = 20. Now dp = [0,15,15,20,35].',
+        'Item (4,30): c = 4 gives max(35, dp[0] + 30) = 35, so nothing changes.',
+        'The answer is dp[4] = 35, from the items of weight 1 and 3.',
+      ],
+    },
+    complexity: 'O(n * W) time. O(W) space with one array, or O(n * W) if you keep the table to list the chosen items. This is pseudo-polynomial: the cost grows with the numeric value of W.',
+    pitfalls: [
+      'Looping capacity forward in 0/1: with the first item above, dp[4] would become 60 because that one item gets used four times.',
+      'Starting a minimum version at 0: Coin Change needs dp[0] = 0 and INF everywhere else, or impossible amounts look free.',
+      'Counting versions need dp[0] = 1, since there is one way to choose nothing. Starting from 0 leaves every count at 0.',
+      'Target Sum (LC 494): check that |target| <= total and that total + target is even before you compute the subset size.',
     ],
     pointsToPonder: [
       'Why does the loop direction (forward/reverse on capacity) toggle between "reuse" and "use once"?',
@@ -83,14 +207,46 @@ for wt, val in items:
     for c in range(W, wt - 1, -1):       # reverse for 0/1
         dp[c] = max(dp[c], dp[c - wt] + val)
 return dp[W]`,
+    practice: [416, 322, 518, 494, 879],
+    snippet: '4-0-1-knapsack',
   },
 
   '5. Interval DP': {
     crux: 'dp[i][j] = best for the interval [i..j]; transition splits at some k and combines dp[i][k] with dp[k+1][j] (or k+1..j-1).',
+    signals: [
+      '"Burst all the balloons", "merge consecutive piles" or "cut the stick": doing something inside a range changes what its neighbors see.',
+      '"Triangulate the polygon" or "the minimum number of multiplications": the whole answer splits into a left part and a right part at some k.',
+      '"Remove boxes" or "the printer can print a sequence of the same character": the remaining pieces close up and can combine later.',
+      'n is only 100 to 500, which is the budget for an O(n^3) table.',
+    ],
+    notThis: [
+      'Every split only cuts a prefix off, as in Palindrome Partitioning II (LC 132): dp[i] over prefixes is simpler than dp[i][j] with a split k.',
+      'You may merge any two piles, not just adjacent ones: a heap with greedy merges wins.',
+      'Stones are only taken from the front, as in Stone Game III (LC 1406): there\'s no real interval, so a suffix dp over one index is enough.',
+    ],
     concepts: [
       'Burst Balloons: think LAST balloon burst in [i..j], not first — that decouples the subproblems.',
       'Always iterate by INCREASING interval length (i.e., len from 2 to n, then i from 0 to n-len).',
       'O(n³) is the typical complexity (n² states × n splits); Knuth optimization can reduce to O(n²) for monotone problems.',
+    ],
+    example: {
+      problem: 'Burst Balloons with nums = [3,1,5]',
+      lc: 312,
+      walkthrough: [
+        'Pad with sentinels: a = [1,3,1,5,1]. dp[i][j] is the best coins from bursting everything strictly between i and j, and k is the last one burst.',
+        'Length 2: dp[0][2] = 1*3*1 = 3. dp[1][3] = 3*1*5 = 15. dp[2][4] = 1*5*1 = 5.',
+        'Length 3, dp[0][3]: k = 1 gives 1*3*5 + 0 + 15 = 30, and k = 2 gives 1*1*5 + 3 + 0 = 8. The best is 30.',
+        'Length 3, dp[1][4]: k = 2 gives 3*1*1 + 0 + 5 = 8, and k = 3 gives 3*5*1 + 15 + 0 = 30. The best is 30.',
+        'Length 4, dp[0][4]: k = 1 gives 1*3*1 + 0 + 30 = 33. k = 2 gives 1*1*1 + 3 + 5 = 9. k = 3 gives 1*5*1 + 30 + 0 = 35.',
+        'The answer is dp[0][4] = 35: burst the 1 first (15), then the 3 (15), then the 5 (5).',
+      ],
+    },
+    complexity: 'O(n^3) time from n^2 intervals with up to n splits each, and O(n^2) space.',
+    pitfalls: [
+      'Filling by i and j directly: dp[i][k] may not be computed yet, so loop by increasing length.',
+      'Choosing the first balloon burst: its neighbors change afterwards and the two sides stop being independent. The last one burst has fixed neighbors a[i] and a[j].',
+      'Forgetting that the table indexes the padded array, so the answer is dp[0][n-1] where n = len(a), not len(nums).',
+      'Minimum versions must start each dp[i][j] at infinity. Merge Stones (LC 1000) also needs an early exit, since it\'s impossible unless (n - 1) % (k - 1) == 0.',
     ],
     pointsToPonder: [
       'What does "last operation in [i..j]" look like — and why is it usually the right framing?',
@@ -107,14 +263,46 @@ for length in range(2, n):
         for k in range(i+1, j):
             dp[i][j] = max(dp[i][j], a[i]*a[k]*a[j] + dp[i][k] + dp[k][j])
 return dp[0][n-1]`,
+    practice: [516, 486, 1039, 312, 1000],
+    snippet: '16-burst-balloons',
   },
 
   '6. Tree DP': {
     crux: 'Post-order traversal: compute children answers first, then combine at the parent.',
+    signals: [
+      '"The thief can\'t rob two directly-linked houses" and the houses form a binary tree: a choice at a node limits its children.',
+      '"A path can start and end at any node and doesn\'t need to pass through the root": the best path peaks at some node, so check every one.',
+      '"Minimum number of cameras needed to monitor all nodes": each node has a small set of states (covered, has camera, needs cover).',
+      '"Move coins so that every node has exactly one": what passes over an edge is decided by the subtree below it.',
+    ],
+    notThis: [
+      'You need an answer for every node as the root: use rerooting in section 19, since a post-order for each root costs O(n^2).',
+      'No tree is given, as in Unique Binary Search Trees (LC 96): that\'s counting by size, so see section 13.',
+      'Information only flows down, such as root-to-leaf sums: a plain DFS with a parameter is enough and nothing needs returning.',
+    ],
     concepts: [
       'Return MULTIPLE values per node (often two: best including this node, best excluding it).',
       'House Robber III, Binary Tree Cameras, Max Path Sum — all use the pair-return pattern.',
       'A subtree answer is "self-contained" — you do not need to know the rest of the tree (until rerooting, see DP on Trees Advanced).',
+    ],
+    example: {
+      problem: 'House Robber III with root = [3,2,3,null,3,null,1]',
+      lc: 337,
+      walkthrough: [
+        'Each call returns (rob, skip). A missing child returns (0, 0).',
+        'Leaf 3 (under the 2) returns (3, 0). Leaf 1 (under the right 3) returns (1, 0).',
+        'Node 2 has only that right child. rob = 2 + 0 + 0 = 2. skip = 0 + max(3, 0) = 3. It returns (2, 3).',
+        'Right node 3 has only child 1. rob = 3 + 0 + 0 = 3. skip = 0 + max(1, 0) = 1. It returns (3, 1).',
+        'Root 3: rob = 3 + 3 + 1 = 7. skip = max(2, 3) + max(3, 1) = 6. It returns (7, 6).',
+        'The answer is max(7, 6) = 7, from robbing the root and the two leaves 3 and 1.',
+      ],
+    },
+    complexity: 'O(n) time, since each node is visited once with O(1) work. O(h) recursion stack, which is O(log n) when balanced and O(n) on a chain.',
+    pitfalls: [
+      'Recursing to grandchildren with no memo: rob(node) = max(val + grandchildren, children) goes exponential. The pair return keeps it O(n).',
+      'Mixing up what you return with what you record: in LC 124 a node returns one downward arm, but the global best uses both arms.',
+      'LC 124 with all negative values: clamp each child\'s gain at 0, and start the global best at -inf rather than 0.',
+      'Skipping the child\'s own best: skip must use max(l_rob, l_skip), not just l_rob.',
     ],
     pointsToPonder: [
       'What pair of values (or tuple) does each node need to return for the parent to decide?',
@@ -130,14 +318,46 @@ def dfs(node):
     skip = max(l_rob, l_skip) + max(r_rob, r_skip)
     return (rob, skip)
 return max(dfs(root))`,
+    practice: [543, 337, 1372, 124, 968],
+    snippet: '18-tree-dp-house-robber-iii',
   },
 
   '7. State Machine / Stock Problems': {
     crux: 'dp[i][state] = best at day i in that state (holding, not holding, cooldown, k transactions left).',
+    signals: [
+      '"You may complete at most k transactions", "you must sell before you buy again", "a cooldown of one day" or "a transaction fee".',
+      '"No two adjacent houses have the same color" with "the minimum cost to paint all houses": the last choice is the state.',
+      'Each day or item you\'re in one of a few modes, and the rules say which mode can follow which.',
+    ],
+    notThis: [
+      'One buy and one sell (LC 121): tracking the lowest price so far is enough. Unlimited trades with no cost (LC 122): sum the positive differences.',
+      'The state has to remember exactly which items were used, not just the last mode: use Bitmask DP in section 8.',
+      'Profits come from choosing non-overlapping jobs, as in LC 1235: sort by time and use dp with binary search.',
+    ],
     concepts: [
       'Stock I/II/III/IV/cooldown/fee — all the SAME state machine with different transitions.',
       'Paint House / Paint Fence: dp[i][color] = min cost at house i ending with that color.',
       'State machine = explicit graph between states; transitions = directed edges with cost.',
+    ],
+    example: {
+      problem: 'Best Time to Buy and Sell Stock with Cooldown with prices = [1,2,3,0,2]',
+      lc: 309,
+      walkthrough: [
+        'Start with hold = -inf, sold = 0 and rest = 0.',
+        'p = 1: sold = -inf + 1 = -inf. hold = max(-inf, 0 - 1) = -1. rest = max(0, 0) = 0.',
+        'p = 2: sold = -1 + 2 = 1. hold = max(-1, 0 - 2) = -1. rest = max(0, -inf) = 0.',
+        'p = 3: sold = -1 + 3 = 2. hold = max(-1, 0 - 3) = -1. rest = max(0, 1) = 1.',
+        'p = 0: sold = -1 + 0 = -1. hold = max(-1, 1 - 0) = 1. rest = max(1, 2) = 2.',
+        'p = 2: sold = 1 + 2 = 3. hold = max(1, 2 - 2) = 1. rest = max(2, -1) = 2.',
+        'The answer is max(3, 2) = 3: buy at 1, sell at 2, cool down, buy at 0, sell at 2.',
+      ],
+    },
+    complexity: 'O(n * states) time and O(states) space. Stock III needs four variables. Stock IV is O(n * k) time and O(k) space. Paint House II is O(n * k) by tracking the two smallest costs from the previous house.',
+    pitfalls: [
+      'Updating a state before another state has read it: the code saves prev_sold because rest needs yesterday\'s value.',
+      'Starting hold at 0: that means you already own a stock for free. It must start at -inf.',
+      'Charging the fee (LC 714) on both the buy and the sell: charge it once per transaction.',
+      'Stock IV (LC 188) with huge k: once k >= n / 2 it\'s the same as unlimited trades, so switch instead of allocating a big table.',
     ],
     pointsToPonder: [
       'What is the minimum set of states needed to capture the decision (do you really need to track "have I just sold"?)',
@@ -152,14 +372,47 @@ for p in prices:
     hold = max(hold, rest - p)
     rest = max(rest, prev_sold)
 return max(sold, rest)`,
+    practice: [121, 122, 309, 714, 123],
+    snippet: '28-stock-dp-state-machine',
   },
 
   '8. Bitmask DP': {
     crux: 'dp[mask] (or dp[mask][i]) where mask is a subset of items already used/visited.',
+    signals: [
+      '"n <= 20" or "n <= 16" on a problem that would otherwise cost n!: that small limit is the biggest clue.',
+      '"Visit every node" or "contains each string as a substring": the order matters, and you only need to remember which were used and the last one.',
+      '"Assign each task to exactly one worker" or "divide into k subsets with equal sum".',
+      '"The smallest team that covers all required skills": the mask tracks what\'s covered rather than who\'s chosen, with at most 16 skills.',
+    ],
+    notThis: [
+      'n is in the hundreds and only the total matters, not which items were used: use Knapsack in section 4.',
+      'For every mask you need an aggregate over all its submasks: use SOS DP in section 21, since it\'s O(n * 2^n) instead of O(3^n).',
+      'Every move costs the same, as in LC 847: BFS over (mask, node) finds the shortest walk and allows revisiting nodes, which plain mask-order DP doesn\'t handle.',
+    ],
     concepts: [
       'Only works when item count ≤ ~20 (2^20 ≈ 1M states feasible).',
       'TSP: dp[mask][i] = min cost to visit exactly nodes in mask, ending at i.',
       'Iterate submasks of a mask with: `sub = mask; while sub: ...; sub = (sub - 1) & mask` — O(3^n) total.',
+    ],
+    example: {
+      problem: 'Shortest path that visits all 3 nodes with dist = [[0,1,4],[1,0,2],[4,2,0]]',
+      walkthrough: [
+        'Seed each single node at cost 0: dp[001][0], dp[010][1] and dp[100][2] are all 0.',
+        'mask 001 (at node 0): dp[011][1] = 1 and dp[101][2] = 4.',
+        'mask 010 (at node 1): dp[011][0] = 1 and dp[110][2] = 2.',
+        'mask 011: from node 0, dp[111][2] = 1 + 4 = 5. From node 1, dp[111][2] = min(5, 1 + 2) = 3.',
+        'mask 100 (at node 2): dp[101][0] = 4 and dp[110][1] = 2.',
+        'mask 101: from node 0, dp[111][1] = 4 + 1 = 5. From node 2, 4 + 2 = 6 doesn\'t improve it.',
+        'mask 110: from node 1, dp[111][0] = 2 + 1 = 3. From node 2, 2 + 4 = 6 doesn\'t improve it.',
+        'dp[111] = [3,5,3]. The code stops after the table, so read the answer as min(dp[111]) = 3, for the path 0, 1, 2.',
+      ],
+    },
+    complexity: 'O(2^n * n^2) time and O(2^n * n) space when you also track the last node. O(2^n * n) time with dp[mask] alone, and O(3^n) when you enumerate submasks.',
+    pitfalls: [
+      'C++ precedence: `mask & (1 << i) == 0` parses as mask & ((1 << i) == 0). Parenthesize the whole `&` expression.',
+      'Path vs cycle: this code seeds every node and finds an open path. A TSP cycle seeds only the start and adds the cost back to it at the end.',
+      'Memory: dp[2^20][20] of 4-byte ints is about 84 MB, so check the limit before adding the second index.',
+      'Increasing mask order works only because adding a bit always gives a larger number, so every predecessor is finished before it\'s read.',
     ],
     pointsToPonder: [
       'Is n ≤ 20? If not, bitmask DP is infeasible.',
@@ -177,14 +430,44 @@ for mask in range(1 << n):
         for j in range(n):
             if (mask >> j) & 1: continue
             dp[mask | 1<<j][j] = min(dp[mask | 1<<j][j], dp[mask][i] + dist[i][j])`,
+    practice: [473, 698, 1986, 847, 943],
+    snippet: '22-bitmask-dp-tsp-style',
   },
 
   '9. Digit DP': {
     crux: 'Iterate over digit positions; state = (pos, tight, leading_zero, problem-specific summary).',
+    signals: [
+      '"Count the integers in the range [1, n]" or "between low and high", with n up to 10^9 or 10^18.',
+      '"Have at least one repeated digit", "all of its digits are distinct" or "digit_sum(x) is between min_sum and max_sum".',
+      '"Count the total number of digit 1 appearing in all integers less than or equal to n."',
+      '"Whose binary representations do not contain consecutive ones": the same idea in base 2.',
+    ],
+    notThis: [
+      'n is around 10^6: a loop that checks each number\'s digits passes and is far easier to get right.',
+      'The property depends on the whole value, such as being prime: a small prefix summary can\'t capture it. Divisibility by a small m still works, by carrying the remainder.',
+      'A direct count exists, as in Count Numbers with Unique Digits (LC 357): 9 * 9 * 8 * ... needs no memo.',
+    ],
     concepts: [
       'tight = True means the current prefix equals the bound\'s prefix, restricting future digits to ≤ bound[pos].',
       'leading_zero handles "the number has not started yet" — needed when problem cares about digit count or repeats.',
       'Memoize ONLY when not tight (different tight states have different reachable futures).',
+    ],
+    example: {
+      problem: 'Count integers from 1 to 12 with no two equal adjacent digits, with N = 12',
+      walkthrough: [
+        'digits = [1,2]. At pos 0 tight is True, so limit = 1 and d can be 0 or 1.',
+        'd = 0 calls dp(1, 0, False, False). The number hasn\'t started, so limit = 9 and any digit is allowed.',
+        'Inside it, d = 0 reaches the end with started = False and returns 0. d = 1 to 9 each return 1, so this branch gives 9 (the numbers 1 to 9).',
+        'd = 1 calls dp(1, 1, True, True). Now limit = 2. d = 0 gives 10 and returns 1. d = 1 is skipped because it equals last. d = 2 gives 12 and returns 1. This branch gives 2.',
+        'The answer is 9 + 2 = 11, which is every number from 1 to 12 except 11.',
+      ],
+    },
+    complexity: 'O(digits * states * 10) time and O(digits * states) space. Here states covers last (11 values), tight and started. A 10-digit seen mask raises states to about 2 * 2 * 1024.',
+    pitfalls: [
+      'Treating leading zeros as real digits: 007 hasn\'t repeated a 0. That\'s what the started flag is for.',
+      'Reusing a cache across bounds: when you compute f(R) - f(L-1), states with tight = True depend on the digits, so clear the cache between calls.',
+      'Counting 0 by accident: int(started) excludes it here, but check whether your problem\'s range includes 0.',
+      'Very long bounds given as strings, as in LC 2719: L - 1 needs string subtraction, or count f(R) - f(L) and check L by itself.',
     ],
     pointsToPonder: [
       'What summary of the prefix do you carry — digit sum, mask of seen digits, last digit?',
@@ -204,14 +487,46 @@ def dp(pos, last, tight, started):
         total += dp(pos+1, d, tight and d == limit, started or d > 0)
     return total
 return dp(0, -1, True, False)`,
+    practice: [357, 788, 902, 2376, 1012],
+    snippet: '24-digit-dp-template',
   },
 
   '10. DP on Strings (Pattern Matching / Parsing)': {
     crux: 'dp[i][j] = does s[..i] match p[..j] (or some property over two strings at indices i, j)?',
+    signals: [
+      '"Implement matching with support for \'.\' and \'*\'" or "\'?\' and \'*\'", followed by "the matching should cover the entire input string".',
+      '"Count the number of distinct subsequences of s which equal t."',
+      '"A string is scrambled by splitting it at any point" or "composed of at least two shorter words": try every split point.',
+      '"The length of the longest valid parentheses substring": dp[i] = longest valid run ending at i.',
+    ],
+    notThis: [
+      'A fixed pattern with no wildcards: use KMP or Z for O(n + m) with no table.',
+      '"The minimum window that contains all the characters" (LC 76): counts in any order, so use a sliding window. LC 727 needs them in order, which is why it uses DP.',
+      'Longest Happy String (LC 1405) is listed here but solved greedily with a heap.',
+    ],
     concepts: [
       'Regex/Wildcard: special chars (`*`, `?`) introduce branching — `*` can mean "match zero" (dp[i][j-2]) or "match one more" (dp[i-1][j]).',
       'Distinct Subsequences: dp[i][j] = ways for s[..i] to form t[..j]; if s[i]==t[j] add dp[i-1][j-1].',
       'Scramble String / Concatenated Words: think about all possible split points and recurse.',
+    ],
+    example: {
+      problem: 'Regular Expression Matching with s = "aa" and p = "a*"',
+      lc: 10,
+      walkthrough: [
+        'm = 2 and n = 2. dp[0][0] = True. For j = 2, p[1] is \'*\', so dp[0][2] = dp[0][0] = True, because a* can match nothing.',
+        'i = 1, j = 1: \'a\' matches \'a\', so dp[1][1] = dp[0][0] = True.',
+        'i = 1, j = 2: \'*\' has two options. Zero copies gives dp[1][0] = False. One more copy gives dp[0][2] = True and p[0] matches s[0]. So dp[1][2] = True.',
+        'i = 2, j = 1: dp[1][0] = False, so dp[2][1] = False.',
+        'i = 2, j = 2: zero copies gives dp[2][0] = False. One more copy gives dp[1][2] = True and p[0] matches s[1]. So dp[2][2] = True.',
+        'The answer is dp[2][2] = True.',
+      ],
+    },
+    complexity: 'O(m * n) time and space for matching, or O(n) space with two rows. Scramble String is O(n^4), from n^3 memoized states with up to n splits each.',
+    pitfalls: [
+      'Mixing up the two `*` rules. In regex it repeats the previous character, so zero copies is dp[i][j-2]. In wildcard it stands alone, so zero characters is dp[i][j-1].',
+      'Skipping the empty-string row: "a*b*" matches "", so dp[0][j] has to be seeded before the main loops.',
+      'Taking dp[i-1][j] for regex `*` without first checking that p[j-2] matches s[i-1] or is \'.\'.',
+      'Distinct Subsequences (LC 115): intermediate counts can overflow a C++ int, so use a wider type.',
     ],
     pointsToPonder: [
       'For Regex, what does `*` actually mean in the DP transition — and why are TWO branches needed?',
@@ -231,14 +546,46 @@ for i in range(1, m+1):
         else:
             dp[i][j] = dp[i-1][j-1] and p[j-1] in (s[i-1], '.')
 return dp[m][n]`,
+    practice: [115, 32, 44, 10, 87],
+    snippet: '29-regex-matching-dp',
   },
 
   '11. DP with Data Structures (Monotonic Stack/Queue, Segment Tree, BIT)': {
     crux: 'When the DP transition needs max/min over a range, swap an O(n) inner loop for an O(log n) (segment tree/BIT) or O(1) amortized (monotonic deque) lookup.',
+    signals: [
+      '"For every two consecutive integers in the subsequence, j - i <= k" or "you can jump at most k steps": dp[i] = nums[i] + the best of the last k values.',
+      '"Maximize yi + yj + |xi - xj| where |xi - xj| <= k": rewrite it so one term depends only on j, then keep a window over those values.',
+      '"The sum of min(b) over every subarray" or "the largest rectangle": each element needs its nearest smaller neighbor, which points to a monotonic stack.',
+      'n is up to 10^5 and your first recurrence has an O(k) or O(n) inner loop.',
+    ],
+    notThis: [
+      'k or n is small enough that the plain O(n * k) loop passes: don\'t add a structure you don\'t need.',
+      'The range is over values rather than a sliding index window, as in LIS by value: use a BIT or segment tree, because a deque can\'t answer it.',
+      'The recurrence only reads a fixed few neighbors: it\'s plain 1D DP from section 1.',
+    ],
     concepts: [
       'Constrained Subsequence Sum / Jump Game VI: dp[i] = nums[i] + max(dp[i-k..i-1]) → monotonic deque on dp values.',
       'LIS via BIT/segment tree: dp[v] = 1 + max(dp[u] for u < v); range-max query keyed on value.',
       'Histogram-based DP (Maximal Rectangle): per-row histogram + monotonic stack for rectangle-in-histogram.',
+    ],
+    example: {
+      problem: 'Constrained Subsequence Sum with nums = [10,2,-10,5,20] and k = 2',
+      lc: 1425,
+      walkthrough: [
+        'i = 0, x = 10: the deque is empty, so dp[0] = 10. dq = [0] and ans = 10.',
+        'i = 1, x = 2: dp[1] = 2 + 10 = 12. Index 0 is popped because 10 <= 12. dq = [1] and ans = 12.',
+        'i = 2, x = -10: dp[2] = -10 + 12 = 2. Index 2 stays behind index 1 because 12 > 2. dq = [1,2] and ans = 12.',
+        'i = 3, x = 5: index 1 is still in the window (1 >= 3 - 2). dp[3] = 5 + 12 = 17. Both indices are popped. dq = [3] and ans = 17.',
+        'i = 4, x = 20: dp[4] = 20 + 17 = 37. dq = [4] and ans = 37.',
+        'The answer is 37, from choosing 10, 2, 5 and 20.',
+      ],
+    },
+    complexity: 'O(n) time and O(n) space with a monotonic deque, since each index enters and leaves once. O(n log n) time with a BIT or segment tree.',
+    pitfalls: [
+      'Reading the front before removing expired indices: the window is i - k to i - 1, so drop the front while dq[0] < i - k.',
+      'Storing values rather than indices in the deque: you need the index to know when an entry has expired.',
+      'Starting ans at 0 when all values are negative: the subsequence must be non-empty, so start at -inf.',
+      'Using the wrong monotonic order: a window maximum needs decreasing values and a window minimum needs increasing ones.',
     ],
     pointsToPonder: [
       'Is the transition a RANGE MAX/MIN/SUM over a window of past dp values? If yes, a DS speeds it up.',
@@ -257,14 +604,45 @@ for i, x in enumerate(nums):
     dq.append(i)
     ans = max(ans, dp[i])
 return ans`,
+    practice: [1696, 907, 1425, 84, 85],
+    snippet: '26-dp-with-monotonic-deque',
   },
 
   '12. Game Theory DP (Minimax)': {
     crux: 'dp[state] = (current player score - opponent score) assuming both play optimally; transition is max of "this move" minus the recursive call.',
+    signals: [
+      '"Both players play optimally" and "Alice and Bob take turns": this wording almost always means minimax.',
+      '"Return true if the first player can guarantee a win" or "can force a win".',
+      '"Take a pile from either end of the row" or "take 1, 2 or 3 stones from the front".',
+      'The state describes only what\'s left, because the player whose turn it is can be worked out from it or doesn\'t matter.',
+    ],
+    notThis: [
+      'A known winning pattern exists, as in Nim Game (LC 292): the answer is n % 4 != 0, with no table.',
+      'Moves can return to an earlier state, as in Cat and Mouse (LC 913): memoized recursion may never finish, so work backwards from known outcomes with BFS.',
+      'Optimal Account Balancing (LC 465) is listed here but has no opponent: it\'s bitmask or backtracking.',
+    ],
     concepts: [
       'Symmetry trick: since both players play optimally, dp[state] from the current player\'s view = best move minus opponent\'s dp[next_state].',
       'Stone Game variants typically have dp[i][j] = max(piles[i] - dp[i+1][j], piles[j] - dp[i][j-1]).',
       'For "can current player win?" boolean problems, dp[state] = exists move s.t. NOT dp[next_state].',
+    ],
+    example: {
+      problem: 'Predict the Winner with nums = [1,5,2]',
+      lc: 486,
+      walkthrough: [
+        'dp(i, j) is the best score lead for whoever moves next on nums[i..j].',
+        'dp(1, 2) = max(5 - dp(2, 2), 2 - dp(1, 1)) = max(5 - 2, 2 - 5) = 3.',
+        'dp(0, 1) = max(1 - dp(1, 1), 5 - dp(0, 0)) = max(1 - 5, 5 - 1) = 4.',
+        'dp(0, 2) = max(1 - dp(1, 2), 2 - dp(0, 1)) = max(1 - 3, 2 - 4) = -2.',
+        '-2 >= 0 is False, so player 1 can\'t win. Whichever end they take, the opponent gets the 5.',
+      ],
+    },
+    complexity: 'O(n^2) time and space for dp(i, j) with two moves per state. In general it\'s states times moves per state, so Can I Win (LC 464) is O(2^n * n).',
+    pitfalls: [
+      'Adding the recursive call instead of subtracting: dp is the next player\'s lead, so it counts against you.',
+      'Getting ties wrong: LC 486 treats a tie as a win (>= 0), while Stone Game III (LC 1406) reports "Tie" separately. Read the statement.',
+      'Boolean games: you win if ANY move leaves the opponent in a losing state, not if all of them do.',
+      'Tracking both players\' scores in the state: the score difference is enough, and it removes a dimension.',
     ],
     pointsToPonder: [
       'Are you maximizing your own score (score-difference DP) or "can I force a win" (boolean DP)?',
@@ -277,6 +655,7 @@ def dp(i, j):
     if i == j: return nums[i]
     return max(nums[i] - dp(i+1, j), nums[j] - dp(i, j-1))
 return dp(0, len(nums)-1) >= 0`,
+    practice: [292, 877, 486, 1140, 1406],
   },
 
   '13. Counting DP / Combinatorics': {
