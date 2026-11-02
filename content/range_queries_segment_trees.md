@@ -9,6 +9,31 @@ order: 70
 ---
 # Range Queries & Segment Trees — Interview Question Bank
 
+**Which pattern do I use?** Ask two things first: does the data change between queries, and can you subtract two prefixes to get the answer?
+
+| The problem says | Reach for | Section |
+| --- | --- | --- |
+| "sum between indices left and right", and the array never changes | Prefix sum | 1 |
+| "subarray sum equals k", with negative numbers allowed | Prefix sum + hash map | 1 |
+| "add val to every element from l to r", then return the final array | Difference array | 2 |
+| "min, max or GCD of a[l..r]", many queries, no updates | Sparse table | 3 |
+| "update index i" mixed with "sum of a range" | Fenwick tree (BIT) | 4 |
+| "add to a range" mixed with "what is a[i] now?" | BIT over differences | 5 |
+| "add to a range" mixed with "sum of a range" | Two BITs, or lazy segment tree | 6, 9 |
+| "sum of the rectangle from (r1, c1) to (r2, c2)" | 2D prefix sum, or 2D BIT with updates | 7 |
+| "update index i" mixed with "min or max of a range" | Segment tree | 8 |
+| "flip all bits in [l, r]", "assign x to [l, r]" | Lazy segment tree | 9 |
+| "how many later elements are smaller", values up to 10^9 | Coordinate compression + BIT | 10 |
+| "longest subsequence where adjacent values differ by at most k" | Segment tree over DP values | 11 |
+| "first row with at least k free seats", "k-th one in the array" | Segment tree descent | 12 |
+| "how many values in a[l..r] are at most x", answered online | Merge sort tree | 13 |
+| "k-th smallest in a[l..r]" | Persistent segment tree | 13 |
+| "distinct values in a[l..r]", all queries given up front | Mo's algorithm | 14 |
+| An operation that won't merge cleanly, n and q around 10^5 | Square root decomposition | 15 |
+| "sum or max on the path from u to v", with updates | Heavy-light decomposition | 16 |
+| "implement a class with book() or query()" | Choose by the operation mix | 17 |
+| "area covered by the union of rectangles", "outline of the buildings" | Sweep line + segment tree | 18 |
+
 ---
 
 ## 1. Prefix Sum / Static Range Sum
