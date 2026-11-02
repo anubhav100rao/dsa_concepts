@@ -665,10 +665,40 @@ return out`,
 
   '13. Queue for BFS on Graphs / Grids': {
     crux: 'Plain BFS from a source (or MULTI-SOURCE — seed all starts at once) gives shortest-path-by-edges in O(V + E).',
+    signals: [
+      '"Fewest moves", "shortest path" or "minimum number of steps", where every move costs the same.',
+      '"Minutes until every orange rots" or "distance to the nearest 0": many sources spread at once.',
+      '"Shortest transformation" or "turn the wheel one slot": states are the vertices, and neighbors are computed.',
+      '"Nearest exit" in a maze: the first time BFS reaches a goal is the shortest way there.',
+    ],
+    notThis: [
+      'Edges have different weights: use Dijkstra, since BFS order no longer matches distance.',
+      'Moves cost only 0 or 1, as in LC 2290: use the 0-1 BFS deque, section 14.',
+      'You only ask whether cells connect, as in Number of Islands (LC 200): DFS or union-find work just as well.',
+    ],
     concepts: [
       'Mark visited BEFORE enqueue (not on dequeue) to avoid duplicate work on dense graphs.',
       'Multi-source BFS: enqueue all sources with distance 0 — solves Rotting Oranges (LC 994), Walls and Gates (LC 286), 01 Matrix (LC 542) in one pass.',
       'For state-as-vertex problems (Word Ladder, Open the Lock, Sliding Puzzle), the "neighbors" are computed lazily — define them once cleanly.',
+    ],
+    example: {
+      problem: 'Rotting Oranges with grid = [[2,1,1],[0,1,1]]',
+      lc: 994,
+      walkthrough: [
+        'Scan the grid: the queue starts with (0,0,t=0), and fresh = 4.',
+        'Pop (0,0,0): (1,0) is empty and (0,1) is fresh, so rot it and enqueue (0,1,1). fresh = 3.',
+        'Pop (0,1,1): rot (1,1) and (0,2), enqueuing both at t=2. fresh = 1.',
+        'Pop (1,1,2): rot (1,2) and enqueue it at t=3. fresh = 0.',
+        'Pop (0,2,2) and then (1,2,3): no fresh neighbors remain, and last = 3.',
+        'fresh is 0, so the answer is 3.',
+      ],
+    },
+    complexity: 'O(V + E) time, which is O(R × C) on a grid. O(V) space for the queue and visited marks.',
+    pitfalls: [
+      'Marking a cell visited when it is dequeued: the same cell can be enqueued many times first. Mark it when you enqueue.',
+      'Starting BFS from one rotten orange and then another: seed every source before the loop, or the times come out too large.',
+      'Forgetting the unreachable case: if fresh > 0 after the loop, the answer is -1.',
+      'Leaving part of the state out of the visited key: in LC 864, the same cell with different keys is a different state.',
     ],
     pointsToPonder: [
       'Why is multi-source BFS equivalent to BFS from a virtual super-source — and when is that mental model useful?',
@@ -691,14 +721,44 @@ while q:
             grid[nr][nc] = 2; fresh -= 1
             q.append((nr, nc, t+1))
 return last if fresh == 0 else -1`,
+    practice: [200, 994, 542, 1091, 127],
+    snippet: '13-bfs-on-grid-shortest-path-in-unweighted-grid',
   },
 
   '14. Deque / 0-1 BFS': {
     crux: 'Edges have weight 0 or 1: push 0-edges to the FRONT of the deque, 1-edges to the BACK — Dijkstra without a heap, O(V + E).',
+    signals: [
+      '"Minimum number of obstacles to remove" while moving through a grid: entering a wall costs 1 and open floor costs 0.',
+      '"Minimum number of signs to change": following an arrow is free, and any other move costs 1.',
+      'Any "minimum cost" problem where each move is either free or costs exactly one.',
+    ],
+    notThis: [
+      'Weights go beyond 0 and 1: use Dijkstra with a heap, or Dial\'s buckets for small integer weights.',
+      'Every move costs the same: plain BFS from section 13 is simpler.',
+      'Shortest Path with Obstacles Elimination (LC 1293) minimizes steps under a removal budget: use plain BFS over (row, column, removals left).',
+    ],
     concepts: [
       'Same correctness as Dijkstra: deque invariant = "front has the smallest known distance".',
       'Minimum Cost to Make Valid Path (LC 1368): moving in arrow direction = 0, other = 1.',
       'When weights are 0/1, 0-1 BFS strictly dominates Dijkstra (no log factor, simpler code).',
+    ],
+    example: {
+      problem: 'Minimum Cost to Make at Least One Valid Path with grid = [[1,2],[1,1]]',
+      lc: 1368,
+      walkthrough: [
+        'Start with dist[0][0] = 0 and deque [(0,0)]. In this grid, 1 points right and 2 points left.',
+        'Pop (0,0), arrow right: (0,1) costs 0, so dist = 0 and it goes to the front. (1,0) costs 1, so dist = 1 and it goes to the back. Deque is [(0,1), (1,0)].',
+        'Pop (0,1), arrow left: moving down to (1,1) costs 1, so dist = 1 and it goes to the back. Moving left would not improve (0,0). Deque is [(1,0), (1,1)].',
+        'Pop (1,0), arrow right: (1,1) costs 0, but 1 + 0 is not below its current dist of 1. Nothing changes.',
+        'Pop (1,1): no neighbor improves, and the deque is empty.',
+        'dist[1][1] = 1, so the answer is 1.',
+      ],
+    },
+    complexity: 'O(V + E) time, which is O(R × C) on a grid, with no log factor from a heap. O(V) space.',
+    pitfalls: [
+      'Appending 0-cost moves to the back: the deque stops being sorted by distance, so cells are processed too early and repeatedly.',
+      'Marking cells visited on first push as in plain BFS: a later 0-cost move can still improve them, so relax with dist instead.',
+      'Reading the arrow of the neighbor: the move is free only when the current cell points in that direction.',
     ],
     pointsToPonder: [
       'Why is appendleft (not append) the key step — what would happen if you appended both kinds to the back?',
@@ -723,14 +783,46 @@ while dq:
                 if w == 0: dq.appendleft((nr, nc))
                 else:      dq.append((nr, nc))
 return dist[R-1][C-1]`,
+    practice: [2290, 1368, 1293],
+    snippet: '14-deque-0-1-bfs',
   },
 
   '15. Circular Queue / Deque Design': {
     crux: 'Maintain head/tail pointers in a fixed-size array, advanced modulo capacity — O(1) per op, no shifting.',
+    signals: [
+      '"Design a circular queue" or "a deque with a maximum size k".',
+      '"Count the hits in the past 300 seconds" or "calls in the last 3000 ms": old entries expire from the front.',
+      '"Moving average of the last size values."',
+      '"pushFront, pushMiddle and pushBack": two deques, kept balanced.',
+    ],
+    notThis: [
+      'Items leave by priority rather than arrival order: use a heap.',
+      'Maximum Frequency Stack (LC 895) pops by frequency: use stacks grouped by frequency, section 19.',
+      'The statement doesn\'t restrict you to a fixed array and you only need FIFO: the language\'s built-in queue is enough.',
+    ],
     concepts: [
       'Track size explicitly to disambiguate full vs empty (when head == tail).',
       'Front Middle Back Queue (LC 1670): two deques, rebalance so |left| ≤ |right| ≤ |left| + 1.',
       'Max Frequency Stack (LC 895): map freq → stack of values pushed at that frequency.',
+    ],
+    example: {
+      problem: 'Design Circular Queue with k = 2',
+      lc: 622,
+      walkthrough: [
+        'enQueue(1) writes buf[0], and enQueue(2) writes buf[1]. Now head = 0 and size = 2.',
+        'enQueue(3): size equals cap, so it returns false.',
+        'Rear(): buf[(0 + 2 - 1) % 2] = buf[1] = 2.',
+        'deQueue(): head = 1 and size = 1. Nothing is erased, because the slot is simply out of range now.',
+        'enQueue(3): it writes buf[(1 + 1) % 2] = buf[0], wrapping around. Now size = 2.',
+        'Front() = buf[1] = 2, and Rear() = buf[(1 + 2 - 1) % 2] = buf[0] = 3.',
+      ],
+    },
+    complexity: 'O(1) time per operation and O(k) space for the fixed buffer.',
+    pitfalls: [
+      'Deciding full or empty from head == tail: both states look the same, so track size or leave one slot unused.',
+      'Computing the rear as head + size without the -1: that is the next free slot, not the last item.',
+      'In a deque, moving head back with (head - 1) % cap: in C++ and Java this can be negative, so use (head - 1 + cap) % cap.',
+      'Reading Front or Rear on an empty queue: return -1 as the problem specifies.',
     ],
     pointsToPonder: [
       'Why is "size variable" cleaner than the "leave one slot empty" trick — and when does each matter (memory vs speed)?',
@@ -751,14 +843,45 @@ class MyCircularQueue:
         self.size -= 1; return True
     def Front(self): return -1 if not self.size else self.buf[self.head]
     def Rear(self):  return -1 if not self.size else self.buf[(self.head + self.size - 1) % self.cap]`,
+    practice: [933, 346, 622, 641, 1670],
+    snippet: '15-circular-queue-fixed-capacity-design',
   },
 
   '16. Stack for Path / Directory / String Simplification': {
     crux: 'Treat the output as a stack — push on normal token, pop on cancel token (`..`, backspace, adjacent duplicate).',
+    signals: [
+      '"Simplify this Unix-style path", where ".." goes up a directory and "." stays put.',
+      '"Remove the star and the closest non-star character to its left" or "clear each digit and the letter before it".',
+      '"Repeatedly remove adjacent duplicates" or k equal adjacent letters.',
+      '"Repeatedly remove the substring AB or CD": a removal can make new neighbors match.',
+    ],
+    notThis: [
+      'The nesting has to be rebuilt with counts or context, as in Decode String (LC 394): use section 10.',
+      'You choose what to remove to get the smallest result: use the greedy stack in section 7.',
+      'Only the final depth matters, as in Crawler Log Folder (LC 1598): a counter is enough.',
+    ],
     concepts: [
       'Simplify Path (LC 71): split by `/`, push real names, pop on `..`, ignore `.` and empty.',
       'Remove Adjacent Duplicates II (LC 1209): stack of (char, count); pop or merge when count hits k.',
       'Removing Stars (LC 2390): push letters, pop on `*` — single pass, no regex.',
+    ],
+    example: {
+      problem: 'Simplify Path with path = "/a/./b/../../c/"',
+      lc: 71,
+      walkthrough: [
+        'Splitting on / gives "", a, ., b, .., .., c, "".',
+        '"" is skipped. a is pushed. . is skipped. b is pushed. Stack is [a, b].',
+        'The first .. pops b, and the second .. pops a. Stack is [].',
+        'c is pushed, and the final "" is skipped. Stack is [c].',
+        'Joining gives "/c".',
+      ],
+    },
+    complexity: 'O(n) time and O(n) space, since each token is pushed and popped at most once.',
+    pitfalls: [
+      'Popping on ".." at the root: "/../" must stay at "/", so guard the pop.',
+      'Treating empty tokens as names: "//" and a trailing / split into empty strings, which must be skipped.',
+      'Treating "..." as special: only "." and ".." are; "..." is an ordinary directory name.',
+      'In LC 1209, comparing only the top character after a removal: keep (char, count) pairs so the count survives the removal.',
     ],
     pointsToPonder: [
       'Why is "stack as output" the same conceptual move as "stack as undo" — what makes the LIFO order natural here?',
@@ -774,14 +897,45 @@ for part in path.split('/'):
     else:
         stk.append(part)
 return '/' + '/'.join(stk)`,
+    practice: [844, 1047, 2390, 71, 1209],
+    snippet: '16-stack-for-path-simplification',
   },
 
   '17. Stack-Based Greedy / Construction': {
     crux: 'Push candidates; pop whenever the top is dominated by the incoming under the problem-specific "worse" predicate.',
+    signals: [
+      '"Moving in opposite directions, the smaller one explodes."',
+      '"Could this have been the result of push and pop operations on an empty stack?"',
+      '"A car catching up forms a fleet": the car in front limits those behind it.',
+      '"Smallest possible sum of non-leaf nodes" (LC 1130) or "maximum sum of a mountain array" (LC 2866): each new value invalidates earlier, dominated ones.',
+    ],
+    notThis: [
+      'The result is lexicographically ordered, with a removal budget: section 7 has the focused template.',
+      'You can pick any remaining item next rather than the adjacent one: use a heap or sorting.',
+      'Each value\'s contribution over many subarrays is what matters: use the contribution method in section 6.',
+    ],
     concepts: [
       'Asteroid Collision (LC 735): right-mover on top + incoming left-mover → resolve by size; loop until stable.',
       'Validate Stack Sequences (LC 946): simulate — push pushed[i], then pop greedily while top == popped[j].',
       'Car Fleet (LC 853): sort by start position desc; pop the fleet ahead if current catches up (time ≤ top.time).',
+    ],
+    example: {
+      problem: 'Asteroid Collision with asteroids = [10, 2, -5]',
+      lc: 735,
+      walkthrough: [
+        '10 moves right and nothing blocks it, so push. Stack is [10].',
+        '2 also moves right, so push. Stack is [10, 2].',
+        '-5 moves left and the top moves right, so they collide. 2 < 5, so pop 2 and -5 keeps going.',
+        'Next collision: 10 > 5, so -5 explodes and alive becomes false. It isn\'t pushed.',
+        'The answer is [10].',
+      ],
+    },
+    complexity: 'O(n) time, since each asteroid is pushed and popped at most once. O(n) space. Car Fleet adds an O(n log n) sort.',
+    pitfalls: [
+      'Using `if` where a `while` is needed: one incoming asteroid can destroy several on the stack.',
+      'Colliding whenever the signs differ: [-2, 1] moves apart, so a collision needs top > 0 and incoming < 0.',
+      'Forgetting the tie: with equal sizes, both are destroyed, so pop and also drop the incoming one.',
+      'In Car Fleet, comparing positions rather than arrival times: a car joins the fleet ahead if its time to the target is less than or equal to the fleet\'s.',
     ],
     pointsToPonder: [
       'For Asteroid, why is the WHILE loop (not IF) essential for correctness on cascading collisions?',
@@ -798,14 +952,46 @@ for a in asteroids:
         else:                          alive = False
     if alive: stk.append(a)
 return stk`,
+    practice: [735, 946, 853, 402, 1776],
+    snippet: '18-asteroid-collision',
   },
 
   '18. Stack for Undo / History / Browser': {
     crux: 'Two stacks (or one stack + an index) — one for the past, one for the future; an action moves between them.',
+    signals: [
+      '"Retrieve the minimum element in constant time."',
+      '"back(steps) and forward(steps)", where "visiting a page clears the forward history".',
+      '"Undo and redo", or a text cursor that moves left and right.',
+      '"snap() and get(index, snap_id)": read any past version.',
+    ],
+    notThis: [
+      'Items also leave from the other end, as in a sliding window minimum: use a monotonic deque, section 11.',
+      'Max Stack (LC 716) removes the maximum from the middle: a plain stack can\'t, so add a heap or sorted map with lazy deletion.',
+      'Snapshot Array (LC 1146) is about looking up versions: per-index history lists with binary search beat a stack.',
+    ],
     concepts: [
       'Browser History (LC 1472): forward stack + history list with index, or back/forward dual stacks.',
       'Min/Max Stack (LC 155 / 716): augment each entry with min/max so far → O(1) min/max alongside push/pop.',
       'Text Editor (LC 2296): two stacks split at the cursor — type/delete/move become symmetric.',
+    ],
+    example: {
+      problem: 'Min Stack with push -2, push 0, push -3, getMin, pop, top, getMin',
+      lc: 155,
+      walkthrough: [
+        'push(-2) stores (-2, -2), since it is the first entry.',
+        'push(0) stores (0, -2), since min(0, -2) = -2.',
+        'push(-3) stores (-3, -3).',
+        'getMin() reads the top pair and returns -3.',
+        'pop() removes (-3, -3). The older minimum returns by itself.',
+        'top() returns 0, and getMin() returns -2.',
+      ],
+    },
+    complexity: 'O(1) time per operation and O(n) space, since each entry also stores its minimum.',
+    pitfalls: [
+      'Keeping one global minimum: after popping it, you have no way to recover the previous one.',
+      'With a separate min stack, pushing only on x < min: use x <= min, or popping a duplicate minimum loses it.',
+      'In Browser History, not clearing the forward entries on visit: forward() would then reach stale pages.',
+      'Moving more steps than exist: clamp the index to the available history.',
     ],
     pointsToPonder: [
       'For Min Stack, why does storing (value, min_so_far) per entry beat keeping a parallel min-stack with conditional pushes (or does it)?',
@@ -821,14 +1007,46 @@ class MinStack:
     def pop(self): self.stk.pop()
     def top(self): return self.stk[-1][0]
     def getMin(self): return self.stk[-1][1]`,
+    practice: [155, 1472, 1381, 1146, 2296],
+    snippet: '20-min-stack-o-1-minimum',
   },
 
   '19. Multi-Stack / Stack of Stacks': {
     crux: 'When a single stack would violate a constraint (capacity, frequency tiers), maintain a list/heap of stacks indexed by that constraint.',
+    signals: [
+      '"Pop the most frequent element; if there is a tie, pop the most recently pushed."',
+      '"Stacks of the same capacity: push to the leftmost non-full one, pop from the rightmost non-empty one."',
+      '"Increment the bottom k elements" on a stack that has a maximum size.',
+      '"Implement N stacks in one array."',
+    ],
+    notThis: [
+      'Only the minimum or maximum is needed: one augmented stack is enough, section 18.',
+      'Frequency matters but recency doesn\'t: a heap or counting is simpler than grouped stacks.',
+      'Every operation is ordinary LIFO with no capacity or tier rule: a single stack is enough.',
+    ],
     concepts: [
       'Dinner Plate Stacks (LC 1172): list of stacks, capacity cap; min-heap of indices that still have room.',
       'Maximum Frequency Stack (LC 895): map freq → stack-of-values; pushing increments freq, popping returns from the top freq-stack.',
       'Stack With Increment (LC 1381): lazy increment — store delta at the bottom of an affected range; apply on pop.',
+    ],
+    example: {
+      problem: 'Maximum Frequency Stack with push 5, 7, 5, 7, 4, 5, then 4 pops',
+      lc: 895,
+      walkthrough: [
+        'After the pushes: group[1] = [5, 7, 4], group[2] = [5, 7], group[3] = [5], and maxf = 3.',
+        'pop: group[3] gives 5. That group is now empty, so maxf = 2.',
+        'pop: group[2] gives 7, the most recent at frequency 2.',
+        'pop: group[2] gives 5. That group is now empty, so maxf = 1.',
+        'pop: group[1] gives 4, the most recent at frequency 1.',
+        'The pops return 5, 7, 5, 4.',
+      ],
+    },
+    complexity: 'Maximum Frequency Stack is O(1) per operation and O(n) space. Dinner Plate Stacks (LC 1172) adds O(log n) per push for its heap.',
+    pitfalls: [
+      'Removing a value from its lower-frequency groups when its count rises: leave those copies, since they are what later pops return.',
+      'Lowering maxf on every pop: lower it only when that group becomes empty.',
+      'In Dinner Plate Stacks, trusting the heap blindly: a popAtStack can make entries stale or duplicated, so clean them when you read them.',
+      'In LC 1381, forgetting to pass a stored increment down to the next element on pop.',
     ],
     pointsToPonder: [
       'For Dinner Plates, why is a HEAP of "available-to-push" indices the right structure — and why must you lazy-clean it?',
@@ -852,14 +1070,44 @@ class FreqStack:
         self.freq[x] -= 1
         if not self.group[self.maxf]: self.maxf -= 1
         return x`,
+    practice: [1381, 895, 1172],
   },
 
   '20. Asteroid / Collision Simulation': {
     crux: 'Process events in some order; the stack tracks "survivors so far" — pop on each collision until stable.',
+    signals: [
+      '"Moving left or right": "when two collide, the smaller one is destroyed".',
+      '"Health decreases by one" for the survivor of a collision.',
+      '"Return the survivors in the original order": sort by position, then restore.',
+      '"Forms a fleet" or "collision time": the object ahead sets the outcome for the one behind it.',
+    ],
+    notThis: [
+      'Identical objects that swap direction on contact, as in Last Moment Before All Ants Fall Out of a Plank (LC 1503): treat them as passing through, and no stack is needed.',
+      'Objects move freely in 2D or any pair can meet: use an event queue, since only line order gives a single next neighbor.',
+      'Removing Stars (LC 2390) has no sizes to compare: it uses the plain output stack from section 16.',
+    ],
     concepts: [
       'The stack always holds the same-direction (or compatible) survivors; the incoming event collides only with the top.',
       'Car Fleet (LC 853, 1776): sort by start position; survivors are fleets, collision predicate is "catch up time".',
       'Robot Collisions (LC 2751): identical to Asteroid but with healths and indices — bookkeeping is the only added complexity.',
+    ],
+    example: {
+      problem: 'Robot Collisions with positions = [3,5,2,6], healths = [10,10,15,12], directions = "RLRL"',
+      lc: 2751,
+      walkthrough: [
+        'Sort by position: robots 2, 0, 1, 3, at positions 2, 3, 5, 6.',
+        'Robot 2 (health 15, R) is pushed. Robot 0 (health 10, R) is pushed.',
+        'Robot 1 (health 10, L) meets robot 0: the healths are equal, so both are removed. Stack is [robot 2].',
+        'Robot 3 (health 12, L) meets robot 2: 15 > 12, so robot 2 drops to 14 and robot 3 is destroyed.',
+        'The stack holds only robot 2 with health 14, so the answer is [14].',
+      ],
+    },
+    complexity: 'O(n log n) time when the input must be sorted by position, then O(n) for the stack pass. O(n) space.',
+    pitfalls: [
+      'Assuming the input is in position order: Robot Collisions gives it unsorted, so sort indices first.',
+      'Returning the stack as is: the answer must follow the original robot order, so sort survivors by index. The sketch stops before this step.',
+      'Stopping after one collision: a robot that wins keeps moving and loses 1 health each time.',
+      'Colliding any two robots with different directions: an L followed by an R moves apart, so only a left-mover meeting a right-mover on the stack collides.',
     ],
     pointsToPonder: [
       'Why is the collision rule always "incoming vs top of stack" — what guarantees no further collisions deeper in?',
@@ -877,14 +1125,45 @@ for i in order:
         elif top[1] < cur[1]: cur[1] -= 1; stk.pop()
         else: stk.pop(); cur = None; break
     if cur: stk.append(cur)`,
+    practice: [2390, 735, 853, 2751, 1776],
+    snippet: '18-asteroid-collision',
   },
 
   '21. Intervals / Merging with Stack': {
     crux: 'Sort intervals by start; maintain a stack of merged intervals — extend the top if the next overlaps, else push.',
+    signals: [
+      '"Function start and end logs" with "exclusive time": nested calls form a call stack.',
+      '"Remove intervals covered by another interval."',
+      '"Merge" or "insert" into a list of intervals, once sorted by start.',
+      '"On a single-threaded CPU", where a function pauses while another runs.',
+    ],
+    notThis: [
+      '"Maximum non-overlapping" (LC 435) needs only the last end time: a greedy pass sorted by end needs no stack.',
+      '"Minimum meeting rooms": count overlap with a sweep line or a heap of end times.',
+      'Bookings arrive online, as in My Calendar (LC 729): keep a sorted map.',
+    ],
     concepts: [
       'Merge Intervals: sort by start; if next.start ≤ top.end, top.end = max(top.end, next.end); else push.',
       'Remove Covered Intervals (LC 1288): sort by (start asc, end desc); pop if top covers current OR current covers top.',
       'Exclusive Time of Functions (LC 636): stack of active function ids; "start" pushes, "end" pops and credits time to the new top.',
+    ],
+    example: {
+      problem: 'Exclusive Time of Functions with n = 2, logs = ["0:start:0", "1:start:2", "1:end:5", "0:end:6"]',
+      lc: 636,
+      walkthrough: [
+        '0:start:0: the stack is empty, so push [0, 0].',
+        '1:start:2: function 0 pauses, so out[0] += 2 - 0 = 2. Push [1, 2].',
+        '1:end:5: pop, and out[1] += 5 - 2 + 1 = 4. Function 0 resumes at time 6, so its entry becomes [0, 6].',
+        '0:end:6: pop, and out[0] += 6 - 6 + 1 = 1, making 3.',
+        'The answer is [3, 4].',
+      ],
+    },
+    complexity: 'O(m) time over m logs and O(m) space in the worst nesting. The sort-based interval problems take O(n log n).',
+    pitfalls: [
+      'Forgetting the +1 on an end event: end timestamps include that whole time unit.',
+      'Setting the resume time to t instead of t + 1 after a nested call ends.',
+      'Crediting the running function only when it ends: credit it each time another function pauses it.',
+      'In LC 1288, sorting ties by end ascending: sort by start ascending and end descending, so a covering interval comes first.',
     ],
     pointsToPonder: [
       'Why does sorting by start (vs end) matter for MERGING vs COUNT-OVERLAP problems?',
@@ -904,14 +1183,43 @@ for log in logs:
         out[f] += t - s + 1
         if stk: stk[-1][1] = t + 1
 return out`,
+    practice: [636, 1288, 435, 57, 1526],
   },
 
   '22. Queue-Based Simulation / Round-Robin': {
     crux: 'Model "first-come-first-served" steps with a queue; rotate or dequeue elements as the simulation progresses.',
+    signals: [
+      '"Takes turns", "in the next round" or "goes to the back of the line".',
+      '"Each senator can ban one opponent": each actor returns for another round if not banned.',
+      '"Reveal the top card, then move the next card to the bottom."',
+      '"How many requests in the last 3000 milliseconds": a queue of times.',
+    ],
+    notThis: [
+      'Task Scheduler (LC 621) has a cooldown: use a counting formula, or a heap to pick the most frequent task.',
+      'Who runs next depends on a priority, as in Single-Threaded CPU (LC 1834): use a heap.',
+      'Only a total is needed, as in Time Needed to Buy Tickets (LC 2073): summing min(tickets[i], tickets[k]), with tickets[k] - 1 after position k, is one pass with no simulation.',
+    ],
     concepts: [
       'Dota2 Senate (LC 649): two queues (R, D); compare front indices, ban the other, re-enqueue at index + n.',
       'Reveal Cards In Increasing Order (LC 950): simulate the reveal process with a deque of positions, then place sorted cards.',
       'Number of Recent Calls (LC 933): sliding-window queue — pop while front < t - 3000.',
+    ],
+    example: {
+      problem: 'Dota2 Senate with senate = "RDD"',
+      lc: 649,
+      walkthrough: [
+        'Set up R = [0], D = [1, 2], and n = 3.',
+        'Fronts are r = 0 and d = 1. r is earlier, so it bans d and returns at 0 + 3 = 3. Now R = [3] and D = [2].',
+        'Fronts are r = 3 and d = 2. d is earlier, so it bans r and returns at 2 + 3 = 5. Now R = [] and D = [5].',
+        'R is empty, so the answer is "Dire".',
+      ],
+    },
+    complexity: 'Dota2 Senate is O(n) time and space, since each comparison removes one senator. In general, cost is the number of simulated steps, so check how large that can get.',
+    pitfalls: [
+      'Re-enqueuing the winner at its old index: it must act after everyone left in this round, so use i + n.',
+      'Simulating a huge number of rounds when a formula exists: Josephus with large n calls for the recurrence.',
+      'Using an array with shift or pop(0): each one costs O(n), so use a deque.',
+      'In LC 933, dropping the boundary: a call at exactly t - 3000 still counts, so pop only while front < t - 3000.',
     ],
     pointsToPonder: [
       'For Dota2 Senate, why does the "+ n trick" naturally encode "act again next round" without an explicit round counter?',
@@ -928,14 +1236,44 @@ while R and D:
     if r < d: R.append(r + n)
     else:     D.append(d + n)
 return 'Radiant' if R else 'Dire'`,
+    practice: [933, 2073, 1700, 649, 950],
+    snippet: '22-round-robin-queue-simulation',
   },
 
   '23. Bidirectional BFS (Queue-Based)': {
     crux: 'Run BFS from BOTH ends; alternate expanding the smaller frontier; meet in the middle ⇒ O(b^(d/2)) instead of O(b^d).',
+    signals: [
+      '"Shortest transformation sequence", changing "one letter at a time".',
+      '"Minimum moves" from one known start state to one known target state.',
+      'Each state has many neighbors (26 letters per position, or 8 wheel turns), and plain BFS runs out of memory or time.',
+    ],
+    notThis: [
+      'The target is any of several unknown states, like "reach any exit": you can\'t start from the far end, so use plain BFS.',
+      'Moves can\'t be run backward, or they have different costs: use one-way BFS or Dijkstra.',
+      'Word Ladder II (LC 126) wants every shortest path: record parents during BFS, then rebuild the paths with DFS.',
+    ],
     concepts: [
       'Use two sets (or two queues) — expand the smaller set each iteration to keep the branching factor low.',
       'Word Ladder (LC 127): the classic application — frontier sizes are critical.',
       'Open the Lock (LC 752), Minimum Genetic Mutation (LC 433), Sliding Puzzle (LC 773) — same template.',
+    ],
+    example: {
+      problem: 'Word Ladder with begin = "hit", end = "cog", words = [hot, dot, dog, lot, log, cog]',
+      lc: 127,
+      walkthrough: [
+        'Start with front = {hit}, back = {cog}, steps = 1. Expand hit: only hot is in words. Now front = {hot} and steps = 2.',
+        'Sizes tie, so expand hot: dot and lot. Now front = {dot, lot} and steps = 3.',
+        'front is larger, so swap: front = {cog} and back = {dot, lot}. Expand cog: dog and log. Now front = {dog, log} and steps = 4.',
+        'Sizes tie, so expand this frontier: dog changes one letter to dot (and log to lot), which is in back. The two searches meet.',
+        'Return steps + 1 = 5, which counts the words in hit, hot, dot, dog, cog.',
+      ],
+    },
+    complexity: 'About O(b^(d/2)) states instead of O(b^d), for branching factor b and distance d. Word Ladder costs O(26 × L²) per word of length L, and O(N) space for N words.',
+    pitfalls: [
+      'Forgetting to check that the end word is in the list: if it isn\'t, the answer is 0, however connected the rest is.',
+      'Counting edges when the problem counts words: Word Ladder returns the number of words, so steps starts at 1.',
+      'Checking the visited filter before the meet test: words in the other frontier are already removed from words, so test `cand in back` first.',
+      'Expanding one fixed side every time: always expand the smaller frontier, or most of the speedup is lost.',
     ],
     pointsToPonder: [
       'Why is expanding the SMALLER frontier always the right heuristic (not strictly smaller, just not-larger)?',
@@ -958,14 +1296,47 @@ while front and back:
                 if cand in words: nxt.add(cand); words.discard(cand)
     front = nxt; steps += 1
 return 0`,
+    practice: [433, 752, 127, 773, 126],
+    snippet: '21-bidirectional-bfs',
   },
 
   '24. Monotonic Stack + Prefix Sum / DP Optimization': {
     crux: 'When the DP/aggregation needs the min/max (or sum) over a left/right boundary, a monotonic stack finds those boundaries in O(n).',
+    signals: [
+      '"min(subarray) × sum(subarray)", "maximize the min-product" or "total strength".',
+      '"Number of subarrays whose maximum lies in [left, right]."',
+      '"Jump to the smallest larger value, or the largest smaller value": the next index comes from sorted order or a stack, and a DP runs from the right.',
+      'The expression combines an extreme value with a range sum, and n is too large for O(n²).',
+    ],
+    notThis: [
+      'The formula uses only the minimum or maximum, with no range sum: use the contribution method in section 6.',
+      'A DP takes the best over the last k positions, as in Jump Game VI (LC 1696): use a monotonic deque, section 11.',
+      'Number of Subarrays with Bounded Maximum (LC 795) also has a one-pass counting solution that needs no stack.',
+    ],
     concepts: [
       'Sum of Total Strength of Wizards (LC 2281): boundary indices from monotonic stack + prefix-of-prefix sums → O(n) total.',
       'Maximum Subarray Min-Product (LC 1856): like LC 84 — for each min, find its range, multiply by range sum (prefix sums).',
       'Odd Even Jump (LC 975): monotonic stack on sorted indices to precompute next-larger-or-equal / next-smaller for each i → DP from right.',
+    ],
+    example: {
+      problem: 'Maximum Subarray Min-Product with nums = [1, 2, 3, 2]',
+      lc: 1856,
+      walkthrough: [
+        'Prefix sums: P = [0, 1, 3, 6, 8].',
+        'Nearest strictly smaller on the left: L = [-1, 0, 1, 0]. On the right: R = [4, 4, 3, 4].',
+        'i=0: 1 × (P[4] - P[0]) = 8.',
+        'i=1: 2 × (P[4] - P[1]) = 14.',
+        'i=2: 3 × (P[3] - P[2]) = 9.',
+        'i=3: 2 × (P[4] - P[1]) = 14, the same window as i=1.',
+        'The maximum is 14, from subarray [2, 3, 2]. It is below the modulus, so the answer is 14.',
+      ],
+    },
+    complexity: 'O(n) time for the prefix sums and two stack passes. O(n) space.',
+    pitfalls: [
+      'Taking the modulo before comparing: the problem maximizes the true value, so take max first and reduce at the end.',
+      'Getting the sum range off by one: boundaries L and R are exclusive, so the sum is P[R[i]] - P[L[i] + 1].',
+      'Reusing this code\'s same-strictness boundaries for a sum over subarrays: in LC 2281, one side must be strict or duplicates are counted twice.',
+      'In C++, keeping the prefix sum or product in int: sums reach 1e12, so use long long.',
     ],
     pointsToPonder: [
       'When is "find left/right boundary with stack, then use prefix sums" the right factoring — what does it save vs naive O(n²)?',
@@ -989,14 +1360,46 @@ for i in range(n-1, -1, -1):
     R[i] = stk[-1] if stk else n
     stk.append(i)
 return max(nums[i] * (P[R[i]] - P[L[i]+1]) for i in range(n)) % MOD`,
+    practice: [795, 1856, 962, 84, 2281],
+    snippet: '23-monotonic-stack-dp-sum-of-subarray-ranges',
   },
 
   '25. Advanced / Contest-Level Stack & Queue': {
     crux: 'Most "hard" problems are a COMPOSITION: monotonic stack + prefix sums, BFS + state encoding, deque + DP, or a custom stack-of-stacks design.',
+    signals: [
+      '"Shortest subarray with sum at least k", with negative numbers allowed.',
+      '"How many steps until the array is non-decreasing", where removals happen in rounds.',
+      '"Design" a structure with several operations that must all be fast, such as a text cursor or frequency pops.',
+      '"Parse" a grammar such as Lisp expressions or tags, where nesting and scope combine.',
+    ],
+    notThis: [
+      'One pattern fits by itself: use its own section, since this one is for combinations.',
+      'All numbers are positive in a sum-at-least-k problem: a plain sliding window is enough (LC 209).',
+      'n is around 1000: an O(n²) solution may pass, and it is much safer to write under pressure.',
+    ],
     concepts: [
       'When stuck, ask: which canonical pattern (NGE? histogram? contribution? deque-DP?) fits — and what extra dimension is the problem adding?',
       'For design problems, decompose into independent invariants and pick a structure per invariant (heap + map + stack is common).',
       'Brace Expansion II / Parse Lisp / Tag Validator: hand-rolled recursive-descent over a stack of contexts beats regex hacks every time.',
+    ],
+    example: {
+      problem: 'Shortest Subarray with Sum at Least K with nums = [2, -1, 2], k = 3',
+      lc: 862,
+      walkthrough: [
+        'Prefix sums: P = [0, 2, 1, 3].',
+        'i=0, p=0: the deque is empty, so push. Deque holds indices [0].',
+        'i=1, p=2: 2 - 0 is below 3, and P[0] is below 2. Push. Deque is [0, 1].',
+        'i=2, p=1: 1 - 0 is below 3. P[1] = 2 >= 1, so pop index 1 from the back, then push. Deque is [0, 2].',
+        'i=3, p=3: 3 - P[0] = 3 >= 3, so best = 3 - 0 = 3 and index 0 leaves the front. 3 - P[2] = 2 is too small. Push.',
+        'The answer is 3, which is the whole array.',
+      ],
+    },
+    complexity: 'O(n) time, since each prefix index enters and leaves the deque once. O(n) space.',
+    pitfalls: [
+      'Using a plain sliding window with negatives: the sum doesn\'t grow as the window grows, so the shrink step is wrong.',
+      'Building the deque over nums: it must run over the n + 1 prefix sums, starting with P[0] = 0.',
+      'Not popping back entries with P >= p: a later, smaller prefix is better in both value and length.',
+      'Forgetting the -1 return when no subarray qualifies.',
     ],
     pointsToPonder: [
       'Can you reduce THIS problem to a known one (histogram, NGE, deque-DP, multi-source BFS)?',
@@ -1014,5 +1417,7 @@ for i, p in enumerate(P):
     while dq and P[dq[-1]] >= p: dq.pop()
     dq.append(i)
 return best if best < float('inf') else -1`,
+    practice: [2289, 862, 1944, 895, 2281],
+    snippet: '11-monotonic-deque-sliding-window-maximum',
   },
 }
