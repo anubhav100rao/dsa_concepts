@@ -842,15 +842,29 @@ sort(s.begin(), s.end());
 
 ## 25. Sort strings by length
 
+**Use when:** Shorter words must be handled first, because longer ones are built from them.
+
+**Complexity:** O(n log n) comparisons. Each compares sizes in O(1), so the sort itself does no character work.
+
 ```cpp
 sort(words.begin(), words.end(), [](string& a, string& b) {
     return a.size() < b.size();
 });
 ```
 
+**Example:** `{"ccc", "a", "bb"}` becomes `{"a", "bb", "ccc"}`.
+
+**Pitfalls:** Words of equal length end up in an unspecified order, so use `stable_sort` or a tie-break if that order matters. The comparator must return `false` for equal items, so never write `<=`. Prefer `const string&` parameters.
+
+**Used in:** LC 472, LC 1408
+
 ---
 
 ## 26. Custom lexicographic compare
+
+**Use when:** The answer has a two-level rule, as in "longest, and the lexicographically smallest on a tie".
+
+**Complexity:** O(n log n) comparisons, each costing up to O(L) for strings of length L.
 
 ```cpp
 sort(words.begin(), words.end(), [](string& a, string& b) {
@@ -859,9 +873,19 @@ sort(words.begin(), words.end(), [](string& a, string& b) {
 });
 ```
 
+**Example:** `{"bb", "a", "ab"}` becomes `{"a", "ab", "bb"}`.
+
+**Pitfalls:** Plain `a < b` already gives pure dictionary order, where `"ab"` comes before `"b"`; this version orders by length first. When the answer wants the longest first, flip only the size comparison, not the tie-break.
+
+**Used in:** LC 720
+
 ---
 
 ## 27. Remove duplicate characters
+
+**Use when:** You must keep only the first copy of each character, in the original order.
+
+**Complexity:** O(n) time and O(1) space for the seen table, plus the output.
 
 ```cpp
 string removeDuplicates(string s) {
@@ -879,9 +903,19 @@ string removeDuplicates(string s) {
 }
 ```
 
+**Example:** `"banana"` returns `"ban"`.
+
+**Pitfalls:** This isn't LC 316, which also wants the lexicographically smallest result and needs section 57. A negative `char` from non-ASCII input is an invalid index, so cast to `unsigned char` there.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## 28. Remove adjacent duplicates
+
+**Use when:** A pair of equal neighbors disappears, and removals can create new pairs, as in "repeatedly remove adjacent duplicates".
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 string removeAdjacentDuplicates(string s) {
@@ -899,26 +933,56 @@ string removeAdjacentDuplicates(string s) {
 }
 ```
 
+**Example:** `"abbaca"` returns `"ca"`.
+
+**Pitfalls:** A single left-to-right pass without a stack misses the new pairs that a removal creates. After a pop, the character is dropped rather than pushed. LC 1209 needs a stored run count for each character.
+
+**Used in:** LC 1047, LC 1209
+
 ---
 
 ## 29. String to int
+
+**Use when:** The token is already known to be a valid number, such as a part of a split string.
+
+**Complexity:** O(d) time for d digits and O(1) space.
 
 ```cpp
 int x = stoi(s);
 long long y = stoll(s);
 ```
 
+**Example:** `stoi("42")` returns `42`; `stoi("42abc")` also returns `42`.
+
+**Pitfalls:** `stoi` throws `invalid_argument` on `"abc"` and `out_of_range` on overflow. It also stops silently at the first bad character, so it can't validate input. Use the manual loop for LC 8.
+
+**Used in:** LC 93, LC 150, LC 165
+
 ---
 
 ## 30. Int to string
+
+**Use when:** You need a number's digits as text, for example to append a count.
+
+**Complexity:** O(d) time and space for d digits.
 
 ```cpp
 string s = to_string(num);
 ```
 
+**Example:** `to_string(42)` returns `"42"`.
+
+**Pitfalls:** On a `double` it prints a fixed six decimals, so `to_string(1.5)` is `"1.500000"`. A negative number keeps its `-`, so digit loops must skip it. Prefer a `char` append for a single digit: `'0' + d`.
+
+**Used in:** LC 38, LC 443
+
 ---
 
 ## 31. Manual atoi
+
+**Use when:** You must parse a number by hand under rules: leading spaces, an optional sign, junk at the end, clamped overflow.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 int myAtoi(string s) {
@@ -948,9 +1012,19 @@ int myAtoi(string s) {
 }
 ```
 
+**Example:** `"  -42a"` returns `-42`; `"91283472332"` returns `2147483647`.
+
+**Pitfalls:** The clamp must run inside the loop, or a long enough digit string overflows even `long long`. Check `i < n` before every `s[i]`, which matters on `""` and `"+"`. A sign with no digits returns 0.
+
+**Used in:** LC 8
+
 ---
 
 ## 32. Generate all subsequences
+
+**Use when:** n is at most about 20 and the problem asks for "all subsequences" or "all subsets" of the characters.
+
+**Complexity:** O(2^n * n) time and O(2^n * n) space to store them. Recursion depth is n.
 
 ```cpp
 void generateSubsequences(int idx, string& s, string cur, vector<string>& ans) {
@@ -964,9 +1038,19 @@ void generateSubsequences(int idx, string& s, string cur, vector<string>& ans) {
 }
 ```
 
+**Example:** `s = "ab"` gives `{"", "b", "a", "ab"}`.
+
+**Pitfalls:** The empty subsequence is included, so filter it if the problem excludes it. Repeated letters produce repeated results, so `"aa"` gives `"a"` twice. Passing `cur` by value is simple but costs a copy per call.
+
+**Used in:** LC 78
+
 ---
 
 ## 33. Generate all permutations
+
+**Use when:** n is at most about 8 to 10 and the problem asks for every ordering of the characters.
+
+**Complexity:** O(n! * n) time, and O(n) recursion depth plus the stored output.
 
 ```cpp
 void generatePermutations(string& s, int idx, vector<string>& ans) {
@@ -983,17 +1067,37 @@ void generatePermutations(string& s, int idx, vector<string>& ans) {
 }
 ```
 
+**Example:** `s = "abc"` gives `{"abc", "acb", "bac", "bca", "cba", "cab"}`.
+
+**Pitfalls:** Undo the swap after the recursive call, or later branches start from the wrong arrangement. Repeated letters produce duplicates, so skip a letter already tried at this `idx`. The output isn't in sorted order.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## 34. Next permutation of string
+
+**Use when:** You need the next ordering in dictionary order, or want to walk all orderings in sorted order.
+
+**Complexity:** O(n) time per call and O(1) space.
 
 ```cpp
 next_permutation(s.begin(), s.end());
 ```
 
+**Example:** `"abc"` becomes `"acb"` and the call returns `true`; `"cba"` becomes `"abc"` and returns `false`.
+
+**Pitfalls:** Sort first if you want to enumerate all orderings, or you only see those after the starting string. On the last permutation it wraps around to the first and returns `false`, so check the return value.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## 35. Check rotation
+
+**Use when:** The problem asks whether one string is a shift or rotation of another.
+
+**Complexity:** O(n) space, and `find` is usually fast but O(n^2) in the worst case. KMP makes it O(n).
 
 ```cpp
 bool isRotation(string a, string b) {
@@ -1004,9 +1108,19 @@ bool isRotation(string a, string b) {
 }
 ```
 
+**Example:** `a = "abcde", b = "cdeab"` returns `true`; `b = "abced"` returns `false`.
+
+**Pitfalls:** Keep the length check, or any substring of `a + a` passes: `b = "bc"` would return `true`. LC 459 uses the same doubling idea, but it must also exclude the trivial match at index 0.
+
+**Used in:** LC 459
+
 ---
 
 ## 36. Longest common prefix
+
+**Use when:** The problem asks for the longest prefix shared by every string in a list.
+
+**Complexity:** O(S * L) worst case for S total characters and prefix length L, because `find` scans each whole string. O(L) space.
 
 ```cpp
 string longestCommonPrefix(vector<string>& strs) {
@@ -1025,6 +1139,12 @@ string longestCommonPrefix(vector<string>& strs) {
     return prefix;
 }
 ```
+
+**Example:** `{"flower", "flow", "flight"}` returns `"fl"`.
+
+**Pitfalls:** `find(prefix) != 0` searches past the start even when the prefix is absent there, so use `rfind(prefix, 0)` or `compare` for a faster check. An empty list or any empty string returns `""`.
+
+**Used in:** LC 14
 
 ---
 
