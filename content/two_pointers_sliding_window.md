@@ -9,6 +9,28 @@ order: 110
 ---
 # Two Pointers & Sliding Window — Interview Question Bank
 
+### Which pattern do I use?
+
+| The problem says | Reach for | Section |
+|---|---|---|
+| "sorted array", "two numbers add up to target", "triplets that sum to 0" | Pointers from both ends, drop the side that can't work | 1, 17 |
+| "two lines form a container", "how much water can it trap" | Pointers from both ends, move the shorter wall | 2 |
+| "reads the same forward and backward", "reverse in-place" | Pointers from both ends, comparing or swapping | 3, 18 |
+| "in-place", "return the new length", "relative order kept" | Read and write pointers moving the same way | 5 |
+| "two sorted arrays", "is a subsequence of", "intersection of two lists" | One pointer per sequence, advance the one that's behind | 6, 18 |
+| "cycle", "middle node", "n-th from the end", "constant extra space" | Fast and slow pointers, or a fixed gap | 7, 19 |
+| "of length k", "k consecutive", "permutation of", "anagram" | Fixed-size window | 8, 12 |
+| "longest substring", "at most k distinct", "flip at most k" | Variable window, keep the longest valid one | 9, 24 |
+| "smallest subarray with sum at least", "minimum window containing" | Variable window, shrink while still valid | 10, 24 |
+| "number of subarrays with exactly k" | atMost(k) − atMost(k − 1) | 11 |
+| "maximum of each window", "within the last k steps", "absolute difference at most limit" | Window plus monotonic deque | 14 |
+| "median of each window", "k-th in the window" | Window plus two heaps or a multiset | 15 |
+| "circular", "first and last are adjacent", "take from either end" | Index with `i % n`, or slide over the complement | 16 |
+| "k-th smallest distance", "minimize the maximum" | Binary search on the answer, count with two pointers | 20 |
+| "at most two per boat", "assign", "maximize the number matched" | Sort, then pair greedily with two pointers | 21 |
+| "subarray sum equals k" and values can be negative | Prefix sum plus hash map, not a window | 22 |
+| "submatrices that sum to target" | Fix a row band, then solve the 1D problem | 23 |
+
 ---
 
 ## 1. Opposite Direction — Pair Sum / Target
