@@ -9,6 +9,35 @@ order: 20
 ---
 # Binary Search — Interview Question Bank
 
+**Which pattern do I use?** Match the wording of the problem to a section.
+
+| The problem says | Pattern | Section |
+| --- | --- | --- |
+| "sorted array, return the index or -1" | Exact search | 1 |
+| "first and last position", "smallest element greater than x" | Lower / upper bound | 2 |
+| "rotated at an unknown pivot", "minimum of a rotated array" | Find the sorted half | 3 |
+| "minimize the largest sum", "maximize the minimum distance" | Search the answer with a greedy check | 4, 9 |
+| "minimum speed / days / capacity to finish in time" | Search the answer with a simulation | 5 |
+| "k-th smallest" among too many candidates to list | Search the value and count | 6 |
+| "sorted matrix", rows and columns sorted | Flatten or staircase | 7 |
+| "peak", "mountain array", "appears exactly once" | Compare mid with its neighbor | 8, 20 |
+| "k-th smallest pair distance", "still a subsequence after k removals" | Search with a window check | 10 |
+| "pick with probability w[i]", "sum at most queries[i]" | Lower bound on prefix sums | 11 |
+| "for each x, how many y pass a threshold" | Sort one side, search per element | 12 |
+| "path that minimizes the maximum", "rising water" | Search a threshold, then BFS or DFS | 13 |
+| "longest increasing subsequence", "non-overlapping jobs for max profit" | DP with a binary search step | 14 |
+| "within 10^-5 of the actual answer" | Search over real numbers | 15 |
+| "without built-in sqrt", "trailing zeroes equal k" | Search over a math function | 16 |
+| "longest duplicate substring", "longest common subpath" | Search the length, check with a hash | 17 |
+| "number of smaller elements to the right" | Binary indexed tree or ordered set | 18 |
+| "value at the latest timestamp <= t", "snapshot" | Sorted history per key | 19 |
+| "must run in O(log n)" on data that isn't sorted | Find a monotonic predicate | 20 |
+| "minimize a function that falls and then rises" | Ternary search | 21 |
+| "size unknown", "infinite array", no upper bound given | Double, then search | 22 |
+| "book if there is no overlap" as events arrive | Sorted events | 23 |
+| "call the API as few times as possible" | Interactive search | 24 |
+| "maximum average with length at least k", odd or hidden predicates | Tricky predicate | 25 |
+
 ---
 
 ## 1. Classic Binary Search / Array Search
