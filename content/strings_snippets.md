@@ -1438,7 +1438,7 @@ string removeOccurrences(string s, string part) {
 
 **Example:** `s = "daabcbaabcbc", part = "abc"` returns `"dab"`.
 
-**Pitfalls:** Calling `find` and `erase` from the start on each loop is O(n^2) or worse, while this version only checks the tail. `res.substr` copies, so `res.compare(res.size() - m, m, part) == 0` is cheaper. An empty `part` would loop on nothing useful, so guard it.
+**Pitfalls:** Calling `find` and `erase` from the start on each loop is O(n^2) or worse, while this version only checks the tail. `res.substr` copies, so `res.compare(res.size() - m, m, part) == 0` is cheaper.
 
 **Used in:** No problem in this topic's list.
 
@@ -1537,13 +1537,27 @@ s.insert(pos, "abc");
 
 ## 49. Replace substring
 
+**Use when:** You must overwrite one known range with new text, possibly of a different length.
+
+**Complexity:** O(n + k) time for k new characters, as the tail may shift. O(k) extra space.
+
 ```cpp
 s.replace(pos, len, "new");
 ```
 
+**Example:** `s = "hello"`: `s.replace(1, 3, "new")` gives `"hnewo"`.
+
+**Pitfalls:** The second argument is the length being replaced, not an end index. C++ `replace` handles one position only, not all occurrences, so looping with `find` must move past the new text or it can loop forever.
+
+**Used in:** LC 1108, LC 1678
+
 ---
 
 ## 50. String stack pattern
+
+**Use when:** The newest character may cancel or combine with the previous surviving one, as in "remove adjacent..." or "typed with backspaces".
+
+**Complexity:** O(n) time, since each character is pushed and popped at most once. O(n) space.
 
 Useful for removals, decoding, balancing.
 
@@ -1559,9 +1573,19 @@ for (char c : s) {
 }
 ```
 
+**Example:** With `shouldRemove(a, b)` being `abs(a - b) == 32`, `"leEeetcode"` gives `"leetcode"`.
+
+**Pitfalls:** Check `!st.empty()` before `st.back()`. Using a `string` as the stack means no final reverse is needed. `shouldRemove` is a placeholder you must define, and a popped character must not be pushed again.
+
+**Used in:** LC 844, LC 1047, LC 1209, LC 1544
+
 ---
 
 ## 51. Balanced parentheses
+
+**Use when:** Brackets of several types must close in the right order, as in "determine if the input string is valid".
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 bool isValid(string s) {
@@ -1586,9 +1610,19 @@ bool isValid(string s) {
 }
 ```
 
+**Example:** `"([]{})"` returns `true`; `"(]"` and `"(("` return `false`.
+
+**Pitfalls:** Check for an empty stack before reading `top`, which handles `")"`. Return `st.empty()` at the end, which handles `"(("`. Any non-opener is treated as a closer here, so filter other characters first if the input can have them.
+
+**Used in:** LC 20
+
 ---
 
 ## 52. Reverse words in a string
+
+**Use when:** The problem asks to reverse the order of words, with messy spacing.
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 string reverseWords(string s) {
@@ -1613,9 +1647,19 @@ string reverseWords(string s) {
 }
 ```
 
+**Example:** `"  the sky is blue "` returns `"blue is sky the"`.
+
+**Pitfalls:** Reversing the characters alone also reverses each word, so an in-place solution must then reverse every word again. `>>` handles extra spaces for you, and the `i > 0` check stops a leading space in the output.
+
+**Used in:** LC 151
+
 ---
 
 ## 53. Check subsequence
+
+**Use when:** The problem asks whether one string appears inside another in order, with gaps allowed.
+
+**Complexity:** O(len(big)) time and O(1) space.
 
 ```cpp
 bool isSubsequence(string small, string big) {
@@ -1631,9 +1675,19 @@ bool isSubsequence(string small, string big) {
 }
 ```
 
+**Example:** `small = "ace", big = "abcde"` returns `true`; `small = "aec"` returns `false`.
+
+**Pitfalls:** Check `i < small.size()` before reading `small[i]`, though reading the terminator there is harmless for `std::string`. Taking the first match is always safe. With many queries (LC 792), bucket by next letter rather than rescanning.
+
+**Used in:** LC 392, LC 792
+
 ---
 
 ## 54. Count substrings with all unique chars
+
+**Use when:** The problem counts substrings under a condition that stays true when the window shrinks.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 int countUniqueSubstrings(string s) {
@@ -1656,9 +1710,19 @@ int countUniqueSubstrings(string s) {
 }
 ```
 
+**Example:** `"abca"` returns `9`, from 1 + 2 + 3 + 3 new substrings at each right edge.
+
+**Pitfalls:** Each `right` adds `right - left + 1` substrings, namely those ending at `right`. Use `long long` for `ans` on long strings, as the count can reach about n^2 / 2. LC 1248 counts "exactly k" as at-most(k) minus at-most(k - 1).
+
+**Used in:** LC 1248
+
 ---
 
 ## 55. Longest substring with at most K distinct chars
+
+**Use when:** The problem says "longest substring with at most k distinct characters".
+
+**Complexity:** O(n) time and O(min(n, alphabet)) space.
 
 ```cpp
 int longestAtMostKDistinct(string s, int k) {
@@ -1687,9 +1751,19 @@ int longestAtMostKDistinct(string s, int k) {
 }
 ```
 
+**Example:** `s = "eceba", k = 2` returns `3`, for `"ece"`; `s = "abc", k = 0` returns `0`.
+
+**Pitfalls:** Erase a key when its count reaches 0, or `freq.size()` overstates the number of distinct characters. Reading `freq[x]` on a missing key also creates it. Update the answer after the shrink loop, not before.
+
+**Used in:** LC 159, LC 340
+
 ---
 
 ## 56. Longest repeating character replacement
+
+**Use when:** The problem says "replace at most k characters" to make the longest run of one letter.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 int characterReplacement(string s, int k) {
@@ -1715,9 +1789,19 @@ int characterReplacement(string s, int k) {
 }
 ```
 
+**Example:** `s = "AABABBA", k = 1` returns `4`.
+
+**Pitfalls:** `maxFreq` is never lowered when the window shrinks. That is safe, because only a larger `maxFreq` can produce a longer answer. The array assumes uppercase letters, so use `c - 'a'` or a larger array otherwise.
+
+**Used in:** LC 424
+
 ---
 
 ## 57. Lexicographically smallest subsequence of distinct chars
+
+**Use when:** The problem says "lexicographically smallest" with "each distinct letter exactly once".
+
+**Complexity:** O(n) time, since each position is pushed and popped at most once. O(1) space besides the result.
 
 ```cpp
 string smallestSubsequence(string s) {
@@ -1748,9 +1832,19 @@ string smallestSubsequence(string s) {
 }
 ```
 
+**Example:** `"cbacdcbc"` returns `"acdb"`.
+
+**Pitfalls:** Pop only if the top letter appears again later, using `last[...] > i`. Mark a popped letter as unused, or it can never return. Skip a letter already in the stack before the `while` loop, or the result gets duplicates.
+
+**Used in:** LC 316, LC 1081
+
 ---
 
 ## 58. String compression
+
+**Use when:** You must write out runs of equal characters as a character and its count, into a new string.
+
+**Complexity:** O(n) time and O(n) space.
 
 ```cpp
 string compress(string s) {
@@ -1773,9 +1867,19 @@ string compress(string s) {
 }
 ```
 
+**Example:** `"aaabbc"` returns `"a3b2c1"`.
+
+**Pitfalls:** This version writes `1` for single characters, unlike LC 443, so check which form you need. The `i = j - 1` line combines with the `for` loop's `i++`. Use `to_string`, since a count may have several digits.
+
+**Used in:** LC 38
+
 ---
 
 ## 59. In-place compression style
+
+**Use when:** The problem says "compress in place" and return the new length, with O(1) extra space.
+
+**Complexity:** O(n) time and O(1) extra space.
 
 ```cpp
 int compress(vector<char>& chars) {
@@ -1806,18 +1910,38 @@ int compress(vector<char>& chars) {
 }
 ```
 
+**Example:** `{'a','a','b','b','b'}` returns `4` and the array starts `a2b3`; twelve `a` characters give `a12`.
+
+**Pitfalls:** A run of 1 writes no count. A count such as 12 takes two slots, one digit per slot. `write` never passes `i`, because the output of a run is never longer than the run itself.
+
+**Used in:** LC 443
+
 ---
 
 ## 60. Useful string constants
+
+**Use when:** You iterate over candidate letters or digits, or map an index back to a character.
+
+**Complexity:** O(1) space and time, since the sizes are fixed.
 
 ```cpp
 string alphabet = "abcdefghijklmnopqrstuvwxyz";
 string digits = "0123456789";
 ```
 
+**Example:** `alphabet[2]` is `'c'` and `digits[7]` is `'7'`.
+
+**Pitfalls:** `'a' + i` has type `int`, so wrap it in `char(...)` before appending. `string` plus an `int` won't add a digit: use `digits[d]` or `char('0' + d)`.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## High-yield interview patterns
+
+**Use when:** You recognize the problem type and need the skeleton quickly; the numbered sections have the complete versions.
+
+**Complexity:** Frequency and sliding window are O(n), prefix hash is O(n) to build, center expansion is O(n^2) overall, and the stack string is O(n).
 
 ```cpp
 // Frequency
@@ -1837,7 +1961,7 @@ for (int right = 0; right < n; right++) {
 }
 
 // Prefix hash
-hash[i + 1] = hash[i] * base + s[i];
+hash[i + 1] = (hash[i] * base + s[i]) % mod;
 
 // Palindrome center expansion
 expand(i, i);
@@ -1849,3 +1973,9 @@ for (char c : s) {
     // push/pop based on condition
 }
 ```
+
+**Example:** On `s = "abca"`: frequency gives `a = 2`, and a no-repeat sliding window gives a longest length of `3`.
+
+**Pitfalls:** These are outlines rather than complete programs, so `mod`, `base`, `n` and `badCondition` need defining. Take `% mod` on every step of the prefix hash, as signed overflow is undefined. Update the answer in the right place for the window type.
+
+**Used in:** LC 3, LC 5, LC 76, LC 242, LC 1047, LC 1316
