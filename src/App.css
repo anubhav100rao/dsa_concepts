@@ -836,18 +836,77 @@
   opacity: 0.6;
 }
 
-.concept-code {
+.concept-code pre {
   margin: 0;
-  padding: 12px 14px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border);
   border-radius: 6px;
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+.markdown-content .concept-code pre code {
+  padding: 12px 14px;
   font-size: 0.82rem;
   line-height: 1.55;
+}
+
+.concept-signals li::before {
+  background: var(--green);
+  opacity: 1;
+}
+
+.concept-not-this li::before {
+  background: var(--yellow);
+  opacity: 1;
+}
+
+.concept-pitfalls li::before {
+  background: var(--red);
+  opacity: 1;
+}
+
+.concept-example-title,
+.concept-complexity {
+  margin: 0 0 6px;
   color: var(--text-primary);
-  overflow-x: auto;
-  white-space: pre;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.concept-block ol.concept-steps {
+  counter-reset: concept-step;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.concept-block ol.concept-steps li {
+  counter-increment: concept-step;
+  padding-left: 24px;
+}
+
+.concept-block ol.concept-steps li::before {
+  content: counter(concept-step) '.';
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
+  color: var(--accent);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.concept-practice-meta {
+  margin-left: 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.concept-snippet-link {
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 /* Fenced code blocks rendered by react-markdown + rehype-highlight.

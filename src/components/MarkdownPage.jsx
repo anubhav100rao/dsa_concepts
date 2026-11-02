@@ -16,6 +16,7 @@ import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github-dark.css'
 import topics from '../topics'
 import conceptMaps from '../conceptMaps'
+import SectionConceptMap from './SectionConceptMap'
 import {
   DIFFICULTIES,
   normalizeDifficulty,
@@ -73,82 +74,6 @@ function getSectionConcept(topicId, headingLine) {
   if (!topicMap) return null
   const key = headingLine.replace(/^##\s+/, '').trim()
   return topicMap[key] || null
-}
-
-function SectionConceptMap({ concept, sectionId, forceOpen }) {
-  const [isOpen, setIsOpen] = useState(Boolean(forceOpen))
-
-  // If the URL flips on the concept-open flag after mount, open the panel.
-  // Compare-to-last pattern avoids a set-state-in-effect lint hit.
-  const [lastForce, setLastForce] = useState(forceOpen)
-  if (lastForce !== forceOpen) {
-    setLastForce(forceOpen)
-    if (forceOpen) setIsOpen(true)
-  }
-
-  return (
-    <div className={`concept-map ${isOpen ? 'open' : ''}`}>
-      <button
-        type="button"
-        className="concept-map-toggle"
-        aria-expanded={isOpen}
-        aria-controls={`concept-${sectionId}`}
-        onClick={() => setIsOpen((v) => !v)}
-      >
-        <span className="concept-map-toggle-icon" aria-hidden="true">
-          {isOpen ? '−' : '+'}
-        </span>
-        <span className="concept-map-toggle-label">
-          {isOpen ? 'Hide concept map' : 'Show concept map'}
-        </span>
-        <span className="concept-map-toggle-hint">
-          crux · key concepts · points to ponder · code
-        </span>
-      </button>
-
-      {isOpen && (
-        <div className="concept-map-body" id={`concept-${sectionId}`}>
-          {concept.crux && (
-            <div className="concept-block concept-crux">
-              <div className="concept-label">Crux</div>
-              <p>{concept.crux}</p>
-            </div>
-          )}
-
-          {concept.concepts && concept.concepts.length > 0 && (
-            <div className="concept-block">
-              <div className="concept-label">Key concepts</div>
-              <ul>
-                {concept.concepts.map((c, i) => (
-                  <li key={i}>{c}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {concept.pointsToPonder && concept.pointsToPonder.length > 0 && (
-            <div className="concept-block">
-              <div className="concept-label">Points to ponder</div>
-              <ul>
-                {concept.pointsToPonder.map((p, i) => (
-                  <li key={i}>{p}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {concept.code && (
-            <div className="concept-block">
-              <div className="concept-label">Code sketch</div>
-              <pre className="concept-code">
-                <code>{concept.code}</code>
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
 }
 
 function QuestionSectionToolbar({ questionRows }) {
@@ -286,6 +211,7 @@ const MarkdownBlock = memo(function MarkdownBlock({ markdown }) {
 })
 
 const CollapsibleSection = memo(function CollapsibleSection({
+  topicId,
   section,
   isCollapsed,
   onToggle,
@@ -347,6 +273,9 @@ const CollapsibleSection = memo(function CollapsibleSection({
               concept={concept}
               sectionId={section.id}
               forceOpen={forceConceptOpen}
+              topicId={topicId}
+              sectionSlug={section.slug}
+              questionRows={section.questionRows}
             />
           )}
           {hasQuestions && (
@@ -414,19 +343,11 @@ export default function MarkdownPage({
     setLastTopicId(topicId)
     setActiveTab(requestedTab === 'snippets' ? 'snippets' : 'questions')
   }
-  // If the URL asks for the snippets tab (e.g. via the search palette), honor
-  // it on every search-params change too.
-  const [lastRequestedTab, setLastRequestedTab] = useState(requestedTab)
-  if (lastRequestedTab !== requestedTab) {
-    setLastRequestedTab(requestedTab)
-    if (requestedTab === 'snippets') setActiveTab('snippets')
-    if (requestedTab === 'questions') setActiveTab('questions')
-  }
-
-  // When the user lands via a question deep-link, force all difficulty
-  // filters on so the target row is actually rendered. Compare-to-last
-  // pattern keeps this out of an effect. Keyed on the navigation rather than
-  // the id, so reopening the same search result still works.
+  // On each navigation, honor a tab requested by the URL (e.g. via the search
+  // palette or a concept map link). And when the user lands via a question
+  // deep-link, force all difficulty filters on so the target row is actually
+  // rendered. Compare-to-last pattern keeps this out of an effect. Keyed on
+  // the navigation so reopening the same link still works.
   const [difficultyFilters, setDifficultyFilters] = useState({
     Easy: true,
     Medium: true,
@@ -435,6 +356,8 @@ export default function MarkdownPage({
   const [lastLocationKey, setLastLocationKey] = useState(location.key)
   if (lastLocationKey !== location.key) {
     setLastLocationKey(location.key)
+    if (requestedTab === 'snippets') setActiveTab('snippets')
+    if (requestedTab === 'questions') setActiveTab('questions')
     if (targetQuestionId) {
       setDifficultyFilters({ Easy: true, Medium: true, Hard: true })
     }
@@ -721,6 +644,7 @@ export default function MarkdownPage({
           {contentSections.sections.map((section) => (
             <CollapsibleSection
               key={section.id}
+              topicId={topicId}
               section={section}
               isCollapsed={Boolean(collapsedInScope[section.slug])}
               onToggle={toggleSection}

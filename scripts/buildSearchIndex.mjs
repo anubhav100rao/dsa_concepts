@@ -84,7 +84,10 @@ function buildSectionDoc(topic, section, concept) {
   const conceptText = concept
     ? [
         concept.crux || '',
+        (concept.signals || []).join(' '),
+        (concept.notThis || []).join(' '),
         (concept.concepts || []).join(' '),
+        (concept.pitfalls || []).join(' '),
         (concept.pointsToPonder || []).join(' '),
       ].join(' ')
     : ''

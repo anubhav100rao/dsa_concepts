@@ -22,10 +22,39 @@ for x in items:
 
   '2. Interval Scheduling / Merging': {
     crux: 'Sort by END time to pack the most non-overlapping intervals; sort by START to merge.',
+    signals: [
+      '"Maximum number of non-overlapping..." or "remove the fewest intervals so that none overlap": sort by end time.',
+      '"Merge all overlapping..." or "insert into a sorted list of intervals": sort by start time.',
+      '"Minimum number of rooms, platforms or arrows": ask how many intervals overlap at one moment.',
+      'The input is a list of [start, end] pairs and only their order and overlap matter.',
+    ],
+    notThis: [
+      'Intervals carry values, as in Maximum Profit in Job Scheduling (LC 1235): taking the earliest end can lose the most valuable job, so use DP with binary search.',
+      'Bookings arrive one at a time, as in My Calendar (LC 729): you can\'t sort up front, so keep a sorted map.',
+    ],
     concepts: [
       'Activity selection: sort by end time, greedily take the interval whose start ≥ last chosen end.',
       'Merge intervals: sort by start; if next.start ≤ cur.end, extend cur.end = max(cur.end, next.end).',
       'Min meeting rooms = max overlap = sweep-line with a +1/-1 timeline, or a min-heap of end times.',
+    ],
+    example: {
+      problem: 'Non-overlapping Intervals with [[1,2],[2,3],[3,4],[1,3]]',
+      lc: 435,
+      walkthrough: [
+        'Sort by end time: [1,2], [2,3], [1,3], [3,4]. Start with end = -inf and count = 0.',
+        '[1,2]: 1 >= -inf, so keep it. Now end = 2 and count = 1.',
+        '[2,3]: 2 >= 2, so keep it, because touching at a point doesn\'t count as overlap here. Now end = 3 and count = 2.',
+        '[1,3]: 1 < 3, so skip it.',
+        '[3,4]: 3 >= 3, so keep it. Now end = 4 and count = 3.',
+        'We kept 3 of 4 intervals, so the answer is 1 removal.',
+      ],
+    },
+    complexity: 'O(n log n) time for the sort, then one O(n) pass. O(1) extra space, or O(n) if you build a merged list.',
+    pitfalls: [
+      'Sorting by start time when counting non-overlapping intervals: one long early interval can block many short ones.',
+      'Using `<` where the problem needs `<=`: LC 435 lets intervals touch, while LC 56 merges them.',
+      'When merging, writing cur.end = next.end instead of max(cur.end, next.end): [1,10] followed by [2,3] would shrink the interval.',
+      'In a meeting-room sweep, handle ends before starts at equal times if a room can be reused at that moment.',
     ],
     pointsToPonder: [
       'Why does sorting by end time (not start, not length) maximize the count of non-overlapping intervals?',
@@ -39,6 +68,8 @@ for s, e in intervals:
     if s >= end:
         count += 1
         end = e`,
+    practice: [2848, 56, 435, 57, 253],
+    snippet: '1-activity-selection-non-overlapping-intervals',
   },
 
   '3. Jump Game Family (Greedy Range Extension)': {

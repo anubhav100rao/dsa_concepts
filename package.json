@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --test \"src/**/*.test.js\"",
-    "build:search-index": "node scripts/buildSearchIndex.mjs"
+    "build:search-index": "node scripts/buildSearchIndex.mjs",
+    "validate:content": "node scripts/validateContent.mjs"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
