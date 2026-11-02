@@ -1,5 +1,6 @@
 import {
   Children,
+  cloneElement,
   createContext,
   memo,
   useCallback,
@@ -8,13 +9,13 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import rehypeHighlight from 'rehype-highlight'
 import 'highlight.js/styles/github-dark.css'
-import topics from '../topics'
+import topics, { questionOccurrences } from '../topics'
 import conceptMaps from '../conceptMaps'
 import SectionConceptMap from './SectionConceptMap'
 import {
@@ -134,6 +135,37 @@ function CollapsedSectionProgress({ questionRows }) {
   )
 }
 
+function AlsoInLinks({ questionId }) {
+  const { topicId } = useParams()
+  const otherTopics = topics.filter(
+    (topic) => topic.id !== topicId && questionOccurrences[questionId]?.[topic.id],
+  )
+
+  if (otherTopics.length === 0) return null
+
+  return (
+    <span className="also-in">
+      <span className="also-in-label">also in</span>
+      {otherTopics.map((topic) => {
+        const params = new URLSearchParams({
+          q: questionId,
+          section: questionOccurrences[questionId][topic.id],
+        })
+        return (
+          <Link
+            key={topic.id}
+            to={`/topic/${topic.id}?${params}`}
+            title={topic.title}
+            aria-label={`Also in ${topic.title}`}
+          >
+            {topic.icon}
+          </Link>
+        )
+      })}
+    </span>
+  )
+}
+
 function QuestionRow({ cellTexts, rowDifficulties, children }) {
   const { doneQuestions, difficultyFilters, onToggleQuestionDone } =
     useContext(QuestionStateContext)
@@ -146,6 +178,8 @@ function QuestionRow({ cellTexts, rowDifficulties, children }) {
   const questionId = makeQuestionId(cellTexts)
   const isDone = Boolean(doneQuestions[questionId])
   const problemName = cellTexts[1] || 'question'
+  const cells = Children.toArray(children)
+  const problemCell = cells[1]
 
   return (
     <tr
@@ -160,7 +194,14 @@ function QuestionRow({ cellTexts, rowDifficulties, children }) {
           aria-label={`Mark ${problemName} as done`}
         />
       </td>
-      {children}
+      {cells[0]}
+      {cloneElement(
+        problemCell,
+        undefined,
+        problemCell.props.children,
+        <AlsoInLinks questionId={questionId} />,
+      )}
+      {cells.slice(2)}
     </tr>
   )
 }

@@ -953,6 +953,29 @@
   margin: 16px 0;
 }
 
+.also-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  opacity: 0.55;
+}
+
+.question-row:hover .also-in,
+.also-in:focus-within {
+  opacity: 1;
+}
+
+.also-in-label {
+  color: var(--text-muted);
+}
+
+.markdown-content .also-in a {
+  text-decoration: none;
+}
+
 /* Collapsible sections */
 .markdown-content .section-heading {
   display: flex;

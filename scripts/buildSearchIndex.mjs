@@ -182,6 +182,8 @@ export async function buildSearchIndex({ silent = false } = {}) {
   const snippetByPair = new Map() // base file → snippet file
   // Unique problems across all topics (id → difficulty), for the home page.
   const allQuestions = new Map()
+  // Question id → topic id → first section listing it, for "also in" links.
+  const questionTopics = new Map()
   let totalSections = 0
 
   // First pass: index snippet companions by their base file so we can
@@ -212,6 +214,8 @@ export async function buildSearchIndex({ silent = false } = {}) {
       for (const cells of section.questionRows) {
         const questionId = makeQuestionId(cells)
         topicQuestionIds.add(questionId)
+        if (!questionTopics.has(questionId)) questionTopics.set(questionId, {})
+        questionTopics.get(questionId)[id] ??= section.slug
         if (!allQuestions.has(questionId)) {
           allQuestions.set(questionId, normalizeDifficulty(cells[cells.length - 1])[0])
         }
@@ -280,6 +284,11 @@ export async function buildSearchIndex({ silent = false } = {}) {
   }
   for (const difficulty of allQuestions.values()) stats.difficulty[difficulty]++
 
+  // Only problems listed in more than one topic have anywhere else to link to.
+  const questionOccurrences = Object.fromEntries(
+    [...questionTopics].filter(([, byTopic]) => Object.keys(byTopic).length > 1),
+  )
+
   await fs.mkdir(GENERATED_DIR, { recursive: true })
   await fs.mkdir(PUBLIC_DIR, { recursive: true })
 
@@ -288,6 +297,7 @@ export async function buildSearchIndex({ silent = false } = {}) {
     '// Re-run `npm run dev` or `npm run build` to regenerate.\n' +
     `const topics = ${JSON.stringify(topics, null, 2)}\n\n` +
     `export const stats = ${JSON.stringify(stats, null, 2)}\n\n` +
+    `export const questionOccurrences = ${JSON.stringify(questionOccurrences)}\n\n` +
     'export default topics\n'
 
   await fs.writeFile(
