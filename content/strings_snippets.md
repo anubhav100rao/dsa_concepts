@@ -1150,6 +1150,10 @@ string longestCommonPrefix(vector<string>& strs) {
 
 ## 37. Group anagrams
 
+**Use when:** Words with the same letters must land in the same bucket, as in "group the anagrams together".
+
+**Complexity:** O(n * k log k) time for n words of length k, and O(n * k) space.
+
 ```cpp
 vector<vector<string>> groupAnagrams(vector<string>& strs) {
     unordered_map<string, vector<string>> mp;
@@ -1171,9 +1175,19 @@ vector<vector<string>> groupAnagrams(vector<string>& strs) {
 }
 ```
 
+**Example:** `{"eat", "tea", "tan"}` gives the groups `{"eat", "tea"}` and `{"tan"}`, in any order.
+
+**Pitfalls:** Results come out in an unspecified order, so don't compare them directly in a test. A count-based key drops the `log k`, but it needs separators between the counts. `string s` copies each word, so `const string&` is cheaper.
+
+**Used in:** LC 49
+
 ---
 
 ## 38. Decode string — stack pattern
+
+**Use when:** The input nests repeat counts in brackets, as in `k[encoded]`, and inner levels must expand first.
+
+**Complexity:** O(output length) time and space, which can be much larger than the input.
 
 For problems like `"3[a2[c]]"`.
 
@@ -1215,9 +1229,19 @@ string decodeString(string s) {
 }
 ```
 
+**Example:** `"3[a2[c]]"` returns `"accaccacc"`.
+
+**Pitfalls:** Counts can have several digits, as in `"12[a]"`, so build `num` with `num * 10 + digit`. Reset both `num` and `cur` after pushing them on `[`. A letter outside any bracket is still appended, as in `"2[a]b"`.
+
+**Used in:** LC 394
+
 ---
 
 ## 39. Longest common subsequence
+
+**Use when:** The problem compares two strings and may skip characters, as in "longest common subsequence" or "fewest deletions to match".
+
+**Complexity:** O(n * m) time and O(n * m) space, or O(min(n, m)) space with one rolling row.
 
 ```cpp
 int lcs(string a, string b) {
@@ -1239,9 +1263,19 @@ int lcs(string a, string b) {
 }
 ```
 
+**Example:** `a = "abcde", b = "ace"` returns `3`.
+
+**Pitfalls:** `dp[i][j]` looks at `a[i - 1]` and `b[j - 1]`, because row 0 means an empty prefix. On a match, take the diagonal plus 1 rather than the maximum of its neighbors. Subsequence isn't substring: for substrings, a mismatch resets to 0.
+
+**Used in:** LC 516, LC 583, LC 1092, LC 1143, LC 1312
+
 ---
 
 ## 40. Edit distance
+
+**Use when:** The problem asks for the "minimum number of operations" to turn one string into another, using insert, delete and replace.
+
+**Complexity:** O(n * m) time and O(n * m) space, or O(min(n, m)) space with rolling rows.
 
 ```cpp
 int editDistance(string a, string b) {
@@ -1270,9 +1304,19 @@ int editDistance(string a, string b) {
 }
 ```
 
+**Example:** `a = "horse", b = "ros"` returns `3`.
+
+**Pitfalls:** Don't skip the base cases: `dp[i][0] = i` and `dp[0][j] = j` cost real operations. With a rolling row, save the old diagonal before overwriting it. On a match, no `1 +` is needed.
+
+**Used in:** LC 72
+
 ---
 
 ## 41. Longest palindromic subsequence
+
+**Use when:** The problem asks for the longest palindrome you can get by skipping characters, or for the fewest insertions or deletions to make a palindrome.
+
+**Complexity:** O(n^2) time and O(n^2) space, or O(n) space with a rolling row.
 
 ```cpp
 int longestPalindromicSubsequence(string s) {
@@ -1296,9 +1340,19 @@ int longestPalindromicSubsequence(string s) {
 }
 ```
 
+**Example:** `"bbbab"` returns `4`, for `"bbbb"`.
+
+**Pitfalls:** `i` must run from `n - 1` down, because `dp[i][j]` reads row `i + 1`. An empty string makes `dp[0][n - 1]` an invalid read, so guard if the input can be empty. Minimum insertions is `n` minus this value.
+
+**Used in:** LC 516, LC 1216, LC 1312
+
 ---
 
 ## 42. Rolling hash with prefix hashes
+
+**Use when:** You need many substring comparisons, each in O(1), usually with binary search on a length.
+
+**Complexity:** O(n) preprocessing time and space, then O(1) per query.
 
 ```cpp
 struct StringHash {
@@ -1329,9 +1383,19 @@ struct StringHash {
 };
 ```
 
+**Example:** For `StringHash h("abab")`, `h.getHash(0, 1) == h.getHash(2, 3)`, since both are `"ab"`.
+
+**Pitfalls:** With base 31 and raw `char` values, mixed-case input can collide: `"az"` and `"b["` share a hash. For safety use a base above 256 and two moduli. Multiply before subtracting, and take `% mod` before the subtraction to stay in range.
+
+**Used in:** LC 1316, LC 1392, LC 2223
+
 ---
 
 ## 43. Compare two substrings using hash
+
+**Use when:** You need to test whether two ranges hold the same text, and `substr` comparison would be too slow.
+
+**Complexity:** O(1) time per comparison after O(n) preprocessing.
 
 ```cpp
 StringHash h(s);
@@ -1341,9 +1405,19 @@ if (h.getHash(l1, r1) == h.getHash(l2, r2)) {
 }
 ```
 
+**Example:** For `s = "abab"`: `(0, 1)` and `(2, 3)` are equal, while `(0, 1)` and `(1, 2)` are not.
+
+**Pitfalls:** Equal hashes mean "probably equal", so verify any answer that matters, or use a second modulus. Compare ranges of equal length only. `r` is inclusive here, so a substring of length `L` ends at `l + L - 1`.
+
+**Used in:** LC 1316, LC 1392
+
 ---
 
 ## 44. Remove occurrences of substring
+
+**Use when:** A substring must be deleted repeatedly, and each deletion can join text into a new match.
+
+**Complexity:** O(n * m) time for pattern length m, and O(n) space.
 
 ```cpp
 string removeOccurrences(string s, string part) {
@@ -1362,9 +1436,19 @@ string removeOccurrences(string s, string part) {
 }
 ```
 
+**Example:** `s = "daabcbaabcbc", part = "abc"` returns `"dab"`.
+
+**Pitfalls:** Calling `find` and `erase` from the start on each loop is O(n^2) or worse, while this version only checks the tail. `res.substr` copies, so `res.compare(res.size() - m, m, part) == 0` is cheaper. An empty `part` would loop on nothing useful, so guard it.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## 45. Character helpers
+
+**Use when:** You parse or filter mixed input, such as "alphanumeric characters only".
+
+**Complexity:** O(1) time and space per call.
 
 ```cpp
 isdigit(c);
@@ -1377,9 +1461,19 @@ tolower(c);
 toupper(c);
 ```
 
+**Example:** `isdigit('7')` is non-zero, `isalpha('7')` is `0`, and `tolower('A')` is `'a'`.
+
+**Pitfalls:** These return an `int`, and a true result can be any non-zero value, so never compare with `== 1`. Passing a negative `char` is undefined, so cast to `unsigned char` on non-ASCII input. `tolower` returns `int`, so `cout` prints a number unless you cast it.
+
+**Used in:** LC 8, LC 65, LC 125, LC 784
+
 ---
 
 ## 46. Case conversion
+
+**Use when:** The comparison must ignore case, or the problem asks you to convert the case.
+
+**Complexity:** O(n) time and O(1) extra space.
 
 ```cpp
 for (char& c : s) {
@@ -1393,9 +1487,19 @@ for (char& c : s) {
 }
 ```
 
+**Example:** `s = "aBc"` becomes `"abc"` with `tolower`, and `"ABC"` with `toupper`.
+
+**Pitfalls:** Write `char& c`, because `char c` changes only a copy and leaves `s` as it was. Non-letters pass through unchanged, and locale-specific letters may not convert correctly.
+
+**Used in:** LC 125, LC 709, LC 784
+
 ---
 
 ## 47. Erase from string
+
+**Use when:** You must remove one known range or character from a string, once or a few times.
+
+**Complexity:** O(n) time per call, because the tail shifts left. O(1) extra space.
 
 ```cpp
 s.erase(pos, len);
@@ -1405,13 +1509,29 @@ s.erase(pos, len);
 s.erase(s.begin() + i);
 ```
 
+**Example:** `s = "hello"`: `s.erase(1, 3)` gives `"ho"`, and `s.erase(s.begin() + 1)` gives `"hllo"`.
+
+**Pitfalls:** The two forms differ: `erase(pos)` with an integer removes everything from `pos` on, while `erase(iterator)` removes one character. Erasing inside a scan is O(n^2), and the indexes shift, so build a new string instead.
+
+**Used in:** No problem in this topic's list.
+
 ---
 
 ## 48. Insert into string
 
+**Use when:** You need to place text at one known position, once or a few times.
+
+**Complexity:** O(n + k) time for k inserted characters, as the tail must shift. O(k) extra space.
+
 ```cpp
 s.insert(pos, "abc");
 ```
+
+**Example:** `s = "xy"`: `s.insert(1, "abc")` gives `"xabcy"`.
+
+**Pitfalls:** `pos` greater than `s.size()` throws `out_of_range`, though `pos == s.size()` appends. Inserting repeatedly at the front is O(n^2), so build the string reversed or use a new buffer, as for the dashes in LC 482.
+
+**Used in:** LC 482
 
 ---
 
