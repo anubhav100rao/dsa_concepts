@@ -711,4 +711,789 @@ export const priorityQueue = {
     practice: [1093, 2034, 295, 480],
     snippet: '4-two-heaps-median-of-a-data-stream',
   },
+  '13. Reorganize / Rearrange with Heap': {
+    crux: 'Always place the item with the most copies left, and hold back the one you just used so it can\'t repeat too soon.',
+    signals: [
+      '"Rearrange so that no two adjacent characters are the same".',
+      '"The same task must be at least n units apart".',
+      '"A string with no \'aaa\', \'bbb\' or \'ccc\'", or "at most repeatLimit in a row".',
+      '"Return any valid arrangement, or an empty string if impossible".',
+    ],
+    notThis: [
+      'Task Scheduler (LC 621) only asks for a length: (maxCount - 1) x (n + 1) + ties, floored at the task count, needs no simulation.',
+      'Maximum Number of Weeks (LC 1953) is decided by comparing the largest count with the sum of the rest.',
+      'Least Number of Unique Integers (LC 1481) has no ordering rule: sort the counts and remove from the smallest.',
+      'Minimize Deviation in Array (LC 1675) isn\'t about arranging anything: see section 23.',
+    ],
+    concepts: [
+      'The most frequent item is the one that can run out of room, so it gets placed first.',
+      'Feasibility check: arrangement is impossible when the top count exceeds (n + 1) / 2, for a gap of one.',
+      'For a larger gap k, keep a queue of k held items and release the oldest once its cooldown ends.',
+    ],
+    example: {
+      problem: 'Reorganize String with s = "aaabb"',
+      lc: 767,
+      walkthrough: [
+        'The counts are a:3 and b:2, and nothing is held.',
+        'Pop a (3). Output "a" and hold a with 2 left.',
+        'Pop b (2). Output "ab", release a back to the heap, and hold b with 1 left.',
+        'Pop a (2). Output "aba", release b, and hold a with 1 left.',
+        'Pop b (1). Output "abab", release a, and hold nothing because b has run out.',
+        'Pop a (1). Output "ababa". The length matches s, so "ababa" is the answer. "aaab" would stop at "aba" with an a still held, and return "".',
+      ],
+    },
+    code: `def reorganize(s):
+    heap = [(-c, ch) for ch, c in Counter(s).items()]
+    heapify(heap)
+    out, hold = [], None       # hold: just used, on cooldown
+    while heap:
+        cnt, ch = heappop(heap)
+        out.append(ch)
+        if hold:
+            heappush(heap, hold)
+        hold = (cnt + 1, ch) if cnt + 1 < 0 else None
+    return ''.join(out) if len(out) == len(s) else ''`,
+    complexity: 'O(n log a) time and O(a) space for an alphabet of a distinct items, which is effectively O(n) for lowercase letters.',
+    pitfalls: [
+      'Pushing the used item back immediately: it comes straight back out and repeats.',
+      'Releasing the held item before popping the next one, which has the same effect.',
+      'Not checking the final length: when the heap runs out with an item still held, the arrangement failed.',
+      'In LC 1405, popping the top when it has just been used twice: use the second largest, and return if there isn\'t one.',
+    ],
+    pointsToPonder: [
+      'Why does placing the most frequent item first avoid dead ends?',
+      'Why does (n + 1) / 2 exactly capture feasibility for a gap of one?',
+      'Which part of this changes when the gap grows to k, as in LC 358?',
+    ],
+    practice: [767, 1054, 1405, 621, 358],
+    snippet: '12-greedy-max-heap-task-scheduler-reorganize-string',
+  },
+  '14. Multi-Source BFS with Priority Queue': {
+    crux: 'Start the heap from every boundary or source at once and always expand the lowest frontier cell, so the level you reach a cell at is its bottleneck.',
+    signals: [
+      '"How much water can it trap" on a 2D height map: the outside is the source, and the lowest rim decides the level.',
+      '"The water rises to t; the least time to swim to the corner": a path\'s cost is its highest cell.',
+      '"A route\'s effort is the maximum difference along it": the same minimax shape, on edges.',
+      'Grid wording where cost is a maximum along the route rather than a sum.',
+    ],
+    notThis: [
+      'Map of Highest Peak (LC 1765): every step costs 1, so plain multi-source BFS with a queue is enough.',
+      'Minimum Cost to Make at Least One Valid Path (LC 1368): edges cost only 0 or 1, so use 0-1 BFS.',
+      'Cut Off Trees for Golf Event (LC 675): the visiting order is fixed, so run a BFS between consecutive trees.',
+      'Trapping Rain Water in 1D (LC 42): two pointers are enough, because each side has a single boundary.',
+    ],
+    concepts: [
+      'Seeding all sources means one sweep answers for every source, rather than one run per source.',
+      'When a cell is popped, its level is the lowest possible maximum of any route from outside, as in Dijkstra with max instead of sum.',
+      'Trapped water: a neighbour lower than the current level holds level - height, and its own level becomes max(level, height).',
+    ],
+    example: {
+      problem: 'Trapping Rain Water II with heightMap = [[3,3,3],[3,1,2],[3,3,3]]',
+      lc: 407,
+      walkthrough: [
+        'Seed the heap with the 8 border cells. The lowest is the 2 at row 1, column 2.',
+        'Pop level 2 at (1,2). Its only unseen neighbour is (1,1), with height 1.',
+        'Water at (1,1) is 2 - 1 = 1, so water = 1. Push (1,1) with level max(2,1) = 2.',
+        'Pop level 2 at (1,1). All its neighbours are seen.',
+        'The remaining border cells at level 3 have no unseen neighbours, so the answer is 1. The rim\'s lowest cell sets the level, not its tallest.',
+      ],
+    },
+    code: `def trap_rain(h):
+    m, n = len(h), len(h[0])
+    heap, seen = [], set()
+    for r in range(m):
+        for c in range(n):
+            if r in (0, m - 1) or c in (0, n - 1):
+                heappush(heap, (h[r][c], r, c))
+                seen.add((r, c))
+    water = 0
+    while heap:
+        level, r, c = heappop(heap)
+        for nr, nc in ((r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)):
+            if 0 <= nr < m and 0 <= nc < n and (nr, nc) not in seen:
+                seen.add((nr, nc))
+                water += max(0, level - h[nr][nc])
+                heappush(heap, (max(level, h[nr][nc]), nr, nc))
+    return water`,
+    complexity: 'O(mn log(mn)) time and O(mn) space, since each cell is pushed once.',
+    pitfalls: [
+      'Pushing a neighbour\'s own height rather than max(level, height): cells behind a submerged one then get too low a level.',
+      'Marking cells seen when popped rather than pushed: each cell would get counted more than once.',
+      'Seeding only the corners, or one side, rather than the full border.',
+      'Applying the 1D left-max and right-max formula to a 2D map: water can escape around a tall row.',
+    ],
+    pointsToPonder: [
+      'Why does expanding the lowest frontier cell guarantee that a cell\'s water level is final?',
+      'How is this algorithm related to Dijkstra with a minimax cost?',
+      'What goes wrong if you process cells from the highest down?',
+    ],
+    practice: [1765, 1631, 778, 1368, 407],
+    snippet: '7-dijkstra-shortest-path-with-a-min-heap',
+  },
+  '15. Huffman Coding / Optimal Merge Patterns': {
+    crux: 'Every merge is paid again by each later merge that includes it, so merge the two smallest first to keep the big items shallow.',
+    signals: [
+      '"The cost to connect two sticks is their sum; return the minimum total".',
+      '"Merging two files costs the sum of their sizes".',
+      '"Build a prefix-free code with the shortest total length", given frequencies.',
+      'Items may merge in any order, and the merged result is available for further merging.',
+    ],
+    notThis: [
+      'Only adjacent items can merge, as in Minimum Cost to Merge Stones (LC 1000): the order is constrained, so use interval DP.',
+      'Reduce Array Size to The Half (LC 1338) has no merging: sort the counts and take from the largest.',
+      'The cost is the larger item rather than the sum, or the result can\'t be reused: the double-counting argument no longer applies.',
+    ],
+    concepts: [
+      'View it as a tree: each item\'s total cost is size x depth, so the smallest items should sit deepest.',
+      'The exchange argument: swapping a deeper large item with a shallower small one never raises the total.',
+      'Once sorted, two queues give O(n) overall: merged results come out in non-decreasing order, so they need no heap.',
+    ],
+    example: {
+      problem: 'Minimum Cost to Connect Sticks with sticks = [1,8,3,5]',
+      lc: 1167,
+      walkthrough: [
+        'The heap holds 1, 3, 5, 8.',
+        'Merge 1 and 3 into 4. Cost is 4. The heap holds 4, 5, 8.',
+        'Merge 4 and 5 into 9. Cost is 4 + 9 = 13. The heap holds 8, 9.',
+        'Merge 8 and 9 into 17. Cost is 13 + 17 = 30. Only one stick remains.',
+        'The answer is 30. Merging the two largest first would give 13 + 16 + 17 = 46.',
+      ],
+    },
+    code: `def connect_sticks(sticks):
+    heapify(sticks)
+    cost = 0
+    while len(sticks) > 1:
+        merged = heappop(sticks) + heappop(sticks)
+        cost += merged
+        heappush(sticks, merged)
+    return cost`,
+    complexity: 'O(n log n) time and O(n) space for the heap, or O(1) extra space if the input is heapified in place.',
+    pitfalls: [
+      'Sorting once and folding from the left: a merged stick can be larger than the next one, so the order must update.',
+      'A single stick costs 0: don\'t pop twice on a one-element heap.',
+      'Using int for the running total on large inputs: use long long.',
+      'Extending the idea to k-way merges without padding: when (n - 1) mod (k - 1) isn\'t 0, add zero-size items first.',
+    ],
+    pointsToPonder: [
+      'Why does the merged-values order stay non-decreasing, making the two-queue method work?',
+      'Why does this greedy fail once only adjacent piles can merge?',
+      'How do you read off Huffman codes from the merge tree?',
+    ],
+    practice: [1167, 1338, 1000],
+    snippet: '8-min-heap-greedy-minimum-cost-to-connect-sticks',
+  },
+  '16. Heap + Binary Search / Two Pointer': {
+    crux: 'For a k-th value in sorted structures, a heap walks the frontier in about k log n, while binary search counts values <= x without visiting them. Let the size of k decide.',
+    signals: [
+      '"Kth smallest element in a sorted matrix", where rows and columns are sorted.',
+      '"The k pairs with the smallest sums": you must list the pairs, so the heap\'s frontier fits best.',
+      '"The kth smallest product" or "the kth smallest fraction": k can reach n^2 or more, which rules out walking.',
+      'A question where counting values <= x is easy, even though finding the k-th directly looks hard.',
+    ],
+    notThis: [
+      'An unsorted array with one query: Quickselect, in section 22.',
+      'Minimum Cost to Hire K Workers (LC 857) is sort plus heap with nothing to binary search: see section 10.',
+      'Smallest Range (LC 632) holds one element per list, which is k-way merge: see section 4.',
+    ],
+    concepts: [
+      'Binary search on the value needs count(x) to be monotonic in x, and the answer is the smallest x with count(x) >= k.',
+      'In a sorted matrix, a staircase walk from the bottom-left corner counts values <= x in O(n).',
+      'Only the heap hands back the items themselves, so use it when the output is the pairs rather than just the k-th value.',
+    ],
+    example: {
+      problem: 'Kth Smallest Element in a Sorted Matrix with matrix = [[1,5,9],[10,11,13],[12,13,15]], k = 8',
+      lc: 378,
+      walkthrough: [
+        'The value range is lo = 1 to hi = 15.',
+        'mid = 8: 2 values are <= 8 (1 and 5). 2 < 8, so lo = 9.',
+        'mid = 12: 6 values are <= 12. 6 < 8, so lo = 13.',
+        'mid = 14: 8 values are <= 14. 8 >= 8, so hi = 14.',
+        'mid = 13: 8 values are <= 13. 8 >= 8, so hi = 13.',
+        'lo = hi = 13, so the answer is 13.',
+      ],
+    },
+    code: `def kth_smallest(matrix, k):
+    n = len(matrix)
+
+    def count_le(x):           # staircase from the bottom-left
+        r, c, cnt = n - 1, 0, 0
+        while r >= 0 and c < n:
+            if matrix[r][c] <= x:
+                cnt += r + 1
+                c += 1
+            else:
+                r -= 1
+        return cnt
+
+    lo, hi = matrix[0][0], matrix[-1][-1]
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if count_le(mid) >= k:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo`,
+    complexity: 'O(n log R) time for value range R and O(1) space. The heap alternative takes O(k log n) time and O(n) space.',
+    pitfalls: [
+      'Returning mid when count(mid) == k: mid may not be in the matrix, so keep narrowing until lo == hi.',
+      'Using hi = mid - 1 with this loop, which can skip the answer.',
+      'With negative values, (lo + hi) // 2 and C++\'s / round differently: a truncating divide can loop forever, so use lo + (hi - lo) / 2.',
+      'In LC 373, pushing every (i, j) pair up front rather than the frontier, which costs too much memory.',
+    ],
+    pointsToPonder: [
+      'Why is the final lo guaranteed to be a real value in the matrix?',
+      'At what size of k does binary search overtake the heap for LC 378?',
+      'How does the count change for LC 786 fractions or LC 2040 products?',
+    ],
+    practice: [373, 378, 786, 1439, 2040],
+    snippet: '6-k-smallest-pairs-matrix-heap-of-frontier',
+  },
+  '17. Heap for BFS State Space / A\\*': {
+    crux: 'Treat each whole configuration as a node. A* orders the search by moves so far plus an estimate that never overshoots, so it reaches the goal with fewer expansions.',
+    signals: [
+      '"Least number of moves to reach the solved board": the state is the whole board.',
+      '"Eliminate at most k obstacles": the state is a position plus what\'s left to spend.',
+      '"Minimum moves on an infinite board": the search needs direction, or it spreads everywhere.',
+      'A small input limit, such as a 2 x 3 board, is a hint that you can enumerate states.',
+    ],
+    notThis: [
+      'Every move costs 1 and the state space is small: plain BFS is simpler and also optimal, which fits LC 773, LC 1210 and LC 1293.',
+      'Minimum Knight Moves (LC 1197) also has a symmetry-based BFS or formula, so a heap isn\'t required.',
+      'You can\'t find an estimate that never overshoots: A* may return a wrong answer, so use BFS or Dijkstra.',
+    ],
+    concepts: [
+      'Order the heap by f = g + h, where g is the moves made and h is the estimated moves left.',
+      'Admissible means h never overestimates. With a consistent h, the first time the goal is popped, its g is optimal.',
+      'With h = 0, A* is exactly Dijkstra. A good h only reduces how many states get expanded.',
+    ],
+    example: {
+      problem: 'Sliding Puzzle with board = [[1,2,3],[0,4,5]]',
+      lc: 773,
+      walkthrough: [
+        'The start (1,2,3,0,4,5) has tiles 4 and 5 each one step from home, so h = 2 and f = 2.',
+        'Pop it. Swapping the blank with 1 gives h = 3 and f = 4. Swapping it with 4 gives (1,2,3,4,0,5), with h = 1 and f = 2.',
+        'Pop (1,2,3,4,0,5) at g = 1. Swapping with 5 gives the goal, with f = 2. Swapping with 2 gives f = 4. Swapping with 4 returns to the start, which is no better, so it is skipped.',
+        'Pop the goal at g = 2 and return 2. The states with f = 4 were never expanded.',
+      ],
+    },
+    code: `NEIGHBORS = {0: (1, 3), 1: (0, 2, 4), 2: (1, 5), 3: (0, 4), 4: (1, 3, 5), 5: (2, 4)}
+
+def sliding_puzzle(board):
+    goal = (1, 2, 3, 4, 5, 0)
+
+    def h(state):              # sum of Manhattan distances, ignoring the blank
+        total = 0
+        for i, tile in enumerate(state):
+            if tile:
+                home = goal.index(tile)
+                total += abs(i // 3 - home // 3) + abs(i % 3 - home % 3)
+        return total
+
+    start = tuple(board[0] + board[1])
+    best = {start: 0}
+    heap = [(h(start), 0, start)]
+    while heap:
+        _, g, state = heappop(heap)
+        if state == goal:
+            return g
+        if g > best[state]:
+            continue           # stale entry
+        blank = state.index(0)
+        for nb in NEIGHBORS[blank]:
+            next_state = list(state)
+            next_state[blank], next_state[nb] = next_state[nb], next_state[blank]
+            next_state = tuple(next_state)
+            if g + 1 < best.get(next_state, inf):
+                best[next_state] = g + 1
+                heappush(heap, (g + 1 + h(next_state), g + 1, next_state))
+    return -1`,
+    complexity: 'O(S log S) time and O(S) space in the worst case, for S reachable states. For LC 773, S is at most 6! = 720, and a good h expands far fewer.',
+    pitfalls: [
+      'An overestimating h, such as counting the blank as a tile: A* can stop on a non-optimal path.',
+      'Using an unhashable state: convert the board to a tuple or string.',
+      'Leaving a dimension out of the state, such as obstacle eliminations left in LC 1293.',
+      'Marking states visited when pushed: a later, shorter route to the state is then ignored.',
+    ],
+    pointsToPonder: [
+      'Why does Manhattan distance never overestimate the moves left in this puzzle?',
+      'When does A* stop being worth the extra code compared with BFS?',
+      'How would you detect an unsolvable board without searching at all?',
+    ],
+    practice: [1197, 1293, 773, 675, 1210],
+    snippet: '7-dijkstra-shortest-path-with-a-min-heap',
+  },
+  '18. Heap with Custom Comparator / Multi-Key Sort': {
+    crux: 'The whole ordering rule, tiebreaks included, goes into the key or comparator, and the heap then does the rest.',
+    signals: [
+      '"Sorted by frequency; words with the same frequency in lexicographical order".',
+      '"Choose the task with the shortest processing time; if tied, the smallest index".',
+      '"The free server with the smallest weight; if tied, the smallest index".',
+      'Any statement with "if there is a tie", "breaking ties by", or "if multiple".',
+    ],
+    notThis: [
+      'Nothing changes after the first ordering: one sort with the same key is simpler than a heap.',
+      'Minimum Time to Visit a Cell (LC 2577) is mostly about waiting logic in Dijkstra: see section 5.',
+      'The problem says "return in any order": skip the tiebreak key, since it adds nothing.',
+    ],
+    concepts: [
+      'In Python, a tuple key is compared left to right: (-count, word) means higher count first, then smaller word.',
+      'In C++, the comparator answers "does a rank below b?", so a true result puts b nearer the top. That is why a min-heap uses >.',
+      'A comparator must be a strict weak ordering: using <= or >= is undefined behaviour in C++.',
+    ],
+    example: {
+      problem: 'Top K Frequent Words with words = ["the","day","is","the","day"], k = 2',
+      lc: 692,
+      walkthrough: [
+        'The counts are the:2, day:2 and is:1.',
+        'Build the keys (-2,"the"), (-2,"day") and (-1,"is"), then heapify.',
+        'The first pop is (-2,"day"): both have count 2, and "day" sorts before "the".',
+        'The second pop is (-2,"the").',
+        'The answer is ["day","the"].',
+      ],
+    },
+    code: `def top_k_words(words, k):
+    heap = [(-c, w) for w, c in Counter(words).items()]
+    heapify(heap)              # higher count first, then smaller word
+    return [heappop(heap)[1] for _ in range(k)]`,
+    complexity: 'O(n + u + k log u) time and O(u) space for u unique words. A size-k heap gives O(n + u log k) time and O(u) space for the counts.',
+    pitfalls: [
+      'Writing the C++ comparator as though it means "comes first": it is inverted, so a < b puts the largest on top.',
+      'Capping a min-heap at k here: the tiebreak must flip too, so that the evicted word is the lexicographically larger one.',
+      'Negating a string in Python isn\'t possible: use a wrapper class with __lt__ if the size-k version needs reverse order.',
+      'Comparing distances as floats in LC 973: squared integer distances avoid sqrt and rounding.',
+    ],
+    pointsToPonder: [
+      'Why does a capped heap for LC 692 need the tiebreak reversed but an uncapped heap doesn\'t?',
+      'What breaks in C++ if a comparator returns true for equal elements?',
+      'When is a sort key enough, and when do you need a real comparator function?',
+    ],
+    practice: [973, 692, 1834, 1882, 218],
+    snippet: '14-custom-comparator-multi-key-heap',
+  },
+  '19. Indexed / Addressable Priority Queue': {
+    crux: 'Items change priority while in the heap. Keep a map from item to its current key, and either update its position or let old entries die.',
+    signals: [
+      '"changeRating(food, newRating)", followed by "highestRated(cuisine)".',
+      '"Replace the number at an index", then "return the smallest index for a number".',
+      '"Decrease-key" in a shortest path or MST context.',
+      '"Reserve the smallest available" and "unreserve": items leave and later come back.',
+    ],
+    notThis: [
+      'Items only get pushed and popped: a plain heap is enough, as in LC 1845 and LC 2336.',
+      'Range Module (LC 715) tracks merged intervals: use an ordered map of ranges.',
+      'Design Twitter (LC 355) never updates a tweet: it is a k-way merge of recent posts, as in section 4.',
+    ],
+    concepts: [
+      'A true indexed heap keeps pos[item] so that sift-up and sift-down can start from the item\'s slot, giving O(log n) updates.',
+      'An ordered set with erase and reinsert gives the same bound, with less code in C++.',
+      'The lazy method pushes a new entry per update and checks entries against the map on read, which is the usual choice in Python.',
+    ],
+    example: {
+      problem: 'Design a Food Rating System with kimchi (korean, 9), ramen (japanese, 14), bulgogi (korean, 7)',
+      lc: 2353,
+      walkthrough: [
+        'The korean heap holds (-9,kimchi) and (-7,bulgogi). highestRated("korean") reads kimchi, whose entry matches the map.',
+        'changeRating("bulgogi", 16) updates the map and pushes (-16,bulgogi). highestRated("korean") reads bulgogi, which matches.',
+        'changeRating("bulgogi", 8) updates the map and pushes (-8,bulgogi).',
+        'highestRated("korean") reads (-16,bulgogi), but the map says 8, so that entry is dead and gets popped.',
+        'The next top is (-9,kimchi), which matches, so the answer is kimchi.',
+      ],
+    },
+    code: `class FoodRatings:
+    def __init__(self, foods, cuisines, ratings):
+        self.rating = dict(zip(foods, ratings))
+        self.cuisine = dict(zip(foods, cuisines))
+        self.heaps = defaultdict(list)
+        for f, c, r in zip(foods, cuisines, ratings):
+            heappush(self.heaps[c], (-r, f))
+
+    def change_rating(self, food, new_rating):
+        self.rating[food] = new_rating
+        heappush(self.heaps[self.cuisine[food]], (-new_rating, food))
+
+    def highest_rated(self, cuisine):
+        heap = self.heaps[cuisine]
+        while -heap[0][0] != self.rating[heap[0][1]]:
+            heappop(heap)      # dead: this food's rating has changed
+        return heap[0][1]`,
+    complexity: 'O(log u) per change and amortized O(log u) per query, with O(n + u) space for n items and u updates.',
+    pitfalls: [
+      'Scanning the heap to find the old entry: that costs O(n) and defeats the structure.',
+      'In a C++ set version, erasing with the new key rather than the old one: update the map only after the erase.',
+      'In a hand-built indexed heap, forgetting to update pos on every swap.',
+      'Assuming only one entry per item can be valid: equal old and new keys make duplicates, which is harmless here but matters when counting.',
+    ],
+    pointsToPonder: [
+      'Why do most interview solutions pick lazy entries over a true indexed heap?',
+      'How much does decrease-key actually save in Dijkstra on a sparse graph?',
+      'What does a set give you that a heap can\'t, and what does it cost?',
+    ],
+    practice: [2336, 1845, 2349, 2353, 855],
+    snippet: '15-indexed-addressable-pq-decrease-key-via-map',
+  },
+  '20. Heap for Stream Processing / Online Algorithms': {
+    crux: 'The input never ends, so keep only what future answers can need, and have each call do just O(log n) work.',
+    signals: [
+      '"Design a class", followed by methods such as add, popSmallest or addBack.',
+      '"Return the kth largest after each call".',
+      '"Calls will be made up to 10^4 times": repeated sorting would be too slow.',
+      '"The 10 most recent tweets from people you follow": merge fresh items only when asked.',
+    ],
+    notThis: [
+      'Online Election (LC 911): the timeline is fixed up front, so precompute the leaders and binary search each query.',
+      'Design a Leaderboard (LC 1244): k differs per call and scores change, so an ordered map or a sort per query fits better.',
+      'All the data is available before the first query: solve it offline in a single sort.',
+    ],
+    concepts: [
+      'Decide what can be discarded. A size-k heap can drop values that can never become the answer again.',
+      'An infinite or huge range is represented by a pointer, and only exceptions go in the heap, as in LC 2336.',
+      'A heap plus a set is a common pair: the heap gives order, and the set blocks duplicates.',
+    ],
+    example: {
+      problem: 'Smallest Number in Infinite Set: popSmallest, popSmallest, addBack(1), addBack(5), popSmallest, popSmallest',
+      lc: 2336,
+      walkthrough: [
+        'Start with next = 1 and an empty heap. The set is implicitly all of 1, 2, 3...',
+        'popSmallest: the heap is empty, so return 1 and set next = 2. popSmallest again returns 2, and next = 3.',
+        'addBack(1): 1 < next and it isn\'t in the heap, so push it. The heap is [1].',
+        'addBack(5): 5 >= next, so 5 is already in the set. Nothing happens.',
+        'popSmallest: the heap isn\'t empty, so return 1.',
+        'popSmallest: the heap is empty again, so return 3, and next = 4.',
+      ],
+    },
+    code: `class SmallestInfiniteSet:
+    def __init__(self):
+        self.next = 1          # everything from here up is present
+        self.heap = []         # added-back numbers below next
+        self.in_heap = set()
+
+    def pop_smallest(self):
+        if self.heap:
+            x = heappop(self.heap)
+            self.in_heap.remove(x)
+            return x
+        self.next += 1
+        return self.next - 1
+
+    def add_back(self, x):
+        if x < self.next and x not in self.in_heap:
+            self.in_heap.add(x)
+            heappush(self.heap, x)`,
+    complexity: 'O(log m) per call and O(m) space, for m numbers added back.',
+    pitfalls: [
+      'Adding a duplicate to the heap: addBack on a number already present must do nothing.',
+      'Comparing the heap top with next before popping: every heap value is below next, so the heap always wins.',
+      'Pre-filling the heap with a large range "to be safe", which costs memory and time.',
+      'In LC 703, reading the top before k values have arrived.',
+    ],
+    pointsToPonder: [
+      'What invariant makes it safe to check the heap first, without comparing with next?',
+      'How would you adapt a size-k heap when k changes between calls?',
+      'What would have to be true of the stream for an offline solution to work?',
+    ],
+    practice: [703, 1845, 2336, 355, 295],
+    snippet: '2-kth-largest-fixed-size-min-heap',
+  },
+  '21. Heap + Prefix / Suffix Computations': {
+    crux: 'When an answer depends on a split point, precompute the best k-element sum for every prefix and every suffix with a heap, then try each split.',
+    signals: [
+      '"Remove exactly n elements, then split the rest into a first part and a second part".',
+      '"Minimum difference between the sums of the two parts".',
+      'A question with a choice from the left and a choice from the right, joined at an unknown split.',
+      '"Choose k from the first i items" for every i, rather than for one fixed i.',
+    ],
+    notThis: [
+      'Minimum Operations to Make a Subsequence (LC 1713) reduces to LIS, with no heap.',
+      'Minimum Cost to Make Array Equal (LC 2448): the cost is convex, so use a weighted median or binary search.',
+      'Only one direction matters, as in LC 2542 and LC 1383: a single sort-and-heap sweep is enough, in section 10.',
+    ],
+    concepts: [
+      'One sweep from the left gives left[i], the smallest sum of n values in nums[..i], using a max-heap to evict the largest.',
+      'A sweep from the right gives the matching best for each suffix, using a min-heap to evict the smallest.',
+      'This is the prefix-suffix idea from arrays, applied when each stored value is a best-k sum rather than a simple total.',
+    ],
+    example: {
+      problem: 'Minimum Difference in Sums After Removal of Elements with nums = [7,9,5,8,1,3]',
+      lc: 2163,
+      walkthrough: [
+        'Here n = 2. The first 2 values sum to 16, so left[1] = 16, with the max-heap holding 9 and 7.',
+        'Sweep left: 5 evicts 9, so left[2] = 12. Then 8 is evicted right away, so left[3] = 12.',
+        'Start right with the last 2 values, 1 and 3, whose sum is 4. The split at index 3 gives left[3] - 4 = 8.',
+        'Sweep right: at index 3, 8 enters and evicts 1, so the sum is 11. left[2] - 11 = 1, so best = 1.',
+        'At index 2, 5 enters and evicts 3, so the sum is 13. left[1] - 13 = 3, so best stays 1.',
+        'The answer is 1.',
+      ],
+    },
+    code: `def minimum_difference(nums):
+    n = len(nums) // 3
+    high = [-x for x in nums[:n]]  # max-heap: keep the n smallest
+    heapify(high)
+    s = sum(nums[:n])
+    left = {n - 1: s}
+    for i in range(n, 2 * n):
+        s += nums[i] + heappushpop(high, -nums[i])  # pops the negated largest
+        left[i] = s
+
+    low = nums[2 * n:]         # min-heap: keep the n largest
+    heapify(low)
+    s = sum(low)
+    best = left[2 * n - 1] - s
+    for i in range(2 * n - 1, n - 1, -1):
+        s += nums[i] - heappushpop(low, nums[i])
+        best = min(best, left[i - 1] - s)
+    return best`,
+    complexity: 'O(n log n) time and O(n) space for the heaps and the left table.',
+    pitfalls: [
+      'Using the same heap direction in both sweeps: the left wants small values and the right wants large ones.',
+      'An off-by-one at the split: a suffix that starts at i pairs with left[i - 1].',
+      'Letting the split go outside [n - 1, 2n - 1], which leaves a part with fewer than n values.',
+      'Forgetting the initial split, before any element has joined the right side.',
+    ],
+    pointsToPonder: [
+      'Why is removing n elements the same as choosing a split and taking the best from each side?',
+      'Why can a heap value evicted in one prefix never be needed in a longer prefix?',
+      'Could you get the same result with a single sweep? Why or why not?',
+    ],
+    practice: [2542, 502, 1383, 2163],
+    snippet: '2-kth-largest-fixed-size-min-heap',
+  },
+  '22. Heap in Divide and Conquer': {
+    crux: 'Many heap problems also split in half. Merge pairs or partition around a pivot when the data is static, and use the heap when it arrives over time.',
+    signals: [
+      '"Merge k sorted lists", especially with "constant extra space" or a request for an alternative to the heap.',
+      '"Kth largest", with "can you solve it without sorting?" or O(n) average expected.',
+      '"How many smaller elements to the right": a count collected while merging sorted halves.',
+      '"Combine two skylines": each half is solved separately, then the results merge.',
+    ],
+    notThis: [
+      'Create Maximum Number (LC 321) splits k across two arrays, then uses a monotonic stack and a greedy merge, with no heap.',
+      'Closest Subsequence Sum (LC 1755) is meet in the middle, with sorted subset sums and two pointers.',
+      'The data arrives online: you can\'t divide what you haven\'t seen, so stay with a heap.',
+    ],
+    concepts: [
+      'A heap and pairwise merging both cost O(N log k): each value takes part in about log k comparisons.',
+      'Quickselect recurses on one side only, so it averages O(n), while a heap can answer k-th queries over a stream.',
+      'Merge sort exposes order between the halves, which is what makes counting problems like LC 315 work.',
+    ],
+    example: {
+      problem: 'Merge k Sorted Lists by rounds with lists = [[1,4],[1,3],[2],[0,5]]',
+      lc: 23,
+      walkthrough: [
+        'There are 4 lists, so pair them as ([1,4], [1,3]) and ([2], [0,5]).',
+        'Merging the first pair gives [1,1,3,4]. Merging the second gives [0,2,5].',
+        'There are 2 lists left, so pair them once more.',
+        'Merging gives [0,1,1,2,3,4,5]. One list remains, so that is the answer.',
+        'There were 2 rounds, which is log2(4), and each round touched every value once.',
+      ],
+    },
+    code: `def merge_two(a, b):
+    out, i, j = [], 0, 0
+    while i < len(a) and j < len(b):
+        if a[i] <= b[j]:
+            out.append(a[i])
+            i += 1
+        else:
+            out.append(b[j])
+            j += 1
+    return out + a[i:] + b[j:]
+
+def merge_k(lists):
+    if not lists:
+        return []
+    while len(lists) > 1:
+        lists = [merge_two(lists[i], lists[i + 1] if i + 1 < len(lists) else [])
+                 for i in range(0, len(lists), 2)]
+    return lists[0]`,
+    complexity: 'O(N log k) time for N values across k lists. This array version uses O(N) space per round, while linked lists can relink in O(1) extra space with the bottom-up version.',
+    pitfalls: [
+      'Merging lists one at a time into a growing result: that costs O(Nk), not O(N log k).',
+      'Dropping the unpaired list when k is odd: pair it with an empty list so that it carries over.',
+      'Using a fixed pivot in Quickselect on sorted or adversarial input: choose it at random.',
+      'Quickselect with many duplicates: a two-way partition degrades, so use three-way partitioning.',
+    ],
+    pointsToPonder: [
+      'Why do the heap and pairwise merge give the same bound, even though they look so different?',
+      'Which of the two would you choose for external sorting of files on disk, and why?',
+      'What does Quickselect\'s average O(n) depend on?',
+    ],
+    practice: [215, 23, 218, 315],
+    snippet: '5-k-way-merge-merge-k-sorted-lists',
+  },
+  '23. Double-Ended Priority Queue / Min-Max Heap': {
+    crux: 'When you need both the minimum and the maximum, check first whether one is easy to track. If not, pair two heaps or use an ordered set.',
+    signals: [
+      '"The difference between the maximum and minimum": both ends matter on every step.',
+      '"The absolute difference between any two elements is at most limit": the window\'s max and min decide validity.',
+      '"Return the highest and lowest" after changes.',
+      '"Minimum deviation" where operations can only shrink the large values or grow the small ones.',
+    ],
+    notThis: [
+      'Only window ends change, as in LC 1438: two monotonic deques are O(n).',
+      'Maximum Gap (LC 164) needs linear time, so use buckets and the pigeonhole principle.',
+      'Only the middle matters, as in LC 295 and LC 480: two heaps meeting at the median, in sections 3 and 12.',
+    ],
+    concepts: [
+      'In C++ a multiset gives both ends in O(1) and removal in O(log n). In Python, use SortedList or a pair of lazy heaps.',
+      'If one end only moves one way, a plain variable can track it, as in LC 1675, where the minimum can only be lowered by halving.',
+      'Normalize first when operations are reversible: in LC 1675, doubling each odd number lets every later step be a halving.',
+    ],
+    example: {
+      problem: 'Minimize Deviation in Array with nums = [1,2,3,4]',
+      lc: 1675,
+      walkthrough: [
+        'Double the odd numbers so every value can only go down: [2,2,6,4]. The tracked minimum is 2.',
+        'Pop 6. The deviation is 6 - 2 = 4, so best = 4. 6 is even, so push 3. The minimum stays 2.',
+        'Pop 4. The deviation is 4 - 2 = 2, so best = 2. 4 is even, so push 2. The minimum stays 2.',
+        'Pop 3. The deviation is 3 - 2 = 1, so best = 1. 3 is odd and can\'t shrink, so stop.',
+        'The answer is 1.',
+      ],
+    },
+    code: `def minimum_deviation(nums):
+    heap = [-(x * 2 if x % 2 else x) for x in nums]  # max-heap
+    heapify(heap)
+    low = -max(heap)
+    best = inf
+    while True:
+        top = -heappop(heap)
+        best = min(best, top - low)
+        if top % 2:
+            return best        # an odd max can't shrink any further
+        low = min(low, top // 2)
+        heappush(heap, -(top // 2))`,
+    complexity: 'O(n log n log M) time for maximum value M, because each number halves at most log M times. O(n) space.',
+    pitfalls: [
+      'Forgetting the normalization step and trying to double and halve at once, which makes the search branch.',
+      'Not updating the tracked minimum after pushing a halved value.',
+      'Continuing after an odd maximum: the maximum can\'t fall further, so no later step can improve the result.',
+      'Building a real min-max heap in an interview, when a multiset or two lazy heaps does the job with much less code.',
+    ],
+    pointsToPonder: [
+      'Why is the answer already final as soon as the maximum is odd?',
+      'When can a tracked variable replace a second heap?',
+      'What would two lazy heaps need to share in order to stay in sync on removal?',
+    ],
+    practice: [1438, 2034, 295, 1675],
+    snippet: '10-lazy-deletion-heap-remove-arbitrary-elements',
+  },
+  '24. Heap + Graph (Non-Dijkstra)': {
+    crux: 'Beyond shortest paths, a heap in a graph either grows a spanning tree or keeps each node\'s best k edges or neighbours.',
+    signals: [
+      '"Sum of a node\'s value and at most k of its neighbours": rank per node, not across the graph.',
+      '"Connect all points at minimum cost": Prim, in section 11.',
+      '"You can use at most d discounts": a graph state with an extra dimension.',
+      '"How many nodes can be reached within maxMoves": Dijkstra with counting on the edges.',
+    ],
+    notThis: [
+      'A minimum cost between two given nodes with no extra rules: plain Dijkstra, in section 5.',
+      'Critical and Pseudo-Critical Edges (LC 1489): the task re-runs an MST with edges forced or banned, which is easiest with Kruskal.',
+      'Minimum Cost to Reach City With Discounts (LC 2093) and LC 882 are still shortest paths despite the listing here, so reuse the Dijkstra template.',
+    ],
+    concepts: [
+      'Per-node top-k: each node owns a small heap, so the total cost is O(E log k) rather than a global sort.',
+      'Only positive neighbours help when "at most k" allows you to skip the rest.',
+      'Prim\'s key is the edge weight, Dijkstra\'s is the path total, and per-node ranking has no traversal at all.',
+    ],
+    example: {
+      problem: 'Maximum Star Sum of a Graph with vals = [1,2,3,4,10,-10,-20], edges = [[0,1],[1,2],[1,3],[3,4],[3,5],[3,6]], k = 2',
+      lc: 2497,
+      walkthrough: [
+        'Keep each node\'s 2 largest positive neighbours.',
+        'Node 0 keeps 2 (node 1), so its star is 1 + 2 = 3.',
+        'Node 1 sees 1, 3 and 4, keeps 3 and 4, and its star is 2 + 7 = 9. Node 2 keeps 2, so its star is 3 + 2 = 5.',
+        'Node 3 sees 2, 10, -10 and -20, keeps 2 and 10, and its star is 4 + 12 = 16.',
+        'Node 4 keeps 4, so its star is 14. Nodes 5 and 6 keep 4, so their stars are -6 and -16.',
+        'The largest star is 16, at node 3.',
+      ],
+    },
+    code: `def max_star_sum(vals, edges, k):
+    best = defaultdict(list)   # node -> min-heap of its k largest positive neighbours
+
+    def add(u, v):
+        if vals[v] > 0:
+            heappush(best[u], vals[v])
+            if len(best[u]) > k:
+                heappop(best[u])
+
+    for u, v in edges:
+        add(u, v)
+        add(v, u)
+    return max(vals[i] + sum(best[i]) for i in range(len(vals)))`,
+    complexity: 'O(V + E log k) time and O(V + min(E, Vk)) space.',
+    pitfalls: [
+      'Adding each edge in one direction only: the graph is undirected, so both ends need it.',
+      'Including negative neighbours: "at most k" lets you leave them out.',
+      'Initializing the best star to 0: all values can be negative, and a single node is a valid star.',
+      'k = 0: only the node\'s own value counts, and the capped heap handles this if it pops after each push.',
+    ],
+    pointsToPonder: [
+      'Why is a per-node heap better than one global sort of edges here?',
+      'How do you spot that a "graph" problem involves no traversal at all?',
+      'What is the extra dimension in the state for LC 2093, and how large does it get?',
+    ],
+    practice: [2497, 1584, 2093, 882, 1489],
+    snippet: '2-kth-largest-fixed-size-min-heap',
+  },
+  '25. Hard / Contest-Level Heap Problems': {
+    crux: 'Hard heap problems stack two ideas: find the sweep or the state first, then ask what the heap orders. Several in this list are better solved without a heap.',
+    signals: [
+      '"Key points of the outline" with buildings that start and end: a sweep plus a max-heap of live heights.',
+      '"Smallest range with at least one number from each list": k-way merge, tracking the maximum.',
+      '"Minimum possible maximum" or "maximize the minimum": try binary search on the answer first, and use a heap only inside the check.',
+      '"Kth smallest pair distance" with n up to 10^4: n^2 pairs won\'t fit, so binary search on the value.',
+    ],
+    notThis: [
+      'Maximize the Minimum Powered City (LC 2528) and Maximum Running Time of N Computers (LC 2141) are binary search on the answer.',
+      'Find K-th Smallest Pair Distance (LC 719) times out with a heap: binary search with two pointers instead.',
+      'Count of Range Sum (LC 327) uses merge sort or a Fenwick tree on prefix sums.',
+      'Maximum Total Reward (LC 3181) is DP over reachable sums, and Closest Subsequence Sum (LC 1755) is meet in the middle.',
+    ],
+    concepts: [
+      'Sweeps are the main way a heap meets geometry: sort events by coordinate, and let the heap hold what is currently active.',
+      'Expiry is usually lazy: an old height stays in the heap until it reaches the top.',
+      'Read the limits before choosing: n up to 10^5 with a monotonic check suggests binary search; k ordered picks suggest a heap.',
+    ],
+    example: {
+      problem: 'The Skyline Problem with buildings = [[2,9,10],[3,7,15],[5,12,12]]',
+      lc: 218,
+      walkthrough: [
+        'The event x values are 2, 3, 5, 7, 9, 12. The heap starts with a ground entry of height 0 that never expires.',
+        'x = 2: add height 10 (ends at 9). The top is 10, a change, so output [2,10].',
+        'x = 3: add height 15 (ends at 7). The top is 15, so output [3,15].',
+        'x = 5: add height 12 (ends at 12). The top is still 15, so output nothing.',
+        'x = 7: 15 has expired, so pop it. The top is 12, so output [7,12].',
+        'x = 9: height 10 has expired but isn\'t on top, so it stays. The top is still 12, so output nothing.',
+        'x = 12: pop 12, then the expired 10. The ground is on top, so output [12,0].',
+      ],
+    },
+    code: `def skyline(buildings):
+    buildings.sort()
+    xs = sorted({x for left, right, _ in buildings for x in (left, right)})
+    live = [(0, inf)]          # (-height, right edge); ground never expires
+    res, i = [], 0
+    for x in xs:
+        while i < len(buildings) and buildings[i][0] <= x:
+            left, right, height = buildings[i]
+            heappush(live, (-height, right))
+            i += 1
+        while live[0][1] <= x:
+            heappop(live)      # lazily expire
+        h = -live[0][0]
+        if not res or res[-1][1] != h:
+            res.append([x, h])
+    return res`,
+    complexity: 'O(n log n) time for the sort and heap operations, and O(n) space.',
+    pitfalls: [
+      'Emitting a point at every event: output only when the top height changes, or equal neighbours produce duplicates.',
+      'Using < rather than <= when expiring: a building whose right edge is x no longer covers x.',
+      'Removing the ground entry, which leaves the heap empty at the end of a run of buildings.',
+      'Reaching for a heap because the problem is listed here: check for a monotonic answer first.',
+    ],
+    pointsToPonder: [
+      'Why does adding all buildings that start at x before reading the top solve the tie cases?',
+      'How do you tell a binary search on the answer from a heap problem by reading the statement alone?',
+      'Which two simpler patterns make up Trapping Rain Water II (LC 407)?',
+    ],
+    practice: [871, 632, 218, 407, 1675],
+    snippet: '9-sliding-window-maximum-heap-with-lazy-deletion',
+  },
 }
