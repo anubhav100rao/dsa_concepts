@@ -791,4 +791,447 @@ def length_of_lis(nums, k):
     ],
     practice: [1157, 2286],
   },
+
+  '13. Merge Sort Tree / Persistent Segment Tree': {
+    crux: 'To ask about values inside an index range, keep sorted lists per segment, or keep a version of the tree for every prefix.',
+    signals: [
+      '"How many values in a[l..r] are at most x?", with queries answered as they arrive.',
+      '"Find the k-th smallest in a[l..r]": a persistent tree per prefix, compared by subtraction.',
+      '"Number of distinct values in a[l..r]", when you can\'t reorder queries for Mo\'s algorithm.',
+      '"What was the answer as of version v?": keep the old roots and share the unchanged nodes.',
+    ],
+    notThis: [
+      'All queries are known up front: sort them by x and sweep with a BIT, which is shorter and uses O(n) memory.',
+      'A count over the whole array, as in Count of Smaller Numbers After Self (LC 315): a BIT with compression is enough.',
+      'Values change often: a merge sort tree can\'t update cheaply, so look at a BIT of ordered sets or square root decomposition.',
+    ],
+    concepts: [
+      'Merge sort tree: each node keeps its segment sorted, which is what merge sort produces level by level.',
+      'A query splits [l, r] into O(log n) nodes and binary searches in each one.',
+      'Persistence: an update copies only the O(log n) nodes on one path and creates a new root.',
+      'k-th smallest: the tree over value ranks for prefix r, minus the one for prefix l - 1, gives the counts for [l, r]. Walk down by those counts.',
+    ],
+    example: {
+      problem: 'Count values at most x = 3 in a[1..3] for a = [5, 1, 4, 2]',
+      walkthrough: [
+        'Build the sorted lists: the leaves are [5], [1], [4], [2]. Their parents are [1, 5] and [2, 4], and the root is [1, 2, 4, 5].',
+        'The root covers [0, 3], which is only partly inside [1, 3], so go down.',
+        'The left child covers [0, 1], again partly inside. Leaf 0 is outside and gives 0.',
+        'Leaf 1 is inside, with list [1]. bisect_right gives 1.',
+        'The right child covers [2, 3], fully inside, with list [2, 4]. bisect_right(3) gives 1.',
+        'The total is 1 + 0 + 1 = 2, which matches the values 1 and 2.',
+      ],
+    },
+    code: `from bisect import bisect_right
+from heapq import merge
+
+class MergeSortTree:
+    def __init__(self, a):
+        self.n = len(a)
+        self.tree = [[] for _ in range(4 * self.n)]
+        self.build(1, 0, self.n - 1, a)
+
+    def build(self, node, l, r, a):
+        if l == r:
+            self.tree[node] = [a[l]]
+            return
+        m = (l + r) // 2
+        self.build(2 * node, l, m, a)
+        self.build(2 * node + 1, m + 1, r, a)
+        self.tree[node] = list(merge(self.tree[2 * node], self.tree[2 * node + 1]))
+
+    def count(self, ql, qr, x, node=1, l=0, r=None):  # values <= x
+        r = self.n - 1 if r is None else r
+        if qr < l or r < ql:
+            return 0
+        if ql <= l and r <= qr:
+            return bisect_right(self.tree[node], x)
+        m = (l + r) // 2
+        return (self.count(ql, qr, x, 2 * node, l, m)
+                + self.count(ql, qr, x, 2 * node + 1, m + 1, r))`,
+    complexity: 'Merge sort tree: O(n log n) time and space to build, O(log^2 n) per query. Persistent tree: O(log n) per version and per query, O(n log n) space.',
+    pitfalls: [
+      'Using upper_bound when the question says strictly less: "at most x" and "less than x" differ by one bisect choice.',
+      'Reusing a node in a persistent tree by writing to it: always copy, or older versions change too.',
+      'Underestimating memory: n log n integers at n = 10^6 is often over the limit.',
+      'Getting k-th smallest with merge sort tree alone: it needs another binary search over values, for O(log^3 n) per query.',
+    ],
+    pointsToPonder: [
+      'Why does each element appear in only O(log n) lists?',
+      'What makes subtraction of two tree versions valid for the k-th smallest query?',
+      'How would you turn "number of distinct values in [l, r]" into a count over previous-occurrence indices?',
+    ],
+    practice: [315],
+    snippet: '17-count-elements-x-in-subarray-l-r-merge-sort-tree',
+  },
+
+  '14. Mo\'s Algorithm (Offline Range Queries)': {
+    crux: 'Answer queries in an order that moves a window as little as possible, when adding or removing one element is easy.',
+    signals: [
+      '"Number of distinct values in a[l..r]" for 10^5 queries, all given before you must answer.',
+      '"Most frequent value in each range": adding one element is easy, but merging two ranges isn\'t.',
+      'Your node summary would have to be a whole frequency table, so a segment tree won\'t merge cheaply.',
+      'n and q are about 10^5 and the time limit allows roughly 10^8 simple steps.',
+    ],
+    notThis: [
+      'Queries must be answered online: the reordering isn\'t allowed, so use a persistent tree.',
+      'Plain sum, min or max: prefix sums, a sparse table or a segment tree are all faster.',
+      'Some listed problems have simpler answers: LC 992 subtracts two at-most-k windows, LC 2488 counts balance prefixes around k, and LC 2080 binary searches on stored positions.',
+    ],
+    concepts: [
+      'Split the left endpoints into blocks of size about sqrt(n). Sort by (block of l, r).',
+      'Within a block, r only moves forward and l moves at most one block per query, which gives the bound.',
+      'Keep a current window [L, R] and move it one element at a time with add and remove.',
+      'Answers are stored at each query\'s original index, because you process them out of order.',
+    ],
+    example: {
+      problem: 'Distinct count on a = [1, 2, 1, 3] with queries (0, 2) and (1, 3)',
+      walkthrough: [
+        'Here size = 2. Both queries have l in block 0, so sorting by r leaves them in this order.',
+        'Start with the empty window L = 0, R = -1 and distinct = 0.',
+        'Query (0, 2): add a[0] = 1, so distinct = 1. Add a[1] = 2, so distinct = 2. Add a[2] = 1, whose count goes to 2, so distinct stays 2. Store 2.',
+        'Query (1, 3): add a[3] = 3, so distinct = 3. Remove a[0] = 1, whose count falls to 1, so distinct stays 3. Store 3.',
+        'The answers are [2, 3].',
+      ],
+    },
+    code: `from collections import Counter
+
+def distinct_in_ranges(a, queries):
+    size = max(1, int(len(a) ** 0.5))
+    order = sorted(range(len(queries)),
+                   key=lambda q: (queries[q][0] // size, queries[q][1]))
+    freq, distinct = Counter(), 0
+    L, R = 0, -1
+    ans = [0] * len(queries)
+
+    for q in order:
+        l, r = queries[q]
+        while R < r:  # grow before shrinking
+            R += 1
+            freq[a[R]] += 1
+            distinct += freq[a[R]] == 1
+        while L > l:
+            L -= 1
+            freq[a[L]] += 1
+            distinct += freq[a[L]] == 1
+        while R > r:
+            freq[a[R]] -= 1
+            distinct -= freq[a[R]] == 0
+            R -= 1
+        while L < l:
+            freq[a[L]] -= 1
+            distinct -= freq[a[L]] == 0
+            L += 1
+        ans[q] = distinct
+    return ans`,
+    complexity: 'O((n + q) * sqrt(n)) window moves, plus O(q log q) to sort. O(n + q) space.',
+    pitfalls: [
+      'Shrinking before growing: the window can become invalid, with L past R, and counts go negative.',
+      'Returning answers in sorted order: store them by original index.',
+      'Indexing freq by raw values up to 10^9: compress them first.',
+      'A wrong block size: a fixed or too-small block loses the sqrt bound.',
+      'Using it when removal is hard, such as for max: you need a rollback variant that only adds.',
+    ],
+    pointsToPonder: [
+      'Work out the total movement of R and of L. Why does sqrt(n) balance them?',
+      'Why does sorting odd blocks by descending r speed things up in practice?',
+      'What would you do if a query could arrive between updates to the array?',
+    ],
+    practice: [2080, 992, 2488],
+    snippet: '18-mo-s-algorithm-offline-range-queries',
+  },
+
+  '15. Square Root Decomposition': {
+    crux: 'Split the array into about sqrt(n) blocks: whole blocks use a summary, and the edges are done by hand.',
+    signals: [
+      'A range operation whose results won\'t merge cleanly, such as "count values at least x in [l, r], with range adds".',
+      '"Update, then query" with n and q around 10^5, where about 10^7 to 10^8 steps fit the limit.',
+      'You can picture a per-block summary, like a sorted copy of the block, but no tree node summary.',
+      'You want something simple to code first, with less risk than a complex tree.',
+    ],
+    notThis: [
+      'Plain sum, min or max: a BIT or segment tree gets O(log n) with about the same code.',
+      'Queries can be reordered: Mo\'s algorithm often has a smaller constant for frequency questions.',
+      'Shortest Subarray with Sum at Least K (LC 862) is a monotonic deque on prefix sums, despite being listed here. LC 1157 has simpler position-based answers too.',
+    ],
+    concepts: [
+      'With block size b, a query touches at most 2b edge elements and n / b whole blocks. b = sqrt(n) balances them.',
+      'Each block keeps a summary: a sum, a sorted copy, or a pending add.',
+      'A point update changes one element and fixes one block\'s summary.',
+      'Range add: tag whole blocks, and rewrite the elements at the edges.',
+    ],
+    example: {
+      problem: 'Range Sum Query Mutable with nums = [1, 3, 5, 2, 4, 6]: query(1, 5), update(4, 10), query(1, 5)',
+      lc: 307,
+      walkthrough: [
+        'size = int(sqrt(6)) + 1 = 3, so the blocks are [1, 3, 5] and [2, 4, 6] with sums 9 and 12.',
+        'query(1, 5): l = 1 isn\'t a block start, so add a[1] = 3 and move to l = 2.',
+        'l = 2 isn\'t a block start, so add a[2] = 5 and move to l = 3.',
+        'l = 3 starts a block and 3 + 2 <= 5, so add the block sum 12 and jump to l = 6. The total is 20.',
+        'update(4, 10): the block sum grows by 10 - 4 = 6 to 18, and a[4] = 10.',
+        'query(1, 5) again: 3 + 5 + 18 = 26.',
+      ],
+    },
+    code: `class SqrtSum:
+    def __init__(self, a):
+        self.a = a
+        self.size = int(len(a) ** 0.5) + 1
+        self.block = [0] * self.size
+        for i, x in enumerate(a):
+            self.block[i // self.size] += x
+
+    def update(self, i, v):
+        self.block[i // self.size] += v - self.a[i]
+        self.a[i] = v
+
+    def query(self, l, r):  # inclusive
+        res = 0
+        while l <= r:
+            if l % self.size == 0 and l + self.size - 1 <= r:
+                res += self.block[l // self.size]
+                l += self.size
+            else:
+                res += self.a[l]
+                l += 1
+        return res`,
+    complexity: 'O(n) build, O(1) per point update here, and O(sqrt(n)) per query. O(sqrt(n)) extra space for block sums.',
+    pitfalls: [
+      'Overwriting a[i] before computing the delta: the block sum then gets v - v = 0.',
+      'Taking a whole block without checking that it ends within r: the block can run past the query.',
+      'With block tags, forgetting to include the tag when you read an edge element.',
+      'A slow block size: for sorted-block queries the best b is larger than sqrt(n), because each block adds a log factor.',
+    ],
+    pointsToPonder: [
+      'If a query costs n / b + b, what value of b minimizes it, and what changes when whole blocks cost log b?',
+      'When is O(sqrt(n)) per query fast enough to beat a harder O(log n) design in practice?',
+      'How would you support "count values at least x" with a sorted copy per block?',
+    ],
+    practice: [307, 862, 1157],
+    snippet: '16-sqrt-decomposition-range-sum-point-update',
+  },
+
+  '16. Heavy-Light Decomposition / LCA + Segment Tree': {
+    crux: 'Cut the tree into chains so any path crosses O(log n) of them, then answer each chain with a segment tree.',
+    signals: [
+      '"Sum or maximum on the path from u to v", mixed with "update the value of node x".',
+      '"Maximum edge weight between two nodes" with changing weights.',
+      '"Add to every node in the subtree of x" and "sum of the subtree": this needs only an Euler tour.',
+      'A tree with 10^5 nodes and 10^5 queries, where walking each path is too slow.',
+    ],
+    notThis: [
+      'Only subtree queries: an Euler tour plus a BIT is much shorter.',
+      'Only LCA or static path sums: binary lifting, or root prefix sums plus LCA, is enough.',
+      'Number of Good Paths (LC 2421) adds nodes in value order with a DSU, and LCA II (LC 1644) is one recursive DFS. Neither needs this, despite being listed.',
+    ],
+    concepts: [
+      'The heavy child is the one with the largest subtree. Every other edge is light.',
+      'Going down a light edge at least halves the subtree size, so a path has O(log n) light edges.',
+      'Visiting the heavy child first makes each chain a contiguous block of positions.',
+      'For a path query, repeatedly lift the node whose chain head is deeper, querying its chain segment, until both are on one chain.',
+      'The same order gives each subtree the block [pos[u], pos[u] + size[u] - 1].',
+    ],
+    example: {
+      problem: 'Path sum from 4 to 2 on edges 0-1, 0-2, 1-3, 1-4 with node values [1, 2, 3, 4, 5]',
+      walkthrough: [
+        'Subtree sizes are 5, 3, 1, 1, 1 for nodes 0 to 4. The heavy child of 0 is 1, and the heavy child of 1 is 3, the first of a tie.',
+        'The chains are 0-1-3, 4 and 2. The positions are 0:0, 1:1, 3:2, 4:3, 2:4, so the base array is [1, 2, 4, 5, 3].',
+        'u = 4 has head 4 at depth 2 and v = 2 has head 2 at depth 1. Lift u, the deeper head: add positions [3, 3], which is 5. Then u = parent[4] = 1.',
+        'u = 1 has head 0 at depth 0 and v = 2 has head 2 at depth 1. Swap so u = 2: add positions [4, 4], which is 3. Then u = parent[2] = 0 and v = 1.',
+        'Both are now on chain 0. Add positions [0, 1], which is 1 + 2 = 3.',
+        'The total is 5 + 3 + 3 = 11, which matches 5 + 2 + 1 + 3 along 4-1-0-2.',
+      ],
+    },
+    code: `# Uses SegTree from section 8; build it over values by pos
+def build_hld(adj, root=0):
+    n = len(adj)
+    par, depth, size = [-1] * n, [0] * n, [1] * n
+    heavy, head, pos = [-1] * n, [0] * n, [0] * n
+
+    def dfs(u):
+        best = 0
+        for v in adj[u]:
+            if v != par[u]:
+                par[v], depth[v] = u, depth[u] + 1
+                dfs(v)
+                size[u] += size[v]
+                if size[v] > best:
+                    best, heavy[u] = size[v], v
+    dfs(root)
+
+    cur = 0
+    def decompose(u, h):
+        nonlocal cur
+        head[u], pos[u] = h, cur
+        cur += 1
+        if heavy[u] != -1:
+            decompose(heavy[u], h)
+        for v in adj[u]:
+            if v != par[u] and v != heavy[u]:
+                decompose(v, v)
+    decompose(root, root)
+    return par, depth, head, pos
+
+def path_sum(u, v, par, depth, head, pos, st):
+    res = 0
+    while head[u] != head[v]:
+        if depth[head[u]] < depth[head[v]]:
+            u, v = v, u
+        res += st.query(pos[head[u]], pos[u] + 1)
+        u = par[head[u]]
+    if pos[u] > pos[v]:
+        u, v = v, u
+    return res + st.query(pos[u], pos[v] + 1)`,
+    complexity: 'O(n) to decompose. O(log^2 n) per path query or update with a segment tree: O(log n) chains, each O(log n). O(n) space.',
+    pitfalls: [
+      'Comparing the depths of u and v instead of their chain heads: you can lift past the LCA.',
+      'Recursion depth on a long chain: Python and sometimes C++ need an iterative DFS at 10^5 nodes.',
+      'For edge weights, stored at the child: skip the LCA with pos[u] + 1 on the last segment.',
+      'Non-commutative merges: the two sides of a path run in opposite directions, so keep them separate.',
+    ],
+    pointsToPonder: [
+      'Why does a light edge at least halve the subtree size, and why does that bound the number of chains?',
+      'Why does the same visiting order serve both path queries and subtree queries?',
+      'What would you use if the tree edges could also be added and removed?',
+    ],
+    practice: [1644, 2421],
+  },
+
+  '17. Range Queries in Design / Online Problems': {
+    crux: 'List the operations and their frequency first, because the required mix chooses the structure.',
+    signals: [
+      '"Implement a class with book(start, end)": a sorted map of intervals.',
+      '"snap() and get(index, snap_id)": per-index history with a binary search.',
+      '"Return the frequency of value in the subarray [left, right]": positions per value with a binary search.',
+      '"Seat the student as far as possible from others": a sorted set of occupied seats or gaps.',
+      '"Latest, max and min price, where a correction can arrive for an old timestamp": a map plus an ordered multiset.',
+    ],
+    notThis: [
+      'There are no mutations: precompute with a prefix array or sparse table, and skip the class-level structure.',
+      'Writes are rare and reads are constant: rebuilding on write can be simplest.',
+      'Every query can be read first, as in Number of Flowers in Full Bloom (LC 2251): sort and sweep offline.',
+    ],
+    concepts: [
+      'Interval sets: keep disjoint intervals in a sorted map, and merge or split around the changed range.',
+      'Versioning: a history list per key costs far less than copying the array on each snapshot.',
+      'Positions per value: a count in [l, r] is two binary searches.',
+      'Dynamic segment tree: create nodes only when touched, for coordinates up to 10^9 that aren\'t known ahead.',
+    ],
+    example: {
+      problem: 'Range Frequency Queries with arr = [1, 2, 1, 3, 1]: query(1, 4, 1) and query(0, 1, 3)',
+      lc: 2080,
+      walkthrough: [
+        'Build the positions: 1 -> [0, 2, 4], 2 -> [1] and 3 -> [3].',
+        'query(1, 4, 1): bisect_left([0, 2, 4], 1) = 1, the first position at or after 1.',
+        'bisect_right([0, 2, 4], 4) = 3, just past the last position at or before 4.',
+        'The count is 3 - 1 = 2, for positions 2 and 4.',
+        'query(0, 1, 3): in [3], bisect_left of 0 is 0 and bisect_right of 1 is 0, so the count is 0.',
+      ],
+    },
+    code: `from bisect import bisect_left, bisect_right
+from collections import defaultdict
+
+class RangeFreqQuery:
+    def __init__(self, arr):
+        self.pos = defaultdict(list)
+        for i, x in enumerate(arr):
+            self.pos[x].append(i)  # sorted, since i only grows
+
+    def query(self, left, right, value):
+        p = self.pos[value]
+        return bisect_right(p, right) - bisect_left(p, left)`,
+    complexity: 'For this design: O(n) build, O(log n) per query, O(n) space. Other designs here cost O(log n) per operation with a sorted map or segment tree.',
+    pitfalls: [
+      'Mixing interval conventions: LC 729 and LC 715 use half-open ranges, so touching intervals don\'t overlap.',
+      'In LC 1146, returning the latest value for an old snapshot: binary search for the last write at or before snap_id.',
+      'In LC 2034, leaving stale prices behind: remove the old price from the multiset, or discard stale heap entries when they surface.',
+      'In LC 855, removing a seat without merging the two neighbouring gaps.',
+      'Pre-allocating a tree for 10^9 coordinates: use a dynamic tree or compress the values.',
+    ],
+    pointsToPonder: [
+      'For each design, which operation would you make slower to make the frequent one faster?',
+      'When does a sorted map beat a segment tree for intervals, and when does it lose?',
+      'What would LC 2080 need if the array could be updated too?',
+    ],
+    practice: [729, 1146, 2080, 2034, 855],
+  },
+
+  '18. Advanced / Contest-Level Range Query Problems': {
+    crux: 'Reduce the problem first, into events, ranks and a sweep. Then decide what a node stores and how updates compose.',
+    signals: [
+      '"Total area covered by all the rectangles, counting overlaps once": sweep one axis and track covered length on the other.',
+      '"Outline formed by the buildings": a sweep over x with the current maximum height.',
+      '"Flip this range, then add p times the count of ones": one tree tracks the state that another operation consumes.',
+      '"Number of range sums between lower and upper": prefix sums, then a counted pair inequality on ranks.',
+    ],
+    notThis: [
+      'A simpler tool still fits: try the choices in earlier sections before designing a custom node.',
+      'The Skyline Problem (LC 218) is usually simpler with a sweep and a heap of active heights.',
+      'Pair-count problems (LC 327, LC 493) also fall to merge sort, with no tree at all.',
+    ],
+    concepts: [
+      'Turn 2D problems into 1D plus time: sweep one axis, and let the tree hold the state of the other.',
+      'Compress coordinates so tree size depends on n and not on the range of values.',
+      'Before coding, write down the node value, the tag, the merge and the tag composition.',
+      'For the area problem each update is undone by an exactly matching removal, so a cover count needs no push-down.',
+    ],
+    example: {
+      problem: 'Rectangle Area II with rectangles = [[0,0,2,2],[1,0,2,3],[1,0,3,1]]',
+      lc: 850,
+      walkthrough: [
+        'xs = [0, 1, 2, 3], so the leaves are the gaps [0,1), [1,2) and [2,3). Events sorted by y: at y = 0 add all three, at y = 1 remove [1,3), at y = 2 remove [0,2), at y = 3 remove [1,2).',
+        'y = 0: covered length is 0, so no area is added. After the three adds, the union is [0,3), so covered length = 3.',
+        'y = 1: area += 3 * 1 = 3. Remove [1,3). The rest is [0,2), so covered length = 2.',
+        'y = 2: area += 2 * 1, giving 5. Remove [0,2). The rest is [1,2), so covered length = 1.',
+        'y = 3: area += 1 * 1, giving 6. Remove [1,2), which leaves nothing covered.',
+        'The answer is 6.',
+      ],
+    },
+    code: `def rectangle_area(rects):
+    xs = sorted({x for r in rects for x in (r[0], r[2])})
+    idx = {x: i for i, x in enumerate(xs)}
+    events = []
+    for x1, y1, x2, y2 in rects:
+        events.append((y1, idx[x1], idx[x2], 1))
+        events.append((y2, idx[x1], idx[x2], -1))
+    events.sort()
+
+    m = len(xs) - 1  # leaf i is the gap [xs[i], xs[i + 1])
+    cnt, cov = [0] * (4 * len(xs)), [0] * (4 * len(xs))
+
+    def update(node, l, r, a, b, v):  # node covers leaves [l, r)
+        if b <= l or r <= a:
+            return
+        if a <= l and r <= b:
+            cnt[node] += v
+        else:
+            mid = (l + r) // 2
+            update(2 * node, l, mid, a, b, v)
+            update(2 * node + 1, mid, r, a, b, v)
+        if cnt[node]:
+            cov[node] = xs[r] - xs[l]
+        else:
+            cov[node] = 0 if r - l == 1 else cov[2 * node] + cov[2 * node + 1]
+
+    area, prev = 0, events[0][0]
+    for y, a, b, v in events:
+        area += cov[1] * (y - prev)
+        prev = y
+        update(1, 0, m, a, b, v)
+    return area % (10**9 + 7)`,
+    complexity: 'O(n log n) for this sweep, with 2n events and O(log n) per update. O(n) space. Most problems here have the same bound.',
+    pitfalls: [
+      'Adding area after applying the event: the strip below y uses the covered length from before the event.',
+      'Treating leaves as points when they represent gaps: lengths come from xs[r] - xs[l].',
+      'Reusing this no-push-down tree when removals don\'t match earlier adds: it relies on them being exact.',
+      'Forgetting the required modulo in LC 850, or 64-bit totals in other languages.',
+      'In LC 699, treating squares that only touch at an edge as overlapping.',
+    ],
+    pointsToPonder: [
+      'Why can this tree avoid lazy push-down when most range-update trees can\'t?',
+      'How would you find the area covered by at least two rectangles?',
+      'For a new hard problem, what would you try to write down first: the sweep axis, the node value or the tag?',
+    ],
+    practice: [493, 327, 699, 218, 850],
+    snippet: '10-lazy-segment-tree-range-add-range-sum-query',
+  },
 }
