@@ -517,6 +517,8 @@ int minDistance(string a, string b) {
 
 ## 13. LIS — O(n²)
 
+**Use when:** "Longest increasing subsequence" with n up to a few thousand, or when each pair needs a custom check (chains, divisibility).
+
 ```cpp
 int lengthOfLIS(vector<int>& nums) {
     int n = nums.size();
@@ -538,9 +540,19 @@ int lengthOfLIS(vector<int>& nums) {
 }
 ```
 
+**Complexity:** O(n^2) time and O(n) space.
+
+**Example:** `nums = [10,9,2,5,3,7,101,18]` returns `4` (for example 2, 3, 7, 18).
+
+**Pitfalls:** The answer is the max over all of `dp`, not `dp[n - 1]`, since the best run may end earlier. Use `<` for strictly increasing and `<=` for non-decreasing.
+
+**Used in:** LC 300, LC 673, LC 1048, LC 368, LC 646.
+
 ---
 
 ## 14. LIS — O(n log n)
+
+**Use when:** "Longest increasing subsequence" with n up to 10^5, when only the length is needed.
 
 ```cpp
 int lengthOfLIS(vector<int>& nums) {
@@ -566,9 +578,19 @@ For non-decreasing LIS:
 auto it = upper_bound(tails.begin(), tails.end(), x);
 ```
 
+**Complexity:** O(n log n) time and O(n) space.
+
+**Example:** `nums = [10,9,2,5,3,7,101,18]` returns `4`, with `tails` ending as [2,3,7,18].
+
+**Pitfalls:** `tails` usually isn't a real subsequence, so only its size counts. For example, [2,3,1] ends as [1,3]. Use lower_bound for strictly increasing and upper_bound for non-decreasing.
+
+**Used in:** LC 300, LC 354.
+
 ---
 
 ## 15. Interval DP — Matrix Chain style
+
+**Use when:** "Merge adjacent groups" or "best way to parenthesize": the last step splits [l, r] at some k, and the cost depends on the range.
 
 ```cpp
 int intervalDP(vector<int>& arr) {
@@ -593,9 +615,19 @@ int intervalDP(vector<int>& arr) {
 }
 ```
 
+**Complexity:** O(n^3) time and O(n^2) space, assuming cost(l, k, r) is O(1).
+
+**Example:** Merging adjacent piles `arr = [1,2,3]` with cost(l, k, r) set to the sum of `arr[l..r]` returns `9` (merge 1+2 for 3, then 3+3 for 6). As written, the cost placeholder is 0, so fill it in first.
+
+**Pitfalls:** Loop by length so smaller intervals are done first. `dp[l][r]` starts at INT_MAX only for len >= 2, and `dp[l][k] + dp[k + 1][r]` never adds to INT_MAX because both are already finished. A max version must start at 0 or -INF instead.
+
+**Used in:** LC 1039, LC 1547, LC 1000, LC 1130.
+
 ---
 
 ## 16. Burst Balloons
+
+**Use when:** "Burst or remove elements, and what you earn depends on the current neighbors."
 
 ```cpp
 int maxCoins(vector<int>& nums) {
@@ -631,9 +663,19 @@ Idea:
 // k is the last balloon burst between l and r
 ```
 
+**Complexity:** O(n^3) time and O(n^2) space.
+
+**Example:** `nums = [3,1,5,8]` returns `167`.
+
+**Pitfalls:** Pad with 1 on both ends, and read the answer at `dp[0][n - 1]` of the padded array. `l` and `r` are exclusive here, so `len` starts at 2 and `k` runs strictly between them.
+
+**Used in:** LC 312, LC 1039, LC 1547.
+
 ---
 
 ## 17. Palindrome Partitioning II
+
+**Use when:** "The minimum cuts so that every piece is a palindrome."
 
 ```cpp
 int minCut(string s) {
@@ -669,9 +711,19 @@ int minCut(string s) {
 }
 ```
 
+**Complexity:** O(n^2) time and O(n^2) space.
+
+**Example:** `s = "aab"` returns `1` ("aa" | "b").
+
+**Pitfalls:** `dp[i]` counts cuts, not pieces, so a palindromic prefix costs 0. `pal` must fill by length, because `pal[l][r]` reads the shorter `pal[l + 1][r - 1]`.
+
+**Used in:** LC 132, LC 5, LC 1278.
+
 ---
 
 ## 18. Tree DP — House Robber III
+
+**Use when:** A tree where choosing a node limits its children, such as "no two directly-linked nodes".
 
 ```cpp
 pair<int, int> dfs(TreeNode* root) {
@@ -701,9 +753,19 @@ first  = take current node
 second = skip current node
 ```
 
+**Complexity:** O(n) time and O(h) stack space, where h is the height of the tree.
+
+**Example:** Tree `[3,2,3,null,3,null,1]` returns `7` (3 + 3 + 1).
+
+**Pitfalls:** `skip` takes the better of each child's two values, while `take` must use each child's `second`. A null node returns {0, 0}.
+
+**Used in:** LC 337, LC 968.
+
 ---
 
 ## 19. Tree DP — Diameter style
+
+**Use when:** "The longest path between any two nodes, which may not pass through the root."
 
 ```cpp
 int ans = 0;
@@ -720,9 +782,19 @@ int height(TreeNode* root) {
 }
 ```
 
+**Complexity:** O(n) time and O(h) stack space.
+
+**Example:** Tree `[1,2,3,4,5]` leaves `ans = 3` (path 4, 2, 1, 3).
+
+**Pitfalls:** The function returns height, but the answer is the global `ans`, so reset it between test cases. `ans` counts edges here, so a problem that counts nodes needs `+ 1`. For LC 124, clamp negative arms to 0.
+
+**Used in:** LC 543, LC 124, LC 687, LC 2246.
+
 ---
 
 ## 20. DP on DAG
+
+**Use when:** "Longest path" or "number of paths" when edges only go forward, so there's no cycle.
 
 ```cpp
 int dfs(int u, vector<vector<int>>& graph, vector<int>& dp) {
@@ -742,9 +814,19 @@ int dfs(int u, vector<vector<int>>& graph, vector<int>& dp) {
 // int ans = max over dfs(i)
 ```
 
+**Complexity:** O(V + E) time and O(V) space for the memo and the stack.
+
+**Example:** `graph = [[1,2],[2],[]]` gives `dfs(0) = 3` (path 0, 1, 2, counted in nodes).
+
+**Pitfalls:** A cycle causes infinite recursion, because the memo isn't set until the call returns. `best = 1` counts nodes, so subtract 1 for edges. Take the max over every start, not only node 0.
+
+**Used in:** LC 329, LC 2050, LC 1786.
+
 ---
 
 ## 21. Longest Increasing Path in Matrix
+
+**Use when:** "The longest strictly increasing path in a grid", moving in four directions.
 
 ```cpp
 int dirs[5] = {0, 1, 0, -1, 0};
@@ -786,9 +868,19 @@ int longestIncreasingPath(vector<vector<int>>& mat) {
 }
 ```
 
+**Complexity:** O(n * m) time and O(n * m) space.
+
+**Example:** `mat = [[9,9,4],[6,6,8],[2,1,1]]` returns `4` (1, 2, 6, 9).
+
+**Pitfalls:** No visited array is needed, since strictly increasing moves can't form a cycle. That breaks with `>=`, where equal neighbors would loop forever. `dirs` has 5 entries so that `dirs[d + 1]` stays in range.
+
+**Used in:** LC 329.
+
 ---
 
 ## 22. Bitmask DP — TSP style
+
+**Use when:** "Visit every city exactly once and return to the start", with n up to about 20.
 
 ```cpp
 int tsp(vector<vector<int>>& cost) {
@@ -828,9 +920,19 @@ int tsp(vector<vector<int>>& cost) {
 }
 ```
 
+**Complexity:** O(2^n * n^2) time and O(2^n * n) space.
+
+**Example:** `cost = [[0,10,15,20],[10,0,35,25],[15,35,0,30],[20,25,30,0]]` returns `80` (0, 1, 3, 2, 0).
+
+**Pitfalls:** `dp[1][0] = 0` fixes node 0 as the start, and the final loop adds the trip back. With n = 1 the answer becomes `cost[0][0]`, so check that case. Remove `cost[u][0]` if the path doesn't need to return.
+
+**Used in:** LC 943, LC 847.
+
 ---
 
 ## 23. Bitmask DP — Assignment problem
+
+**Use when:** "Assign each worker to exactly one job at minimum cost", with n up to about 20.
 
 ```cpp
 int minCostAssignment(vector<vector<int>>& cost) {
@@ -860,9 +962,19 @@ int minCostAssignment(vector<vector<int>>& cost) {
 }
 ```
 
+**Complexity:** O(2^n * n) time and O(2^n) space.
+
+**Example:** `cost = [[9,2,7],[6,4,3],[5,8,1]]` returns `9` (2 + 6 + 1).
+
+**Pitfalls:** The worker is implied by `popcount(mask)`, so don't store it. `__builtin_popcount` needs GCC or Clang, and `1 << n` overflows past n = 30.
+
+**Used in:** LC 1879, LC 2172, LC 1434.
+
 ---
 
 ## 24. Digit DP template
+
+**Use when:** "Count the integers up to n whose digits have some property", with n too big to loop over. This template counts distinct digits.
 
 ```cpp
 string num;
@@ -904,6 +1016,14 @@ long long countSpecialNumbers(long long n) {
     return dfs(0, true, false, 0);
 }
 ```
+
+**Complexity:** O(digits * 2 * 2 * 1024 * 10) time and O(digits * 2 * 2 * 1024) space.
+
+**Example:** `n = 20` returns `19` (every number from 1 to 20 except 11).
+
+**Pitfalls:** Leading zeros don't count as digits, which is why `newMask` only changes once the number has started. `started` also excludes 0 from the count. Refill the memo with -1 for each new bound, as this code does.
+
+**Used in:** LC 2376, LC 1012, LC 357.
 
 ---
 
