@@ -275,7 +275,7 @@ for (auto &item : items) {
 
 **Pitfalls:** This is only correct when items can be split. For 0/1 knapsack the same order gives 160 instead of 220, so use DP. Cast to double before dividing.
 
-**Used in:** None in greedy.md. This is the classic fractional knapsack, and section 21 contrasts it with 0/1 knapsack.
+**Used in:** None in greedy.md. This is the classic fractional knapsack, and the Exchange Argument section of the question bank contrasts it with 0/1 knapsack.
 
 ---
 
@@ -317,7 +317,7 @@ for (int i = 0; i < jobs.size(); i++) {
 
 **Pitfalls:** Scan slots from `deadline` down to 1, not up: the latest free slot keeps earlier ones open. Slots are 1-based, so allocate `maxDeadline + 1`.
 
-**Used in:** Job Sequencing Problem (classic, no LC number) in sections 4 and 21.
+**Used in:** Job Sequencing Problem (classic, no LC number) in the Activity Selection and Exchange Argument sections.
 
 ---
 
@@ -777,6 +777,10 @@ sort(nums.begin(), nums.end(), [](int a, int b) {
 
 ## 25. Greedy for scheduling by profit using DSU optimization
 
+**Use when:** Job sequencing with large inputs: find the latest free slot at or before a deadline in near-constant time.
+
+**Complexity:** O(n log n) time for the sort, plus O(n * alpha(D)) for the lookups. O(D) space.
+
 ```cpp
 vector<int> parent(maxDeadline + 1);
 
@@ -805,9 +809,19 @@ for (auto &job : jobs) {
 }
 ```
 
+**Example:** Jobs `(2,100), (1,19), (2,27), (1,25), (3,15)` give `profit = 142`, the same as section 10.
+
+**Pitfalls:** Slot 0 is the "no slot left" sentinel, so check `availableSlot > 0`. After filling slot s, point it to `find(s - 1)`, not `s - 1`.
+
+**Used in:** Job Sequencing Problem (classic, no LC number) in the Activity Selection and Exchange Argument sections.
+
 ---
 
 ## 26. Greedy with priority queue: Course Schedule III
+
+**Use when:** "Maximum number of courses" with durations and deadlines: take each course, and drop the longest one when time runs over.
+
+**Complexity:** O(n log n) time, O(n) space for the heap.
 
 ```cpp
 sort(courses.begin(), courses.end(), [](auto &a, auto &b) {
@@ -832,9 +846,19 @@ for (auto &c : courses) {
 int maxCourses = pq.size();
 ```
 
+**Example:** `courses = [[100,200],[200,1300],[1000,1250],[2000,3200]]` gives `maxCourses = 3`.
+
+**Pitfalls:** Sort by deadline, not duration. Push before you check. The course you drop may be the one just added, which is fine.
+
+**Used in:** LC 630
+
 ---
 
 ## 27. Minimum refueling stops
+
+**Use when:** "Fewest refueling stops to reach the target": only fill up when you must, from the biggest station you have passed.
+
+**Complexity:** O(n log n) time, O(n) space for the heap.
 
 ```cpp
 priority_queue<int> pq;
@@ -858,9 +882,19 @@ while (fuel < target) {
 }
 ```
 
+**Example:** `target = 100`, `startFuel = 10`, `stations = [[10,60],[20,30],[30,30],[60,40]]` give `stops = 2`.
+
+**Pitfalls:** `fuel` is the farthest position you can reach, not the fuel left in the tank. An empty heap while `fuel < target` means you can't make it, so return -1.
+
+**Used in:** LC 871
+
 ---
 
 ## 28. CPU Task Scheduler
+
+**Use when:** "Same task must be n intervals apart": the most frequent task sets the frame, and the rest fill the gaps.
+
+**Complexity:** O(T) time for T tasks, O(1) space with 26 letters.
 
 ```cpp
 vector<int> freq(26, 0);
@@ -882,9 +916,19 @@ int idles = max(0, emptySlots - availableTasks);
 int ans = tasks.size() + idles;
 ```
 
+**Example:** `tasks = "AAABBB"` with `n = 2` gives `ans = 8`.
+
+**Pitfalls:** Clamp the idle count at 0 with `max(0, ...)`. Many distinct tasks mean no idling, and the answer is `tasks.size()`.
+
+**Used in:** LC 621
+
 ---
 
 ## 29. Greedy for valid parenthesis with wildcard
+
+**Use when:** A parenthesis string with a wildcard `*` that can be `(`, `)` or empty: track the range of possible open counts.
+
+**Complexity:** O(n) time, O(1) space.
 
 ```cpp
 int low = 0, high = 0;
@@ -909,9 +953,19 @@ for (char c : s) {
 return low == 0;
 ```
 
+**Example:** `s = "(*))"` returns `true`. `s = ")("` returns `false`.
+
+**Pitfalls:** Return `false` as soon as `high < 0`. Clamp `low` at 0 on every step, since a count can't go negative. This is LC 678 Valid Parenthesis String.
+
+**Used in:** None in greedy.md.
+
 ---
 
 ## 30. Two-pointer greedy pairing
+
+**Use when:** Pair items from the two ends of a sorted array under a rule, for as many pairs as possible.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 sort(nums.begin(), nums.end());
@@ -930,11 +984,19 @@ while (l < r) {
 }
 ```
 
-Used in: boats, rescue pairing, max matching under condition.
+**Example:** With "can pair" meaning `nums[l] + nums[r] <= 5`, `nums = [1,2,3,9]` gives `ans = 1`.
+
+**Pitfalls:** If the largest can't pair with the smallest, it can't pair with anything, so drop it with `r--`. If every item must be used, as in boats, count the singles too (section 13).
+
+**Used in:** LC 881, LC 1877
 
 ---
 
 ## How to recognize greedy
+
+**Use when:** Before coding: check that a local choice can never block a better final answer.
+
+**Complexity:** Usually O(n log n) for a sort or heap, plus an O(n) pass.
 
 Use greedy when:
 
@@ -960,3 +1022,9 @@ Most common greedy proof ideas:
 // Local optimal choice:
 // Current best choice never blocks future better solution.
 ```
+
+**Example:** Activity selection (LC 435) is proved by staying ahead. Largest Number (LC 179) is proved by an exchange argument.
+
+**Pitfalls:** Passing the samples doesn't prove a greedy correct. Check it against a brute force on small inputs. 0/1 knapsack is the standard case where ratio greedy fails.
+
+**Used in:** LC 435, LC 179, LC 630, LC 1167
