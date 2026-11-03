@@ -675,10 +675,37 @@ for c in s:
 
   '14. Greedy with Math / Geometry': {
     crux: 'Find an invariant — parity, median, GCD, perfect-square count — and let it drive the choice.',
+    signals: [
+      '"Double or subtract 1" in the fewest steps: work backwards from the target.',
+      '"Every i-th bulb is toggled" or "after n rounds": find the rule by counting divisors.',
+      '"Minimum moves to make all elements equal" with +1 and -1: the median minimizes the total.',
+      '"Moving by 2 is free": only parity matters, so count odd and even positions.',
+    ],
+    notThis: [
+      'The geometry needs real enumeration, as in Max Points on a Line (LC 149): count slopes from each point with a hash map, since no local choice exists.',
+      'Multiple operation sequences must be compared, as in Coin Change (LC 322): this needs DP unless the coin system is canonical.',
+    ],
     concepts: [
       'Median minimizes Σ|x - m| (the L1 optimal point).',
       'Bulb Switcher: a bulb ends ON iff it has an odd number of divisors iff it is a perfect square.',
       'Broken Calculator: work BACKWARD from target — halving when even is strictly better than doubling many times.',
+    ],
+    example: {
+      problem: 'Broken Calculator with startValue = 3 and target = 10',
+      lc: 991,
+      walkthrough: [
+        'target = 10 is even, so halve it to 5. ops = 1.',
+        'target = 5 is odd, so add 1 to get 6. ops = 2.',
+        'target = 6 is even, so halve it to 3. ops = 3.',
+        'target = 3 is no longer above start, so stop. Add start - target = 0, and the answer is 3.',
+      ],
+    },
+    complexity: 'O(log target) time and O(1) space for Broken Calculator. Median problems take O(n log n) with a sort.',
+    pitfalls: [
+      'Searching forward from start in LC 991: the reverse direction has a forced move at every step.',
+      'Forgetting the case where start > target: the loop never runs, and the answer is just start - target.',
+      'Using the mean in LC 462: the median is the right center for absolute differences.',
+      'In Bulb Switcher (LC 319), simulating the rounds: n can reach 10^9, and the answer is floor(sqrt(n)).',
     ],
     pointsToPonder: [
       'Why is the median (not the mean) the L1 optimum?',
@@ -692,14 +719,42 @@ while target > start:
     else: target //= 2
     ops += 1
 return ops + (start - target)`,
+    practice: [1217, 1518, 462, 991, 319],
   },
 
   '15. Greedy + Stack (Monotonic Stack Greedy)': {
     crux: 'Maintain a monotonic stack; pop when the top is worse than the incoming element under the chosen ordering.',
+    signals: [
+      '"Next greater" or "next smaller" element: finalize answers as a stack pops.',
+      '"Remove k digits", or "subsequence of size k" that is most competitive: pop worse earlier picks.',
+      '"Asteroids collide" or "cars merge into a fleet": the stack holds the survivors so far.',
+      '"Find i < j < k with a pattern", as in 132 Pattern: a stack keeps the best candidate for the middle.',
+    ],
+    notThis: [
+      'The maximum of each fixed window, as in Sliding Window Maximum (LC 239): items also leave from the front, so use a deque.',
+      'Pairs may be anywhere, with no "nearest" meaning: if nearness isn\'t part of the question, a monotonic stack won\'t help.',
+    ],
     concepts: [
       'Decreasing stack ⇒ each pop computes a "next greater" answer; increasing stack ⇒ "next smaller".',
       'Remove K Digits and Most Competitive Subsequence: same monotonic-stack template, just different budget logic.',
       'Asteroid Collision / Car Fleet: the stack tracks survivors after pairwise greedy resolution.',
+    ],
+    example: {
+      problem: 'Next greater value for each index, with nums = [2,1,3,0]',
+      walkthrough: [
+        'i = 0, x = 2: the stack is empty, so push index 0.',
+        'i = 1, x = 1: nums[0] = 2 isn\'t smaller, so push index 1.',
+        'i = 2, x = 3: pop index 1, so ans[1] = 3. Pop index 0, so ans[0] = 3. Push index 2.',
+        'i = 3, x = 0: nums[2] = 3 isn\'t smaller, so push index 3.',
+        'Indices 2 and 3 stay on the stack and keep -1. The answer is [3,3,-1,-1].',
+      ],
+    },
+    complexity: 'O(n) time, since each index is pushed and popped at most once. O(n) space for the stack.',
+    pitfalls: [
+      'Storing values rather than indices when you need to write into an answer array.',
+      'Mixing `<` and `<=`: on duplicates this decides whether "next greater" means strictly greater.',
+      'In Asteroid Collision (LC 735), missing that equal sizes destroy both asteroids.',
+      'In Car Fleet (LC 853), comparing arrival times with integer division: use a float or cross-multiply.',
     ],
     pointsToPonder: [
       'Increasing vs decreasing stack — which direction does THIS problem need?',
@@ -712,14 +767,44 @@ for i, x in enumerate(nums):
     while stack and nums[stack[-1]] < x:
         ans[stack.pop()] = x
     stack.append(i)`,
+    practice: [402, 735, 1673, 853, 321],
+    snippet: '18-greedy-with-monotonic-stack-remove-k-digits',
   },
 
   '16. Greedy Bit Manipulation': {
     crux: 'Process bits from the MOST significant; greedily set the current bit if a valid completion still exists.',
+    signals: [
+      '"Maximum XOR of two numbers": try to set each bit from the top.',
+      '"Interpret each row as a binary number" and maximize the score: the highest bit outweighs all lower ones.',
+      '"Minimum flips" so that a OR b equals c, or to reach a target: count per bit.',
+      '"Multiply by 2 at most k times" to maximize the OR: put every doubling on one element.',
+    ],
+    notThis: [
+      'Longest subarray with the maximum AND, as in LC 2419: AND can\'t exceed the largest element, so find runs of the max value.',
+      'XOR over any subset, not a pair: a pair check won\'t do, so use a linear basis.',
+    ],
     concepts: [
       'Maximum XOR: for each bit from MSB, try to set it; check if some pair achieves it (often via a trie).',
       'Score After Flipping Matrix: leftmost column must all be 1 (flip rows to ensure); for each later column, flip to majority-1.',
       'MSB-first greedy works because one MSB is worth more than all lower bits combined.',
+    ],
+    example: {
+      problem: 'Maximum XOR of Two Numbers with nums = [3,10,5]',
+      lc: 421,
+      walkthrough: [
+        'Bits above bit 3 are 0 in all numbers, so they can\'t be set. Start at bit 3 with ans = 0.',
+        'Bit 3: prefixes = {0, 8}. Candidate 8 works, since 8 ^ 0 = 8 is in the set. ans = 8.',
+        'Bit 2: prefixes = {0, 8, 4}. Candidate 12 works, since 12 ^ 8 = 4 is in the set. ans = 12.',
+        'Bit 1: prefixes = {2, 10, 4}. Candidate 14 works, since 14 ^ 10 = 4 is in the set. ans = 14.',
+        'Bit 0: prefixes = {3, 10, 5}. Candidate 15 works, since 15 ^ 10 = 5 is in the set. The answer is 15, from 10 ^ 5.',
+      ],
+    },
+    complexity: 'O(B * n) time for B bits, and O(n) space for the prefix set. B is 32 here.',
+    pitfalls: [
+      'Going from the low bits up: one high bit is worth more than all lower bits together, so the search must start at the top.',
+      'In C++, writing `a ^ b == c`: == binds tighter than ^, so add parentheses.',
+      'In C++, writing `1 << 31` on a signed int: it overflows, so start at bit 30 for non-negative input.',
+      'In LC 2680, splitting doublings across elements: applying all k to one number always does at least as well.',
     ],
     pointsToPonder: [
       'Why is greedy bit-setting MSB-first provably optimal?',
@@ -734,14 +819,45 @@ for bit in range(31, -1, -1):
     candidate = ans | (1 << bit)
     if any(candidate ^ p in prefixes for p in prefixes):
         ans = candidate`,
+    practice: [2220, 1318, 861, 421, 1888],
   },
 
   '17. Gas Station / Circular Greedy': {
     crux: 'Reset the start index whenever the running tank goes negative; total≥0 ⇒ that reset point is the unique answer.',
+    signals: [
+      '"Circular route" and "return the starting index": try the reset-on-negative scan.',
+      '"The solution is guaranteed to be unique": a hint that one pass can pin down the start.',
+      '"The last element connects back to the first", or "circular array": think about total minus the worst linear part.',
+      '"Senators take turns in rounds": each one acts on the nearest opponent, so model it with queues.',
+    ],
+    notThis: [
+      'Candy (LC 135) sits in this list, but its row isn\'t circular, so use two passes from section 19.',
+      'A fixed-size circular window, as in Minimum Swaps to Group All 1\'s Together II (LC 2134): count ones in a sliding window over the doubled array.',
+      'Josephus elimination has a known recurrence: J(n) = (J(n-1) + k) % n, with no choice to make.',
+    ],
     concepts: [
       'Gas Station: one pass; track tank and total; if tank dips below 0, reset start = i+1, tank = 0.',
       'Candy: two passes (left-then-right) and take max — a constant-time-per-element greedy.',
       'Circular subarrays: max circular sum = max(linear Kadane, total - min subarray) with an all-negative edge case.',
+    ],
+    example: {
+      problem: 'Gas Station with gas = [1,2,3,4,5] and cost = [3,4,5,1,2]',
+      lc: 134,
+      walkthrough: [
+        'i = 0: diff = -2, total = -2, tank = -2. The tank is negative, so start = 1 and tank = 0.',
+        'i = 1: diff = -2, total = -4, tank = -2. So start = 2 and tank = 0.',
+        'i = 2: diff = -2, total = -6, tank = -2. So start = 3 and tank = 0.',
+        'i = 3: diff = 3, total = -3, tank = 3.',
+        'i = 4: diff = 3, total = 0, tank = 6.',
+        'total >= 0, so the answer is start = 3.',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space. Doing the scan once is enough: no need to loop the array twice.',
+    pitfalls: [
+      'Returning start without checking total: a negative total means no start works, so return -1.',
+      'Restarting at start + 1 instead of i + 1: every station up to i fails as well, and the retries make it O(n^2).',
+      'In LC 918, using total - min when all values are negative: that gives 0 for an empty subarray, so return the Kadane max.',
+      'In Can Place Flowers (LC 605), forgetting the ends: a missing neighbor counts as empty.',
     ],
     pointsToPonder: [
       'Why does the FIRST station after a negative tank dip always work when total ≥ 0?',
@@ -755,14 +871,44 @@ for i, (g, c) in enumerate(zip(gas, cost)):
     if tank < 0:
         start = i + 1; tank = 0
 return start if total >= 0 else -1`,
+    practice: [605, 134, 918, 649, 135],
+    snippet: '8-gas-station',
   },
 
   '18. Greedy Matrix / Grid': {
     crux: 'Fix the highest-value row/column first, then sweep remaining rows/columns greedily.',
+    signals: [
+      '"Toggle any row or column" and "interpret each row as a binary number": fix the highest-value column first.',
+      '"Make every row and column palindromic" with fewest flips: mirrored cells form groups, and you decide each group.',
+      '"In place" or "O(1) extra space" on a matrix: reuse the first row and column, or encode two states in one cell.',
+      '"Beams between non-empty rows": the grid reduces to a count per row.',
+    ],
+    notThis: [
+      'Moving through cells for a shortest or cheapest route, as in Minimum Path Sum (LC 64): earlier cells limit later choices, so use DP or BFS.',
+      'Spiral Matrix (LC 54) and Rotate Image (LC 48) sit in this list, but they are pure simulation with no choice to make.',
+    ],
     concepts: [
       'Score After Flipping Matrix: ensure column 0 is all 1s (flip rows as needed); then for each later column, flip if it has more 0s than 1s.',
       'Each column contributes 2^(cols - col - 1) — leftmost columns dominate, so prioritize them.',
       'Many grid greedy problems are "set the most valuable bit/cell first" in disguise.',
+    ],
+    example: {
+      problem: 'Score After Flipping Matrix with grid = [[0,0,1],[1,0,0]]',
+      lc: 861,
+      walkthrough: [
+        'Row 0 starts with 0, so flip it to [1,1,0]. Row 1 already starts with 1. Column values are 4, 2 and 1.',
+        'Column 0: 2 ones out of 2, so it adds 2 * 4 = 8.',
+        'Column 1: 1 one out of 2, so max(1, 1) = 1 adds 1 * 2 = 2.',
+        'Column 2: 0 ones out of 2, so flipping gives max(0, 2) = 2, which adds 2 * 1 = 2.',
+        'The answer is 8 + 2 + 2 = 12, which matches rows 111 and 101: 7 + 5.',
+      ],
+    },
+    complexity: 'O(R * C) time and O(1) extra space.',
+    pitfalls: [
+      'Comparing rows as whole values rather than fixing column 0 first: the top bit outweighs all the others.',
+      'Actually flipping each column: max(ones, R - ones) already gives the better count.',
+      'In Game of Life (LC 289), updating cells as you read them: encode old and new states so neighbors see the old one.',
+      'In Set Matrix Zeroes (LC 73), using row 0 and column 0 as markers without separately noting whether they had zeros.',
     ],
     pointsToPonder: [
       'Why does fixing the leftmost column first never preclude optimal choices for later columns?',
@@ -777,14 +923,43 @@ score = 0
 for c in range(C):
     ones = sum(grid[r][c] for r in range(R))
     score += max(ones, R - ones) * (1 << (C - c - 1))`,
+    practice: [2125, 48, 54, 73, 861],
   },
 
   '19. Greedy Two-Pass / Multi-Pass': {
     crux: 'Enforce one constraint left-to-right, the other right-to-left, then combine (max/min/sum).',
+    signals: [
+      '"Higher rating than its neighbors": left and right constraints, so run a pass in each direction.',
+      '"Product of all elements except self" or "without division": combine a prefix and a suffix.',
+      '"Water above each bar": the answer depends on the tallest bar on both sides.',
+      '"Answer for i depends on everything to its left and everything to its right": precompute each side.',
+    ],
+    notThis: [
+      'Each index has a choice with two states, as in Minimum Swaps to Make Sequences Increasing (LC 801): use DP on swap or no swap.',
+      'Only one direction matters, as in Minimum Number of Increments on Subarrays (LC 1526): one pass that adds the positive differences is enough.',
+    ],
     concepts: [
       'Candy: left pass enforces "if r[i] > r[i-1] then c[i] > c[i-1]"; right pass enforces the mirror; answer = sum(max(L,R)).',
       'Trapping Rain Water: left-max[i] and right-max[i]; water at i = min(L,R) - h[i].',
       'Product Except Self: prefix product and suffix product, multiplied at each index.',
+    ],
+    example: {
+      problem: 'Candy with ratings = [1,0,2]',
+      lc: 135,
+      walkthrough: [
+        'Start with L = [1,1,1] and R = [1,1,1].',
+        'Left pass: i = 1 has 0 < 1, so L[1] stays 1. i = 2 has 2 > 0, so L[2] = 2. L = [1,1,2].',
+        'Right pass: i = 1 has 0 < 2, so R[1] stays 1. i = 0 has 1 > 0, so R[0] = 2. R = [2,1,1].',
+        'Take the max at each index: 2, 1 and 2.',
+        'The answer is 2 + 1 + 2 = 5.',
+      ],
+    },
+    complexity: 'O(n) time and O(n) space for the two arrays. Some problems reduce the space to O(1), as in Trapping Rain Water with two pointers.',
+    pitfalls: [
+      'Running only one pass: [3,2,1] needs the right pass, since the left pass gives everyone 1.',
+      'Taking the sum of both passes instead of the max: one candy count must satisfy both sides at once.',
+      'Treating equal ratings as a rule: neighbors with the same rating may have different candy, so don\'t copy the value.',
+      'In a one-array version, assigning candy[i] = candy[i+1] + 1 in the right pass, which erases the left pass result. Use max().',
     ],
     pointsToPonder: [
       'Why do two passes suffice — when would you need three or more?',
@@ -799,14 +974,44 @@ for i in range(1, n):
 for i in range(n - 2, -1, -1):
     if ratings[i] > ratings[i + 1]: R[i] = R[i + 1] + 1
 return sum(max(L[i], R[i]) for i in range(n))`,
+    practice: [121, 238, 484, 135, 42],
+    snippet: '11-candy-distribution',
   },
 
   '20. Huffman / Optimal Encoding Greedy': {
     crux: 'Repeatedly combine the two cheapest items via a min-heap; cost accumulates on each merge.',
+    signals: [
+      '"Connect ropes or sticks", where each merge costs the sum: always merge the two smallest.',
+      '"Minimum total cost to merge" with free choice of what to merge: a min-heap fits.',
+      '"Assign shorter codes to more frequent symbols": this is exactly Huffman.',
+      'An item is paid for again every time it is merged, so frequently paid items should come in last.',
+    ],
+    notThis: [
+      'Only adjacent piles can merge, as in Minimum Cost to Merge Stones (LC 1000): position matters, so use interval DP.',
+      'Packing into sessions of a fixed capacity, as in Minimum Number of Work Sessions (LC 1986): despite the name it is not a merge cost, so use bitmask DP.',
+      'Reduce Array Size to The Half (LC 1338) sits in this list, but you remove the most frequent values first, with no merging.',
+    ],
     concepts: [
       'Min-cost to connect sticks is textbook Huffman: pop two smallest, push their sum, add to cost.',
       'Total Huffman cost = sum of all INTERNAL node weights of the merge tree.',
       'Generalizes to k-way merges via padding with zero-weight elements until size ≡ 1 (mod k-1).',
+    ],
+    example: {
+      problem: 'Minimum Cost to Connect Sticks with sticks = [2,4,3]',
+      lc: 1167,
+      walkthrough: [
+        'Heapify the sticks into {2, 3, 4}, with cost = 0.',
+        'Pop 2 and 3: cost = 5. Push 5, so the heap holds {4, 5}.',
+        'Pop 4 and 5: cost = 5 + 9 = 14. Push 9, so the heap holds {9}.',
+        'One stick is left, so the answer is 14.',
+      ],
+    },
+    complexity: 'O(n log n) time for n-1 merges, each with heap operations. O(n) space, or O(1) extra if you heapify in place.',
+    pitfalls: [
+      'Returning the last merged size rather than the running total: that is just the sum of all sticks.',
+      'Sorting once and merging from the front without a heap: a merged stick may belong in the middle of the order.',
+      'Mishandling a single stick: no merge happens, and the cost is 0.',
+      'Using int for the cost in C++: repeated merges can overflow, so use long long.',
     ],
     pointsToPonder: [
       'Why does combining the two smallest first minimize total cost (exchange argument)?',
@@ -821,14 +1026,44 @@ while len(sticks) > 1:
     a = heapq.heappop(sticks); b = heapq.heappop(sticks)
     cost += a + b
     heapq.heappush(sticks, a + b)`,
+    practice: [1338, 1167, 1000],
+    snippet: '15-huffman-coding-combine-smallest-first',
   },
 
   '21. Exchange Argument Greedy (Proof Pattern)': {
     crux: 'Prove correctness by showing any "out-of-order" adjacent pair in an optimal solution can be swapped to match greedy without worsening the result.',
+    signals: [
+      '"Arrange them so that they form the largest number": compare pairs by which order wins.',
+      '"Send exactly n people to each city": sort by the difference between the two costs.',
+      '"Reconstruct the queue" from heights and counts: place the tallest first, then insert by count.',
+      'A task with a pair of attributes and "any order is allowed": test which of two neighbors should go first.',
+    ],
+    notThis: [
+      'A subset under a capacity, as in 0/1 knapsack: with W = 50 and (value, weight) pairs (60,10), (100,20), (120,30), ratio order gives 160 but the best is 220, so use DP.',
+      'Settling debts with the fewest transfers, as in Optimal Account Balancing (LC 465): no pairwise swap settles it, so use backtracking or bitmask DP.',
+    ],
     concepts: [
       'Largest Number: sort by comparator (a+b > b+a) — the swap argument shows local order ⇒ global order.',
       'Hire K Workers: sort by wage/quality ratio — fixing the ratio fixes the "captain" and the rest is a heap.',
       'The proof is the design: if you can prove an exchange does not worsen the optimum, the greedy is correct.',
+    ],
+    example: {
+      problem: 'Largest Number with nums = [3,30,34]',
+      lc: 179,
+      walkthrough: [
+        'Convert to strings: "3", "30", "34".',
+        'Compare "3" and "30": "330" > "303", so "3" goes first.',
+        'Compare "3" and "34": "334" < "343", so "34" goes first.',
+        'Compare "30" and "34": "3034" < "3430", so "34" goes first. The order is "34", "3", "30".',
+        'Join them to get "34330". It doesn\'t start with 0, so that is the answer.',
+      ],
+    },
+    complexity: 'O(n log n * L) time, since each comparison concatenates strings of length L. O(n * L) space for the strings.',
+    pitfalls: [
+      'Comparing numbers or plain strings: "3" vs "30" needs concatenation, since neither direct order gets it right.',
+      'Returning "000" for all zeros: strip leading zeros, or check the first element after sorting, and return "0".',
+      'Writing a C++ comparator with `>=` on equal concatenations: it must be a strict ordering.',
+      'Assuming a good adjacent swap proves the order: the comparator must also be transitive for the sort to be valid.',
     ],
     pointsToPonder: [
       'Is your comparator TRANSITIVE? (a+b > b+a, b+c > c+b ⇒ a+c > c+a — usually yes, but verify.)',
@@ -840,14 +1075,43 @@ from functools import cmp_to_key
 nums = [str(x) for x in nums]
 nums.sort(key=cmp_to_key(lambda a, b: -1 if a + b > b + a else 1))
 return ''.join(nums).lstrip('0') or '0'`,
+    practice: [1029, 406, 179, 857, 630],
+    snippet: '24-greedy-with-sorting-by-custom-comparator',
   },
 
   '22. Greedy + Union-Find': {
     crux: 'Sort edges or operations by cost/time, then process in order while a DSU tracks connectivity.',
+    signals: [
+      '"Minimum cost to connect all..." with an edge list or points: sort edges and union.',
+      '"Is there a path using only edges with weight below limit?" across many queries: sort queries and edges together.',
+      '"Earliest time" or "smallest t so that they are connected": add edges or cells in order of value until it connects.',
+      '"Remove the maximum number of edges" and keep it traversable: add the shared edges first.',
+    ],
+    notThis: [
+      'Minimizing the sum along a route, as in Network Delay Time (LC 743): union-find only tracks connectivity, so use Dijkstra.',
+      'Edges are removed online with no way to reorder: a plain DSU can\'t split sets, so process in reverse if the input can be read offline.',
+    ],
     concepts: [
       'Kruskal\'s MST: sort edges, union non-cyclic ones — exactly n-1 unions occur.',
       'Edge-length-limited path queries: sort queries AND edges by limit; process queries in order, adding edges as the limit grows (offline trick).',
       'Swim in Rising Water / Path in Threshold Grid: sort cells by value; union neighbors as cells "appear".',
+    ],
+    example: {
+      problem: 'Min Cost to Connect All Points with points = [[0,0],[2,2],[3,3]]',
+      lc: 1584,
+      walkthrough: [
+        'Distances: (1,2) = 2, (0,1) = 4, (0,2) = 6. Sorted, that gives this order.',
+        'Edge (1,2) with weight 2: union succeeds, so cost = 2 and picked = 1.',
+        'Edge (0,1) with weight 4: union succeeds, so cost = 6 and picked = 2.',
+        'picked == n - 1, so stop before reaching (0,2). The answer is 6.',
+      ],
+    },
+    complexity: 'For n points, n^2 edges cost O(n^2 log n) time and O(n^2) space. Each DSU operation is nearly O(1) with path compression and union by rank.',
+    pitfalls: [
+      'Writing union without a return value: the code above needs it to return True only when two sets actually merged.',
+      'Sorting queries and losing their order: keep each query\'s original index, as LC 1697 expects answers in input order.',
+      'In LC 1697, adding edges with weight equal to the limit: the paths must be strictly less than limit.',
+      'In LC 1319, not checking for at least n-1 edges first: with fewer cables, the answer is -1.',
     ],
     pointsToPonder: [
       'Why does Kruskal\'s never need to undo a union (the cycle property)?',
@@ -861,14 +1125,44 @@ for w, u, v in edges:
     if union(u, v):
         cost += w; picked += 1
         if picked == n - 1: break`,
+    practice: [684, 1319, 721, 1584, 1697],
   },
 
   '23. Greedy Subsequence Selection': {
     crux: 'Build "best so far" piles via patience sorting; bisect to place each element.',
+    signals: [
+      '"Longest strictly increasing subsequence", with n up to 10^5: O(n^2) DP is too slow, so keep tails with binary search.',
+      '"Fit one envelope inside another" with two dimensions: sort one, then run LIS on the other.',
+      '"Longest course or chain up to each position": read the tails position as an answer at each index.',
+      '"Is s a subsequence of t?": match characters as early as possible.',
+    ],
+    notThis: [
+      'You must list the sequence or count them all, as in Number of Longest Increasing Subsequence (LC 673): tails only gives the length, so use DP.',
+      'Contiguous pieces, as in Longest Continuous Increasing Subsequence (LC 674): a subarray needs a simple scan, not tails.',
+      'The next link depends on word content, as in Longest String Chain (LC 1048): sort by length and use DP with a hash map.',
+    ],
     concepts: [
       'LIS in O(n log n): keep `tails`; for each x, replace the first tails[i] ≥ x (or append).',
       'tails is NOT the actual LIS — but its LENGTH equals the LIS length.',
       'Russian Doll Envelopes: sort by width asc, height DESC (to prevent same-width chaining), then LIS on heights.',
+    ],
+    example: {
+      problem: 'Longest Increasing Subsequence with nums = [4,5,1,6]',
+      lc: 300,
+      walkthrough: [
+        'x = 4: the list is empty, so append. tails = [4].',
+        'x = 5: it is past the end, so append. tails = [4,5].',
+        'x = 1: bisect_left gives 0, so replace. tails = [1,5].',
+        'x = 6: it is past the end, so append. tails = [1,5,6].',
+        'The answer is 3. Note that [1,5,6] isn\'t a real subsequence: the actual one is [4,5,6], and only the length carries over.',
+      ],
+    },
+    complexity: 'O(n log n) time and O(n) space for tails.',
+    pitfalls: [
+      'Using bisect_right for strictly increasing: duplicates would extend the length. LC 1964 is non-decreasing, so there it is correct.',
+      'Reading tails as the answer sequence: it is only a record of the smallest ending values for each length.',
+      'In Russian Doll Envelopes (LC 354), sorting equal widths by ascending height: same-width envelopes would chain together.',
+      'In LC 1713, running LIS without the mapping: first convert values to their index in target, and drop any not present.',
     ],
     pointsToPonder: [
       'Why does replacing the smallest tail ≥ x preserve LIS length?',
@@ -883,14 +1177,45 @@ for x in nums:
     if i == len(tails): tails.append(x)
     else: tails[i] = x
 return len(tails)`,
+    practice: [392, 944, 300, 646, 354],
   },
 
   '24. Greedy Water / Resource Distribution': {
     crux: 'Two pointers from outside in; the weaker boundary moves because it cannot improve while paired with anything.',
+    signals: [
+      '"How much water can it trap?" over an elevation map: each bar\'s water depends on the lower of its two side maxima.',
+      '"Two lines that together hold the most water": the shorter one caps the area.',
+      '"Height map" on a grid, with water trapped in 3D: expand from the boundary with a min-heap.',
+      '"Minimum moves to spread coins evenly over a tree": excess flows across each edge.',
+    ],
+    notThis: [
+      'Pour Water (LC 755) simulates each drop with a direction rule, with no pair of boundaries to compare.',
+      'Distribute Candies (LC 575) and Water Bottles (LC 1518) are direct formulas despite the names: min(n/2, kinds), and a repeated exchange.',
+      'Capacities along paths and a maximum total, as in true flow problems: use max flow, since local choices can block later ones.',
+    ],
     concepts: [
       'Container With Most Water: shorter wall caps area, so move it.',
       'Trapping Rain Water: at each step, the side with the smaller max can finalize its water (water = its_max - h).',
       'Trapping Rain Water II (3D): min-heap of boundary cells — always pop the shortest wall (the limiting factor).',
+    ],
+    example: {
+      problem: 'Trapping Rain Water with h = [0,2,0,3,1,2]',
+      lc: 42,
+      walkthrough: [
+        'l = 0, r = 5: 0 < 2, so lmax = 0 and water += 0. Move l to 1.',
+        'l = 1, r = 5: 2 < 2 is false, so rmax = 2 and water += 0. Move r to 4.',
+        'l = 1, r = 4: 2 < 1 is false, so rmax stays 2 and water += 2 - 1 = 1. Move r to 3.',
+        'l = 1, r = 3: 2 < 3, so lmax = 2 and water += 0. Move l to 2.',
+        'l = 2, r = 3: 0 < 3, so lmax stays 2 and water += 2 - 0 = 2, making 3. Move l to 3.',
+        'l == r ends the loop, so the answer is 3.',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space with two pointers. Trapping Rain Water II takes O(mn log(mn)) time and O(mn) space.',
+    pitfalls: [
+      'Subtracting before updating the max: update lmax or rmax first, so water at a bar is never negative.',
+      'Moving the side with the larger height: its water isn\'t settled yet, since only the smaller side has a known limit.',
+      'Using two pointers on a 2D map: water can escape in four directions, so LC 407 needs the boundary heap.',
+      'In LC 407, not pushing max(wall, neighbor height) when expanding: a low neighbor still sits behind the taller wall.',
     ],
     pointsToPonder: [
       'Why is moving the shorter side guaranteed not to skip a better answer?',
@@ -907,14 +1232,44 @@ while l < r:
     else:
         rmax = max(rmax, h[r])
         water += rmax - h[r]; r -= 1`,
+    practice: [575, 1518, 11, 134, 42],
   },
 
   '25. Advanced / Contest-Level Greedy': {
     crux: 'Identify which canonical lens applies: regret heap, exchange argument, binary-search-the-answer, or two-pass.',
+    signals: [
+      '"Minimum number of patches so that every number in [1, n] can be formed": keep the smallest sum you can\'t reach.',
+      '"Maximize sum times minimum, choosing up to k": sort by one factor and keep a heap on the other.',
+      '"Reduce to the original by reversing operations", as in Stamping The Sequence: work backwards from the final state.',
+      'n up to 10^5 and a hard rating, where DP would be too slow: try each lens in turn, such as regret heap, exchange, binary search or two passes.',
+    ],
+    notThis: [
+      'Sorting makes the order fixed, but costs interact, as in Minimum Total Distance Traveled (LC 2463): use DP on the sorted lists.',
+      'The set of reachable rewards matters, as in Maximum Total Reward Using Operations (LC 3181): after sorting, use a DP or bitset over sums.',
+      'A small counterexample beats your rule: stop patching the greedy and switch to DP.',
+    ],
     concepts: [
       'Most "advanced" greedy problems are a composition: e.g., binary search the answer + greedy feasibility + heap for the inner check.',
       'Patching Array: maintain reachable [1, miss); if next num > miss, patch with miss itself.',
       'When greedy seems to fail, check: is the comparator non-transitive? does a "future cost" make a local choice non-optimal? if yes, DP.',
+    ],
+    example: {
+      problem: 'Patching Array with nums = [1,3] and n = 6',
+      lc: 330,
+      walkthrough: [
+        'Start with miss = 1, so nothing can yet be formed, and patches = 0.',
+        'nums[0] = 1 <= 1, so use it: miss = 2 and i = 1.',
+        'nums[1] = 3 > 2, so 2 can\'t be formed. Patch with 2: miss = 4 and patches = 1.',
+        'nums[1] = 3 <= 4, so use it: miss = 7 and i = 2.',
+        'miss = 7 > 6 ends the loop, so the answer is 1 patch.',
+      ],
+    },
+    complexity: 'Patching Array takes O(len(nums) + log n) time and O(1) space. Other problems here vary, usually O(n log n) with a sort or heap.',
+    pitfalls: [
+      'Letting miss overflow in C++: it can double past n near the limit of int, so use long long.',
+      'Patching with something other than miss: miss itself extends the range the most without leaving a gap.',
+      'Trusting a rule because it passed the samples: test it against a brute force on small inputs before relying on it.',
+      'In LC 2366, scanning left to right: the last element can only shrink by splitting earlier ones, so go right to left.',
     ],
     pointsToPonder: [
       'Which greedy lens does THIS problem fit — and is there a known LeetCode analog?',
@@ -929,5 +1284,6 @@ while miss <= n:
     else:
         miss += miss; patches += 1
 return patches`,
+    practice: [135, 502, 330, 857, 2141],
   },
 }
