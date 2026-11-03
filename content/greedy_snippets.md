@@ -386,6 +386,10 @@ int satisfied = i;
 
 ## 13. Boats to Save People
 
+**Use when:** "Each boat carries at most two people" with a weight limit: pair the lightest with the heaviest.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
+
 ```cpp
 sort(people.begin(), people.end());
 
@@ -402,9 +406,19 @@ while (l <= r) {
 }
 ```
 
+**Example:** `people = [3,2,2,1]` with `limit = 3` gives `boats = 3`.
+
+**Pitfalls:** Use `l <= r`, not `l < r`: the last person left in the middle still needs a boat. The heaviest person always leaves, either alone or with the lightest.
+
+**Used in:** LC 881
+
 ---
 
 ## 14. Minimum arrows to burst balloons
+
+**Use when:** "Minimum arrows to burst all balloons": a point hits every interval that contains it.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 sort(points.begin(), points.end(), [](auto &a, auto &b) {
@@ -422,9 +436,19 @@ for (auto &p : points) {
 }
 ```
 
+**Example:** `points = [[10,16],[2,8],[1,6],[7,12]]` gives `arrows = 2`.
+
+**Pitfalls:** Use `p[0] > lastEnd`, because balloons that touch can share an arrow. Coordinates can be `INT_MIN`, which is why `lastEnd` starts at `LLONG_MIN`. Sorting with `a[1] - b[1]` overflows.
+
+**Used in:** LC 452
+
 ---
 
 ## 15. Huffman Coding / Combine smallest first
+
+**Use when:** Merge repeatedly where each merge costs the combined size and any two items may merge: always take the two smallest.
+
+**Complexity:** O(n log n) time, O(n) space for the heap.
 
 ```cpp
 priority_queue<int, vector<int>, greater<int>> pq;
@@ -442,11 +466,19 @@ while (pq.size() > 1) {
 }
 ```
 
-Used in: minimum cost to connect ropes, Huffman coding.
+**Example:** `freq = [5,9,12,13,16,45]` gives `cost = 224`.
+
+**Pitfalls:** A single item costs 0, since there are no merges. Large inputs can overflow `int`, so use `long long`. If only adjacent items may merge, it becomes interval DP (LC 1000).
+
+**Used in:** LC 1167
 
 ---
 
 ## 16. Minimum cost to connect ropes
+
+**Use when:** "Connect all ropes or sticks, where each connection costs the sum of the two". This is section 15 under a different name.
+
+**Complexity:** O(n log n) time, O(n) space for the heap.
 
 ```cpp
 priority_queue<int, vector<int>, greater<int>> pq;
@@ -464,9 +496,19 @@ while (pq.size() > 1) {
 }
 ```
 
+**Example:** `ropes = [4,3,2,6]` gives `cost = 29`.
+
+**Pitfalls:** Return the running `cost`, not the final rope length (which is just the sum). Use `long long` if the lengths are large.
+
+**Used in:** LC 1167
+
 ---
 
 ## 17. Greedy using max-heap: reorganize string
+
+**Use when:** "Rearrange so that no two adjacent characters are the same": always place the two most plentiful characters.
+
+**Complexity:** O(n log A) time for alphabet size A, O(A) space.
 
 ```cpp
 vector<int> freq(26, 0);
@@ -498,9 +540,19 @@ if (!pq.empty()) {
 }
 ```
 
+**Example:** `s = "aab"` gives `"aba"`. `s = "aaab"` returns `""`.
+
+**Pitfalls:** Pop two characters per round, so the same one never sits next to itself. A leftover character with a count above 1 means it can't be done. Quick check: any count > (n + 1) / 2 is impossible.
+
+**Used in:** LC 767
+
 ---
 
 ## 18. Greedy with monotonic stack: remove K digits
+
+**Use when:** "Remove k digits to make the smallest number", or keep k items of a sequence in the smallest order.
+
+**Complexity:** O(n) time, O(n) space.
 
 ```cpp
 string st;
@@ -526,9 +578,19 @@ string ans = st.substr(i);
 if (ans.empty()) ans = "0";
 ```
 
+**Example:** `num = "1432219"` with `k = 3` gives `"1219"`.
+
+**Pitfalls:** Leftover `k` must trim from the end, as with `"12345"` and `k = 2`. Strip leading zeros, and return `"0"` if nothing is left, as with `"10"` and `k = 2`.
+
+**Used in:** LC 402, LC 1673
+
 ---
 
 ## 19. Lexicographically smallest subsequence of distinct chars
+
+**Use when:** "Smallest result, each distinct letter exactly once, in subsequence order".
+
+**Complexity:** O(n) time, O(alphabet) space.
 
 ```cpp
 vector<int> last(26);
@@ -557,9 +619,19 @@ for (int i = 0; i < s.size(); i++) {
 }
 ```
 
+**Example:** `s = "cbacdcbc"` gives `"acdb"`.
+
+**Pitfalls:** Pop only if the letter appears again later (`last[...] > i`). Skip letters already in the stack, or you get duplicates. Clear `used` when you pop.
+
+**Used in:** LC 316, LC 1081
+
 ---
 
 ## 20. Partition Labels
+
+**Use when:** "Split into as many parts as possible so each letter appears in at most one part".
+
+**Complexity:** O(n) time, O(alphabet) space.
 
 ```cpp
 vector<int> last(26);
@@ -582,9 +654,19 @@ for (int i = 0; i < s.size(); i++) {
 }
 ```
 
+**Example:** `s = "abaccd"` gives `ans = [3,2,1]`.
+
+**Pitfalls:** Extend with `max(end, last[c])` at every index, not only at the start of a part. Close only when `i == end`.
+
+**Used in:** LC 763
+
 ---
 
 ## 21. Max profit stock buy/sell multiple transactions
+
+**Use when:** "Buy and sell as many times as you like": every price rise is profit you can take.
+
+**Complexity:** O(n) time, O(1) space.
 
 ```cpp
 int profit = 0;
@@ -596,9 +678,19 @@ for (int i = 1; i < prices.size(); i++) {
 }
 ```
 
+**Example:** `prices = [7,1,5,3,6,4]` gives `profit = 7`.
+
+**Pitfalls:** Only correct with unlimited transactions and no fee. A cap on transactions (LC 188) or a cooldown needs DP.
+
+**Used in:** LC 122
+
 ---
 
 ## 22. Greedy interval coverage
+
+**Use when:** "Fewest intervals, clips or taps to cover [0, target]": jump to the farthest reach among options that start inside the covered range.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 sort(intervals.begin(), intervals.end());
@@ -625,11 +717,19 @@ while (coveredTill < target) {
 }
 ```
 
-Used in: minimum taps to water garden, video stitching.
+**Example:** `intervals = [[0,2],[4,6],[8,10],[1,9],[1,5],[5,9]]` with `target = 10` gives `count = 3`.
+
+**Pitfalls:** If `best` doesn't grow, there is a gap, so return -1. For taps (LC 1326), first turn each tap into `[i - r, i + r]` clamped to the garden.
+
+**Used in:** LC 1024, LC 1326, LC 45
 
 ---
 
 ## 23. Greedy choose smallest/largest available
+
+**Use when:** The smallest valid choice is always safe, so sort and take items while the state allows it.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 sort(nums.begin(), nums.end());
@@ -644,11 +744,19 @@ for (int x : nums) {
 }
 ```
 
-Common when smallest valid choice is always safe.
+**Example:** With "x can be used" meaning `budget >= x` and the update `budget -= x`, `nums = [1,3,2,4,1]` with `budget = 7` gives `ans = 4`.
+
+**Pitfalls:** Prove the safety claim before trusting it: if picking a small item can block a later, more valuable one, you need DP.
+
+**Used in:** LC 455, LC 1338, LC 1481
 
 ---
 
 ## 24. Greedy with sorting by custom comparator
+
+**Use when:** "Arrange the numbers to form the largest number": compare by which concatenation is bigger.
+
+**Complexity:** O(n log n * L) time for digit length L, O(L) extra per comparison.
 
 ```cpp
 sort(nums.begin(), nums.end(), [](int a, int b) {
@@ -659,7 +767,11 @@ sort(nums.begin(), nums.end(), [](int a, int b) {
 });
 ```
 
-Used in: largest number problem.
+**Example:** `nums = [3,30,34,5,9]` sorts to `9, 5, 34, 3, 30`, so the joined answer is `"9534330"`.
+
+**Pitfalls:** The comparator must be strict (`x > y`, never `>=`), or `sort` can crash. If the first element after sorting is 0, the answer is `"0"`.
+
+**Used in:** LC 179
 
 ---
 
