@@ -1,5 +1,9 @@
 ## 1. Opposite Direction — Pair Sum in Sorted Array
 
+**Use when:** The array is sorted and the problem says "two numbers add up to target".
+
+**Complexity:** O(n) time and O(1) space, or O(n log n) if you have to sort first.
+
 ```cpp
 // returns indices of a pair summing to target, or {-1, -1}
 pair<int,int> twoSumSorted(vector<int>& a, int target) {
@@ -17,9 +21,19 @@ pair<int,int> twoSumSorted(vector<int>& a, int target) {
 }
 ```
 
+**Example:** `a = [2,3,4,8,11], target = 12` returns `{2, 3}`, because `a[2] + a[3] = 12`.
+
+**Pitfalls:** Use `l < r`, because `l <= r` pairs an element with itself. The result is 0-indexed, but LC 167 wants 1-indexed. Sum into `long long` if values can reach the `int` limit.
+
+**Used in:** LC 167, LC 15, LC 16, LC 1099
+
 ---
 
 ## 2. Opposite Direction — Container With Most Water
+
+**Use when:** The problem says "two lines form a container", so the area depends only on the two chosen ends.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 int maxArea(vector<int>& h) {
@@ -38,9 +52,19 @@ int maxArea(vector<int>& h) {
 }
 ```
 
+**Example:** `h = [1,8,6,2,5]` returns `15`, from the walls at indices 1 and 4.
+
+**Pitfalls:** Move the shorter wall, because moving the taller one can't increase the area. If heights are equal, moving either is safe. The product can exceed `int` when values are very large.
+
+**Used in:** LC 11
+
 ---
 
 ## 3. Opposite Direction — Trapping Rain Water
+
+**Use when:** The problem says "how much water can it trap", which is the trapped amount across all bars of a 1D height map.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 int trap(vector<int>& h) {
@@ -63,9 +87,19 @@ int trap(vector<int>& h) {
 }
 ```
 
+**Example:** `h = [4,2,0,3,2,5]` returns `9`.
+
+**Pitfalls:** Update the running max before adding water, or `leftMax - h[l]` can go negative. Start with `l < r`, since the final bar is the tallest and holds nothing. For a 2D grid (LC 407) you need a heap instead.
+
+**Used in:** LC 42
+
 ---
 
 ## 4. Opposite Direction — Palindrome Check
+
+**Use when:** The problem says "reads the same forward and backward", or asks you to compare mirrored positions in place.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 bool isPalindrome(const string& s) {
@@ -99,9 +133,19 @@ bool isPalindromeAlnum(const string& s) {
 }
 ```
 
+**Example:** `isPalindrome("abcba")` returns `true`, and `isPalindromeAlnum("A man, a plan, a canal: Panama")` returns `true`.
+
+**Pitfalls:** Keep the `l < r` check inside the skip loops, or a string of only punctuation runs off the end. Cast to `unsigned char` before `isalnum` and `tolower` if the input can hold non-ASCII bytes.
+
+**Used in:** LC 125, LC 680, LC 234
+
 ---
 
 ## 5. Same Direction — Read/Write In-Place Filter
+
+**Use when:** The problem says "in-place", "return the new length" or "maintain relative order".
+
+**Complexity:** O(n) time and O(1) space.
 
 Remove duplicates from a sorted array; returns new length.
 
@@ -133,9 +177,19 @@ void moveZeroes(vector<int>& a) {
 }
 ```
 
+**Example:** `removeDuplicates` on `[0,0,1,1,2]` returns `3`, leaving `[0,1,2]` in front. `moveZeroes` on `[0,1,0,3,12]` gives `[1,3,12,0,0]`.
+
+**Pitfalls:** Compare against `a[write - 1]`, the last kept value, not `a[read - 1]`. The early return handles an empty array, where `write = 1` would otherwise be wrong. Only the first `write` slots are meaningful afterwards.
+
+**Used in:** LC 26, LC 27, LC 80, LC 283, LC 2460
+
 ---
 
 ## 6. Same Direction — Merge Two Sorted Arrays
+
+**Use when:** You have two sorted sequences to combine, and the problem says "merge" or leaves spare space at the end of one array.
+
+**Complexity:** O(m + n) time and O(1) extra space.
 
 In-place merge from the back (LeetCode style: `a` has trailing space).
 
@@ -150,9 +204,19 @@ void merge(vector<int>& a, int m, vector<int>& b, int n) {
 }
 ```
 
+**Example:** `a = [1,2,3,0,0,0], m = 3, b = [2,5,6], n = 3` turns `a` into `[1,2,2,3,5,6]`.
+
+**Pitfalls:** Loop on `j >= 0` alone, because any leftovers from `a` are already in place. Check `i >= 0` before reading `a[i]`, since `m` can be 0. Filling from the front would overwrite values you haven't read yet.
+
+**Used in:** LC 88, LC 21, LC 977
+
 ---
 
 ## 7. Fast-Slow Pointers — Cycle Detection (Floyd)
+
+**Use when:** The problem mentions a "cycle", or asks for "where the cycle begins" with O(1) memory.
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 bool hasCycle(ListNode* head) {
@@ -190,9 +254,19 @@ ListNode* cycleStart(ListNode* head) {
 }
 ```
 
+**Example:** For `3 → 2 → 0 → -4` with `-4` linking back to `2`, `hasCycle` returns `true` and `cycleStart` returns node `2`.
+
+**Pitfalls:** Check `fast && fast->next` before the double step, or a list without a cycle crashes. Compare node pointers, not values, since values can repeat. In phase 2 both pointers move one step at a time.
+
+**Used in:** LC 141, LC 142, LC 202, LC 287
+
 ---
 
 ## 8. Fixed-Size Sliding Window — Max Sum of Window k
+
+**Use when:** The problem gives the size: "of length k", "size k" or "k consecutive".
+
+**Complexity:** O(n) time and O(1) space.
 
 ```cpp
 long long maxSumWindow(vector<int>& a, int k) {
@@ -211,9 +285,19 @@ long long maxSumWindow(vector<int>& a, int k) {
 }
 ```
 
+**Example:** `a = [2,1,5,1,3,2], k = 3` returns `9`, from `[5,1,3]`.
+
+**Pitfalls:** This assumes `k <= a.size()`, and the first loop reads out of bounds otherwise. Start `best` from the first full window, not 0, because window sums can be negative. A running sum can't give you the window's max or min.
+
+**Used in:** LC 643, LC 1052, LC 1456, LC 2090
+
 ---
 
 ## 9. Variable Window — Longest (Non-Shrinkable Template)
+
+**Use when:** The problem says "longest" with a limit, such as "at most k distinct", and you only need the length.
+
+**Complexity:** O(n) time and O(k) space for the map.
 
 Longest substring with at most `k` distinct characters.
 
@@ -225,7 +309,7 @@ int longestKDistinct(const string& s, int k) {
     for (int right = 0; right < (int)s.size(); right++) {
         cnt[s[right]]++;
 
-        while ((int)cnt.size() > k) {
+        if ((int)cnt.size() > k) { // slide: the window never gets smaller
             if (--cnt[s[left]] == 0) cnt.erase(s[left]);
             left++;
         }
@@ -237,9 +321,19 @@ int longestKDistinct(const string& s, int k) {
 }
 ```
 
+**Example:** `s = "eceba", k = 2` returns `3`, from `"ece"`.
+
+**Pitfalls:** Using `if`, the window slides without shrinking, so it may hold too many distinct characters. Its size is still the answer, but its contents aren't. Use `while` when you need a valid window at every step. Erase keys at zero, or `cnt.size()` overcounts.
+
+**Used in:** LC 159, LC 340, LC 424, LC 904, LC 1004
+
 ---
 
 ## 10. Variable Window — Shortest (Shrinkable Template)
+
+**Use when:** The problem says "minimum length" or "smallest subarray", and values are positive.
+
+**Complexity:** O(n) time and O(1) space.
 
 Minimum-length subarray with sum `>= target` (positive numbers).
 
@@ -261,9 +355,19 @@ int minSubArrayLen(int target, vector<int>& a) {
 }
 ```
 
+**Example:** `target = 7, a = [2,3,1,2,4,3]` returns `2`, from `[4,3]`.
+
+**Pitfalls:** Record the answer inside the `while`, before removing the left element. Return 0 when `best` is still `INT_MAX`. Negative values break the shrink rule, so LC 862 needs a deque over prefix sums.
+
+**Used in:** LC 209, LC 1234, LC 2260
+
 ---
 
 ## 11. Sliding Window — Exactly K via atMost
+
+**Use when:** The problem says "exactly k" and asks how many subarrays qualify.
+
+**Complexity:** O(n) time for two passes and O(k) space.
 
 ```cpp
 // subarrays with exactly K distinct = atMost(K) - atMost(K-1)
@@ -290,9 +394,19 @@ int subarraysWithKDistinct(vector<int>& a, int k) {
 }
 ```
 
+**Example:** `a = [1,2,1,2,3], k = 2` returns `7`, which is `atMost(2) = 12` minus `atMost(1) = 5`.
+
+**Pitfalls:** Add `right - left + 1`, the count of subarrays ending at `right`, and not 1. Use `long long` for the result on long arrays. `atMost` changes its own copy of `k`, so it must take it by value.
+
+**Used in:** LC 930, LC 992, LC 1248
+
 ---
 
 ## 12. Sliding Window — Minimum Window Substring
+
+**Use when:** The problem says "smallest window containing all characters of t", including duplicates.
+
+**Complexity:** O(|s| + |t|) expected time and O(alphabet) space.
 
 Smallest window of `s` containing all chars of `t`.
 
@@ -325,6 +439,12 @@ string minWindow(const string& s, const string& t) {
     return bestLen == INT_MAX ? "" : s.substr(bestL, bestLen);
 }
 ```
+
+**Example:** `s = "ADOBECODEBANC", t = "ABC"` returns `"BANC"`.
+
+**Pitfalls:** Change `formed` only when a count crosses the required amount exactly, using `==` on the way up and `<` on the way down. Count with a map or a 128-slot array, because `t` can have uppercase and lowercase. Return `""` when no window qualifies.
+
+**Used in:** LC 76, LC 1234
 
 ---
 
