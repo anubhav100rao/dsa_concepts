@@ -1,5 +1,7 @@
 ## 1. Memoization template
 
+**Use when:** A recurrence is easy to write top-down ("take or skip at index i") and you want to add a cache rather than work out a fill order.
+
 ```cpp
 int solve(int i, vector<int>& nums, vector<int>& dp) {
     if (i >= nums.size()) return 0;
@@ -17,9 +19,19 @@ int solve(int i, vector<int>& nums, vector<int>& dp) {
 // int ans = solve(0, nums, dp);
 ```
 
+**Complexity:** O(n) time for n states with O(1) work each. O(n) space for the cache plus the recursion stack.
+
+**Example:** `nums = [2,7,9,3,1]` returns `12` (take 2, 9 and 1).
+
+**Pitfalls:** Using -1 as "not computed" breaks if -1 can be a real answer, so use a separate visited array or another sentinel. Pass `dp` by reference, because a copy throws away the cache.
+
+**Used in:** LC 198, LC 91, LC 139, LC 2140.
+
 ---
 
 ## 2. 1D DP — House Robber
+
+**Use when:** "You cannot pick two adjacent elements" and you want the best total.
 
 ```cpp
 int rob(vector<int>& nums) {
@@ -55,9 +67,19 @@ int rob(vector<int>& nums) {
 }
 ```
 
+**Complexity:** O(n) time. O(n) space for the table, or O(1) with two variables.
+
+**Example:** `nums = [2,7,9,3,1]` returns `12`, and `nums = [1,2,3,1]` returns `4`.
+
+**Pitfalls:** The table version reads `dp[1]`, so it needs the checks for n = 0 and n = 1. For LC 213 (circular), run this twice, once without the first house and once without the last.
+
+**Used in:** LC 198, LC 213, LC 740.
+
 ---
 
 ## 3. Grid DP — Minimum Path Sum
+
+**Use when:** "You can only move down or right" and you want the cheapest route through a grid.
 
 ```cpp
 int minPathSum(vector<vector<int>>& grid) {
@@ -104,9 +126,19 @@ int minPathSum(vector<vector<int>>& grid) {
 }
 ```
 
+**Complexity:** O(n * m) time. O(n * m) space for the table, or O(m) with one row.
+
+**Example:** `grid = [[1,3,1],[1,5,1],[4,2,1]]` returns `7` (path 1, 3, 1, 1, 1).
+
+**Pitfalls:** The first row and column have only one predecessor, so fill them separately. In the one-row version, `dp[0] = 0` and the INT_MAX fill are what make row 0 work, and min() must pick the other side before anything is added to INT_MAX.
+
+**Used in:** LC 62, LC 63, LC 64, LC 120, LC 931.
+
 ---
 
 ## 4. 0/1 Knapsack
+
+**Use when:** "Each item can be used at most once" with a capacity or target budget.
 
 ```cpp
 int knapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -152,9 +184,19 @@ Important:
 // 0/1 knapsack => capacity loop backward
 ```
 
+**Complexity:** O(n * W) time. O(n * W) space for the table, or O(W) with one array.
+
+**Example:** `wt = [1,3,4]`, `val = [15,20,30]`, `W = 4` returns `35` (items of weight 1 and 3).
+
+**Pitfalls:** In the one-array version, a forward capacity loop reuses the same item, which turns this into unbounded knapsack. Loop W downwards and stop at `wt[i]`.
+
+**Used in:** LC 416, LC 494, LC 1049, LC 474, LC 879.
+
 ---
 
 ## 5. Unbounded Knapsack
+
+**Use when:** "You may use an unlimited number of each item" and you want the best value within a capacity.
 
 ```cpp
 int unboundedKnapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -177,9 +219,19 @@ Important:
 // unbounded knapsack => capacity loop forward
 ```
 
+**Complexity:** O(n * W) time and O(W) space.
+
+**Example:** `wt = [2,3]`, `val = [3,5]`, `W = 7` returns `11` (weights 2, 2 and 3).
+
+**Pitfalls:** Start the capacity loop at `wt[i]`, because starting at 0 reads a negative index. If the knapsack must be filled exactly, start with -INF everywhere except `dp[0] = 0`.
+
+**Used in:** LC 322, LC 518, LC 279.
+
 ---
 
 ## 6. Coin Change — Minimum coins
+
+**Use when:** "The fewest coins that make up the amount", with unlimited coins of each kind.
 
 ```cpp
 int coinChange(vector<int>& coins, int amount) {
@@ -200,9 +252,19 @@ int coinChange(vector<int>& coins, int amount) {
 }
 ```
 
+**Complexity:** O(amount * coins) time and O(amount) space.
+
+**Example:** `coins = [1,2,5]`, `amount = 11` returns `3` (5 + 5 + 1), and `coins = [2]`, `amount = 3` returns `-1`.
+
+**Pitfalls:** INF has to be small enough that `1 + INF` doesn't overflow, so don't use INT_MAX. `amount = 0` must return 0, which `dp[0] = 0` handles.
+
+**Used in:** LC 322, LC 279.
+
 ---
 
 ## 7. Coin Change II — Number of combinations
+
+**Use when:** "The number of combinations that make up the amount", where 1+2 and 2+1 are the same combination.
 
 ```cpp
 int change(int amount, vector<int>& coins) {
@@ -226,9 +288,19 @@ Important:
 // amount outer, coin inner => permutations
 ```
 
+**Complexity:** O(amount * coins) time and O(amount) space.
+
+**Example:** `amount = 5`, `coins = [1,2,5]` returns `4` (5, 2+2+1, 2+1+1+1, 1+1+1+1+1).
+
+**Pitfalls:** Swapping the two loops counts orderings instead, which is LC 377. `dp[0] = 1` is required, because choosing nothing is the one way to make 0.
+
+**Used in:** LC 518, LC 377.
+
 ---
 
 ## 8. Subset Sum
+
+**Use when:** "Is there a subset that sums to exactly target?", with non-negative numbers.
 
 ```cpp
 bool subsetSum(vector<int>& nums, int target) {
@@ -245,9 +317,19 @@ bool subsetSum(vector<int>& nums, int target) {
 }
 ```
 
+**Complexity:** O(n * target) time and O(target) space.
+
+**Example:** `nums = [3,34,4,12,5,2]`, `target = 9` returns `true` (4 + 5).
+
+**Pitfalls:** The sum loop must go downwards, or one number gets used twice. For LC 416, return false on an odd total before calling this with `total / 2`.
+
+**Used in:** LC 416, LC 1049.
+
 ---
 
 ## 9. Target Sum
+
+**Use when:** "Add + or - before each number and count the ways to reach target."
 
 ```cpp
 int findTargetSumWays(vector<int>& nums, int target) {
@@ -279,9 +361,19 @@ positiveSum + negativeSum = total
 positiveSum = (total + target) / 2
 ```
 
+**Complexity:** O(n * S) time and O(S) space, where S = (sum + target) / 2.
+
+**Example:** `nums = [1,1,1,1,1]`, `target = 3` returns `5`.
+
+**Pitfalls:** Both guards are needed: `sum < abs(target)` and an odd `sum + target` each mean 0 ways. Zeros in `nums` need no special case, because the loop reaches `s = 0` and doubles the count, which is right since +0 and -0 are different.
+
+**Used in:** LC 494.
+
 ---
 
 ## 10. LCS — Longest Common Subsequence
+
+**Use when:** "Longest common subsequence", or anything that keeps characters in order across two strings without needing them adjacent.
 
 ```cpp
 int longestCommonSubsequence(string a, string b) {
@@ -328,9 +420,19 @@ int longestCommonSubsequence(string a, string b) {
 }
 ```
 
+**Complexity:** O(n * m) time. O(n * m) space for the table, or O(m) with two rows.
+
+**Example:** `a = "abcde"`, `b = "ace"` returns `3` ("ace").
+
+**Pitfalls:** dp is 1-indexed and the strings are 0-indexed, so compare `a[i - 1]` with `b[j - 1]`. To print the subsequence you need the full table, not the two-row version.
+
+**Used in:** LC 1143, LC 583, LC 712, LC 1092, LC 516, LC 1312.
+
 ---
 
 ## 11. Longest Common Substring
+
+**Use when:** "Longest common substring" or "maximum length of repeated subarray": the match must be contiguous.
 
 ```cpp
 int longestCommonSubstring(string a, string b) {
@@ -362,9 +464,19 @@ Important:
 // substring: reset to 0 on mismatch
 ```
 
+**Complexity:** O(n * m) time and O(n * m) space.
+
+**Example:** `a = "abcdxyz"`, `b = "xyzabcd"` returns `4` ("abcd").
+
+**Pitfalls:** The answer is the largest cell anywhere, not `dp[n][m]`, because a run can end before the end of either string.
+
+**Used in:** LC 718.
+
 ---
 
 ## 12. Edit Distance
+
+**Use when:** "Minimum operations (insert, delete, replace) to turn one string into another."
 
 ```cpp
 int minDistance(string a, string b) {
@@ -392,6 +504,14 @@ int minDistance(string a, string b) {
     return dp[n][m];
 }
 ```
+
+**Complexity:** O(n * m) time and O(n * m) space.
+
+**Example:** `a = "horse"`, `b = "ros"` returns `3`.
+
+**Pitfalls:** The borders aren't 0: `dp[i][0] = i` and `dp[0][j] = j`, since an empty string needs that many inserts or deletes. On a match, copy the diagonal with no `+ 1`.
+
+**Used in:** LC 72, LC 583, LC 712.
 
 ---
 
