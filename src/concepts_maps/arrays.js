@@ -1434,4 +1434,237 @@ for q in order:
     practice: [303, 1310, 2070, 307, 1851],
     snippet: '56-mo-s-algorithm-skeleton',
   },
+
+  '25. Reservoir Sampling / Randomization': {
+    crux: 'Make every outcome equally likely by design: shuffle by swapping into a shrinking range, or keep the i-th item with probability 1/i.',
+    signals: [
+      '"Return a random shuffling" where "all permutations are equally likely": Fisher-Yates.',
+      '"Randomly output the index of a given target" with "too large to store": reservoir sampling.',
+      '"Linked list of unknown length" and "each node has the same probability": reservoir with k = 1.',
+      '"Probability proportional to w[i]": prefix sums plus binary search on a random number.',
+      '"Generate rand10() using only rand7()": rejection sampling.',
+      '"Not in the blacklist" with "minimize calls to random": remap the banned slots.',
+    ],
+    notThis: [
+      'The whole input is in memory and you sample many times: precompute positions with a hash map instead of rescanning.',
+      'You need O(1) insert, delete and getRandom on a changing set: that is the array-plus-map design in section 22.',
+      'The order of outputs must follow a rule, so they are not really random: this is a sorting or simulation problem.',
+    ],
+    concepts: [
+      'Reservoir with k = 1: when the i-th match arrives, keep it with probability 1/i. Each item ends with probability 1/n.',
+      'Fisher-Yates: for i from 0 to n-1, swap a[i] with a random index in [i, n-1]. That gives n! equally likely results.',
+      'Weighted pick: draw a value in [1, total] and find the first prefix sum that is at least that value.',
+      'Rejection sampling: generate a larger uniform range, throw away the leftover, and retry.',
+      'Polar sampling (LC 478): for a uniform point in a circle, use radius R * sqrt(u), not R * u.',
+    ],
+    example: {
+      problem: 'Random Pick Index with nums = [1,2,3,3,3], target = 3, assuming the random draws come out as 0, 0, then 2',
+      lc: 398,
+      walkthrough: [
+        'Index 2 is the first 3, so count = 1. randrange(1) is always 0, so picked = 2.',
+        'Index 3 is the second 3, so count = 2. The draw is 0, which happens with probability 1/2, so picked = 3.',
+        'Index 4 is the third 3, so count = 3. The draw is 2, not 0, so picked stays 3.',
+        'The result is 3. Index 2 survives with chance 1 * 1/2 * 2/3 = 1/3, and index 3 survives with chance 1/2 * 2/3 = 1/3, the same as index 4.',
+      ],
+    },
+    code: `count = 0
+picked = -1
+for i, x in enumerate(nums):
+    if x == target:
+        count += 1
+        if random.randrange(count) == 0:
+            picked = i`,
+    complexity: 'O(n) time per pick and O(1) extra space for reservoir sampling. Fisher-Yates is O(n) time. A weighted pick is O(n) to build and O(log n) per pick.',
+    pitfalls: [
+      'Shuffling with a random index from the whole range [0, n-1] at each step: that gives n^n paths, which cannot spread evenly over n! orders.',
+      'Using rand() % n in C++: the low bits are biased, so use std::uniform_int_distribution.',
+      'Weighted pick off-by-one: draw from [1, total] and look up with lower bound, or draw from [0, total) and use upper bound. Mixing the two skews the result.',
+      'Rejection sampling: keep the full rejection loop. Throwing away the leftover only once breaks uniformity.',
+      'Circle sampling with a uniform radius: points crowd the centre.',
+    ],
+    pointsToPonder: [
+      'Prove by induction that every element survives reservoir sampling with probability 1/n.',
+      'How does reservoir sampling extend to choosing k items?',
+      'What is the expected number of rand7() calls per rand10() in the rejection method?',
+    ],
+    practice: [384, 398, 528, 380, 710],
+  },
+
+  '26. Coordinate Compression / Discretization': {
+    crux: 'When only the order of values matters, replace each value with its rank, and a huge range becomes an array of size n.',
+    signals: [
+      '"Values up to 10^9" but "at most 10^5 elements": an array indexed by value will not fit, but one indexed by rank will.',
+      '"Count of smaller numbers after self": a Fenwick tree over value ranks.',
+      '"Rectangle area" or "skyline" with large coordinates: compress x (and y), then work on a grid of distinct coordinates.',
+      '"Book an event" and "maximum k-booking": a sweep on compressed or sorted times.',
+      '"Good triplets" where positions in two permutations must both increase: map one permutation onto the other, then count with a Fenwick tree.',
+    ],
+    notThis: [
+      'Actual distances or gaps matter, not just order: compression throws them away unless you store them alongside.',
+      'Values are already small, so an array indexed by value works: skip the compression step.',
+      'Bookings arrive online and you cannot see all coordinates up front: use a sorted map or a dynamic segment tree.',
+    ],
+    concepts: [
+      'Sort the unique values. Each value\'s rank is its index in that list, found by binary search or a dict.',
+      'Compression keeps order and equality, which is all that comparisons, Fenwick trees and sweeps need.',
+      'For areas (LC 850), compressed cell (i, j) covers the real width xs[i + 1] - xs[i], so keep the original values.',
+      'Collect every value that can be queried, including query points and boundaries, before you compress.',
+      'Fenwick tree over ranks: add 1 at a rank, then a prefix query counts how many values rank below it.',
+    ],
+    example: {
+      problem: 'Count of Smaller Numbers After Self with nums = [500,2,600000,1], using ranks and a Fenwick tree',
+      lc: 315,
+      walkthrough: [
+        'Sorted unique values are 1, 2, 500, 600000, so the ranks are 1 -> 1, 2 -> 2, 500 -> 3, 600000 -> 4. The tree needs only 4 slots, not 600000.',
+        'i = 3 (value 1, rank 1): no ranks below 1 have been added, so answer[3] = 0. Add rank 1.',
+        'i = 2 (value 600000, rank 4): ranks below 4 hold one value, so answer[2] = 1. Add rank 4.',
+        'i = 1 (value 2, rank 2): ranks below 2 hold one value, so answer[1] = 1. Add rank 2.',
+        'i = 0 (value 500, rank 3): ranks below 3 hold two values, so answer[0] = 2.',
+        'The answer is [2,1,1,0].',
+      ],
+    },
+    code: `ranks = {v: i + 1 for i, v in enumerate(sorted(set(nums)))}
+tree = [0] * (len(ranks) + 1)
+answer = [0] * len(nums)
+for i in range(len(nums) - 1, -1, -1):
+    r = ranks[nums[i]]
+    q = r - 1
+    while q > 0:
+        answer[i] += tree[q]
+        q -= q & -q
+    while r < len(tree):
+        tree[r] += 1
+        r += r & -r`,
+    complexity: 'O(n log n) time to sort and rank, then O(log n) per Fenwick operation. O(n) space.',
+    pitfalls: [
+      'Ranking from 0 and then using a Fenwick tree: index 0 makes `r & -r` equal 0, which loops forever. Rank from 1.',
+      'Forgetting to deduplicate before ranking: equal values get different ranks and stop being equal.',
+      'Compressing only the data values and then querying a value that was never ranked: include every query value too.',
+      'Using compressed indices as distances in area or length problems: convert back with the original coordinates.',
+      'Counting "smaller" with an inclusive query: query r - 1, not r, or equal values are counted.',
+    ],
+    pointsToPonder: [
+      'Which operations keep giving correct answers after compression, and which stop working?',
+      'Why does processing from the right turn "smaller after self" into a prefix count?',
+      'When would a sorted map be preferable to compressing everything up front?',
+    ],
+    practice: [729, 731, 315, 732, 2251],
+    snippet: '40-coordinate-compression',
+  },
+
+  '27. Array Math / Number Theory': {
+    crux: 'Look for an identity first, such as a sum formula, a gcd or a remainder. One fact often replaces a whole algorithm.',
+    signals: [
+      '"Contains n distinct numbers in the range [0, n]" and "find the missing one": expected sum minus actual sum, or XOR.',
+      '"Divisible by k" for subarrays: equal prefix remainders.',
+      '"Select some subset and multiply each by any integer" to get 1: Bezout, so check whether the gcd is 1.',
+      '"Count primes less than n": the sieve of Eratosthenes.',
+      '"The n-th positive integer divisible by a or b": binary search on the answer with inclusion-exclusion using lcm.',
+      '"Exactly three divisors": the number must be the square of a prime.',
+    ],
+    notThis: [
+      'No identity applies, and the question is really about order or ranges: use the array patterns instead.',
+      'You need the actual subset or arrangement, not just whether one exists: you may need DP or search.',
+      'Values are huge, but the structure is about shared factors between elements, as in LC 952: you need union-find over prime factors.',
+    ],
+    concepts: [
+      'gcd(a, b) = gcd(b, a mod b). The gcd of a whole array can only shrink as you fold elements in.',
+      'Bezout: integer combinations of the numbers can make exactly the multiples of their gcd.',
+      'Modular arithmetic: (a - b) mod k = 0 exactly when a mod k = b mod k.',
+      'Sieve: cross out multiples starting from p * p, which gives O(n log log n).',
+      'Count up to x: numbers divisible by a or b number x / a + x / b - x / lcm(a, b). Binary search for the first x that reaches n.',
+      'Normalize ratios by their gcd so that equal ratios compare equal without floating point (LC 2001).',
+    ],
+    example: {
+      problem: 'Check If It Is a Good Array with nums = [6,10,15]',
+      lc: 1250,
+      walkthrough: [
+        'Start with g = 0, because gcd(0, x) = x.',
+        'x = 6: g = gcd(0, 6) = 6.',
+        'x = 10: g = gcd(6, 10) = 2.',
+        'x = 15: g = gcd(2, 15) = 1. Stop early, since the gcd cannot fall below 1.',
+        'g is 1, so the array is good. For example 6 * 1 + 10 * 1 + 15 * (-1) = 1.',
+      ],
+    },
+    code: `g = 0
+for x in nums:
+    g = math.gcd(g, x)
+    if g == 1:
+        break
+answer = g == 1`,
+    complexity: 'O(n log V) time for a gcd fold, where V is the largest value. O(1) space. A sieve is O(n log log n) time and O(n) space.',
+    pitfalls: [
+      'Overflow in the sum formula: n * (n + 1) / 2 needs 64 bits once n passes about 65,000.',
+      'Negative remainders in C++ and Java: normalize with ((x % k) + k) % k.',
+      'Computing lcm as a * b / gcd: the product overflows first, so use a / gcd(a, b) * b.',
+      'Sieve boundaries: "less than n" excludes n, and 0 and 1 are not prime.',
+      'Comparing ratios with floating point division: precision errors make equal ratios unequal. Use reduced integer pairs.',
+    ],
+    pointsToPonder: [
+      'Why does the gcd of the whole array decide whether 1 can be formed?',
+      'Why can the sieve start crossing out at p * p?',
+      'When is binary search on the answer the cleanest way to find an n-th number?',
+    ],
+    practice: [268, 1952, 204, 974, 878],
+    snippet: '18-find-missing-number',
+  },
+
+  '28. Hard / Contest-Level Array Problems': {
+    crux: 'Hard array problems are usually two known patterns combined. Find the constraint that rules out the easy approach, then switch to the tool that handles it.',
+    signals: [
+      '"n <= 40" with subset sums: split in half and enumerate 2^20 sums per side (meet in the middle).',
+      '"Minimum number of patches so that every number in [1, n] can be formed": greedily track the reachable range.',
+      '"Maximum time all computers can run": binary search on the answer with a feasibility check.',
+      '"Shortest subarray with sum at least K" with negatives: monotonic deque over prefix sums.',
+      '"Smaller numbers after self", "reverse pairs", "range sum count": merge-sort counting or a Fenwick tree over ranks.',
+      '"Linear time and space" for a max gap between sorted values: pigeonhole buckets.',
+    ],
+    notThis: [
+      'The usual pattern still fits within the limits: check the constraints before reaching for the hard tool.',
+      'The problem is about paths, connectivity or ordering of tasks: it is a graph problem in an array costume.',
+      'Choices compound over time with overlapping subproblems: use DP, not one of these array tricks.',
+    ],
+    concepts: [
+      'Read the constraints as a hint: 10^5 suggests O(n log n), 40 suggests 2^(n/2), and 10^9 values suggest compression or binary search.',
+      'Reachable-range greedy (LC 330): if every value in [1, reach] can be formed and the next number x <= reach + 1, then [1, reach + x] can too.',
+      'Binary search on the answer turns "maximize the minimum" into "is t feasible?", which is often an easy greedy check.',
+      'Deque over prefix sums (LC 862): keep prefix indices with increasing values, pop from the front while the sum is large enough.',
+      'Contribution plus monotonic stack plus prefix of prefix sums handles sums over all subarrays (LC 2281).',
+    ],
+    example: {
+      problem: 'Patching Array with nums = [1,5,10], n = 20',
+      lc: 330,
+      walkthrough: [
+        'Start with reach = 0, meaning nothing can be formed yet.',
+        '1 <= reach + 1 = 1, so use it. reach = 1.',
+        '5 > reach + 1 = 2, so patch with 2. reach = 3 and patches = 1.',
+        '5 > reach + 1 = 4, so patch with 4. reach = 7 and patches = 2.',
+        '5 <= 8, so use it. reach = 12.',
+        '10 <= 13, so use it. reach = 22, which covers 20. The answer is 2 patches.',
+      ],
+    },
+    code: `reach, i, patches = 0, 0, 0
+while reach < n:
+    if i < len(nums) and nums[i] <= reach + 1:
+        reach += nums[i]
+        i += 1
+    else:
+        reach += reach + 1
+        patches += 1`,
+    complexity: 'O(len(nums) + log n) time and O(1) space for LC 330. Meet in the middle is O(2^(n/2) * n). Binary search on the answer is O(n log range).',
+    pitfalls: [
+      'Overflow: reach can pass 2^31 before the loop stops, so use 64-bit integers in C++ and Java.',
+      'Patching with any missing number other than reach + 1: smaller patches extend the range less.',
+      'Meet in the middle: sorting both halves is not needed. Sort one half and binary search into it.',
+      'Binary search on the answer: make sure the check is monotonic, or the search silently returns a wrong value.',
+      'Spending interview time on the hardest idea before writing a brute force that tells you whether the faster approach is right.',
+    ],
+    pointsToPonder: [
+      'Which constraint in each problem rules out the standard pattern?',
+      'Why is reach + 1 always the best patch in LC 330?',
+      'How do you test a hard solution quickly against a brute force?',
+    ],
+    practice: [164, 42, 239, 330, 2141],
+    snippet: '43-binary-search-on-answer',
+  },
 }
