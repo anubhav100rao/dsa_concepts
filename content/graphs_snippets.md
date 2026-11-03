@@ -583,6 +583,8 @@ for (int i = 0; i < n - 1; i++) {
 
 ## 14. Negative cycle detection
 
+**Use when:** Run after Bellman-Ford when the problem asks "is there a negative cycle?" or "can the cost drop forever?"
+
 ```cpp
 bool hasNegativeCycle = false;
 
@@ -594,9 +596,22 @@ for (auto &e : edges) {
 }
 ```
 
+**Complexity:** O(E) time on top of Bellman-Ford, with O(1) extra space.
+
+**Example:** With edges 0→1 (1), 1→2 (-2), 2→1 (1), the loop 1→2→1 sums to -1. After the n - 1 rounds an edge can still relax, so `hasNegativeCycle = true`.
+
+**Pitfalls:**
+
+- This only finds cycles reachable from src. To check the whole graph, start every dist at 0, which acts like a virtual source.
+- Run it after the n - 1 rounds, not inside them.
+
+**Used in:** The classic "Negative weight cycle detection" in section 5 (no LC number in the bank)
+
 ---
 
 ## 15. Cheapest path with at most K stops
+
+**Use when:** "Cheapest price with at most k stops", or any shortest path limited to k + 1 edges.
 
 ```cpp
 vector<int> dist(n, 1e9);
@@ -619,9 +634,22 @@ for (int i = 0; i <= k; i++) {
 return dist[dst] == 1e9 ? -1 : dist[dst];
 ```
 
+**Complexity:** O(k x E) time and O(V) space.
+
+**Example:** With flights 0→1 (100), 1→2 (100), 0→2 (500) from 0 to 2, k = 0 returns 500 and k = 1 returns 200.
+
+**Pitfalls:**
+
+- Reading from `dist` while writing to `temp` is the whole trick. Updating in place lets one round chain several flights.
+- k stops means k + 1 flights, so the loop runs `i <= k`.
+
+**Used in:** LC 787
+
 ---
 
 ## 16. Floyd-Warshall — all pairs shortest path
+
+**Use when:** All-pairs distances on a small graph (n up to about 400), or many "is a reachable from b?" queries.
 
 ```cpp
 const long long INF = 1e18;
@@ -647,9 +675,23 @@ for (int via = 0; via < n; via++) {
 }
 ```
 
+**Complexity:** O(n³) time and O(n²) space.
+
+**Example:** With edges 0→1 (3), 1→2 (1), 0→2 (7), you get `dist[0][2] = 4` after `via = 1`.
+
+**Pitfalls:**
+
+- `via` must be the outer loop.
+- Undirected input needs both `dist[u][v]` and `dist[v][u]` set.
+- The INF guard stops INF + INF from overflowing, so keep it.
+
+**Used in:** LC 1334, LC 1462, LC 2976, LC 399
+
 ---
 
 ## 17. DSU / Union Find
+
+**Use when:** "Are a and b in the same group?" while edges keep arriving, or Kruskal's MST.
 
 ```cpp
 class DSU {
@@ -686,9 +728,23 @@ public:
 };
 ```
 
+**Complexity:** O(α(n)) amortized per `find` or `unite` with path compression and union by size. O(n) space.
+
+**Example:** With `DSU d(3)`, `d.unite(0, 1)` returns true and `d.unite(1, 0)` returns false. `find(2)` stays 2.
+
+**Pitfalls:**
+
+- Compare `find(a) == find(b)`, never `parent[a] == parent[b]`.
+- The recursive `find` can go deep before compression kicks in. That is rare with union by size, but an iterative version is safer.
+- 1-indexed input needs `DSU dsu(n + 1)`.
+
+**Used in:** LC 684, LC 721, LC 990, LC 1319, LC 1202
+
 ---
 
 ## 18. Number of connected components using DSU
+
+**Use when:** Count components from an edge list without building an adjacency list.
 
 ```cpp
 DSU dsu(n);
@@ -701,9 +757,22 @@ for (auto &[u, v] : edges) {
 }
 ```
 
+**Complexity:** O(n + E α(n)) time and O(n) space.
+
+**Example:** With n = 5 and edges (0,1), (1,2), (3,4), you get `components = 2`.
+
+**Pitfalls:**
+
+- Decrement only when `unite` returns true. An edge inside one group changes nothing.
+- Isolated nodes still count, which is why the count starts at n.
+
+**Used in:** LC 323, LC 1319, LC 2316, LC 200
+
 ---
 
 ## 19. Kruskal MST
+
+**Use when:** "Minimum cost to connect all nodes" given an edge list.
 
 ```cpp
 struct Edge {
@@ -729,9 +798,22 @@ for (auto &e : edges) {
 bool connected = used == n - 1;
 ```
 
+**Complexity:** O(E log E) time for the sort and O(n + E) space.
+
+**Example:** With edges (0,1,1), (1,2,2), (0,2,3), (2,3,4), it takes 1, 2 and 4 and skips (0,2,3). So `mstCost = 7` and `connected = true`.
+
+**Pitfalls:**
+
+- If `used < n - 1`, the graph is disconnected and has no spanning tree. LC 1135 wants -1 then.
+- Use `long long` for mstCost when weights are large.
+
+**Used in:** LC 1584, LC 1135, LC 1489, LC 1168
+
 ---
 
 ## 20. Prim MST
+
+**Use when:** MST on a dense graph, or one given as an adjacency list, as in LC 1584 where every pair is an edge.
 
 ```cpp
 vector<int> vis(n, 0);
@@ -761,9 +843,22 @@ while (!pq.empty()) {
 }
 ```
 
+**Complexity:** O(E log E) time with this lazy heap, and O(V + E) space.
+
+**Example:** Same graph as Kruskal's above, starting at 0: it takes 0-1 (1), 1-2 (2) and 2-3 (4), so `mstCost = 7`.
+
+**Pitfalls:**
+
+- Mark the node when it is popped, not when it is pushed, or a cheaper edge seen later is lost.
+- For a disconnected graph, `mstCost` covers only the start component. Count the visited nodes to detect this.
+
+**Used in:** LC 1584, LC 1135
+
 ---
 
 ## 21. Bridges in graph — Tarjan
+
+**Use when:** "Critical connections": edges whose removal disconnects the graph.
 
 ```cpp
 vector<int> tin(n, -1), low(n, -1), vis(n, 0);
@@ -795,9 +890,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With the triangle 0-1-2 plus edge 1-3, `bridges = [(1, 3)]`.
+
+**Pitfalls:**
+
+- The comparison is strict, `low[v] > tin[u]`. Using `>=` gives articulation points instead.
+- `v == parent` skips every parallel copy. With multi-edges, skip by edge id, since a doubled edge is never a bridge.
+
+**Used in:** LC 1192
+
 ---
 
 ## 22. Articulation points
+
+**Use when:** "Single point of failure": nodes whose removal disconnects the graph.
 
 ```cpp
 vector<int> tin(n, -1), low(n, -1), vis(n, 0), isArt(n, 0);
@@ -832,9 +940,22 @@ void dfs(int u, int parent) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With the triangle 0-1-2 plus edge 1-3, calling `dfs(0, -1)` gives `isArt = [0, 1, 0, 0]`. Only node 1 is a cut point.
+
+**Pitfalls:**
+
+- The root is special: it is a cut point only with 2 or more DFS children.
+- The snippet has no driver. Call `dfs(i, -1)` for every unvisited i.
+
+**Used in:** LC 1568
+
 ---
 
 ## 23. Kosaraju SCC
+
+**Use when:** Group a directed graph into strongly connected components using two simple DFS passes.
 
 ```cpp
 vector<int> vis(n, 0), order;
@@ -883,9 +1004,23 @@ for (int u : order) {
 }
 ```
 
+**Complexity:** O(V + E) time, and O(V + E) space for the reversed graph.
+
+**Example:** With edges 0→1, 1→2, 2→0, 2→3, you get `sccs = {0, 1, 2}` and `{3}`.
+
+**Pitfalls:**
+
+- The second pass must use the reversed graph `rg` in reverse finishing order.
+- Reset `vis` between the passes.
+- The function definitions sit between statements here, so move them to file scope when you paste this.
+
+**Used in:** LC 802, LC 2360, and the classic SCC condensation and 2-SAT rows in section 11
+
 ---
 
 ## 24. Tarjan SCC
+
+**Use when:** Strongly connected components in one DFS pass, with SCCs coming out in reverse topological order.
 
 ```cpp
 vector<int> disc(n, -1), low(n, 0), inStack(n, 0);
@@ -925,9 +1060,22 @@ void dfs(int u) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With edges 0→1, 1→2, 2→0, 2→3, calling dfs on each node with `disc == -1` gives `sccs = [[3], [2, 1, 0]]`. The sink SCC comes first.
+
+**Pitfalls:**
+
+- Only update low from nodes still `inStack`. A finished SCC must not pull low down.
+- The snippet has no driver, so loop over every node with `disc == -1`.
+
+**Used in:** LC 802, LC 2360, LC 1192 (the same disc/low idea)
+
 ---
 
 ## 25. Longest path in DAG
+
+**Use when:** "Minimum semesters / time to finish all tasks", or the longest chain in a DAG.
 
 ```cpp
 vector<int> indegree(n, 0);
@@ -964,9 +1112,23 @@ while (!q.empty()) {
 int ans = *max_element(dp.begin(), dp.end());
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With edges 0→1, 1→2, 0→2, you get `dp = [0, 1, 2]` and `ans = 2` edges.
+
+**Pitfalls:**
+
+- dp counts edges. Add 1 if the problem counts nodes or semesters, as LC 1136 does.
+- For weighted tasks like LC 2050, use `dp[v] = max(dp[v], dp[u] + time[u])` and add each node's own time.
+- On a graph with a cycle, some nodes never reach in-degree 0, so check the count.
+
+**Used in:** LC 2050, LC 1136, LC 329
+
 ---
 
 ## 26. Shortest path in DAG
+
+**Use when:** Single-source shortest path on a DAG, even with negative weights, in linear time.
 
 ```cpp
 vector<int> topo; // assume already computed
@@ -982,6 +1144,17 @@ for (int u : topo) {
     }
 }
 ```
+
+**Complexity:** O(V + E) time after the topological order, and O(V) space.
+
+**Example:** With topo = [0, 1, 2] and edges 0→1 (1), 1→2 (1), 0→2 (5), you get `dist = [0, 1, 2]`.
+
+**Pitfalls:**
+
+- Skip nodes with `dist == 1e9`, or they relax with a fake distance.
+- The graph must really be acyclic, because a cycle makes the order meaningless.
+
+**Used in:** A classic technique with no LC row in the bank. It relaxes in the same order as LC 2050
 
 ---
 
