@@ -685,4 +685,741 @@ export const trees = {
     practice: [310, 2925, 834, 2581, 2846],
     snippet: '22-rerooting-dp-sum-of-distances-to-all-nodes',
   },
+
+  '13. Tree + DFS with State (Pass Down / Collect Up)': {
+    crux: 'Ask where the information lives. If it comes from ancestors, pass it as an argument; if it comes from descendants, return it. Harder problems need both.',
+    signals: [
+      '"No nodes with a value greater than X on the path from the root": carry the maximum down.',
+      '"Maximum |a.val - b.val| where a is an ancestor of b": carry the min and max down.',
+      '"At least one permutation of the node values in the path is a palindrome": carry a parity mask down.',
+      '"Minimum number of moves" to balance coins across edges: return each subtree\'s surplus up.',
+      '"Time needed to inform all employees": the time accumulates down the chain of managers.',
+    ],
+    notThis: [
+      'The path can start at any ancestor and you need to count sums, as in Path Sum III (LC 437): a single value isn\'t enough, so keep a prefix map (section 15).',
+      'A node\'s answer depends on nodes outside its own root path and subtree, as in Sum of Distances (LC 834): use rerooting (section 12).',
+    ],
+    concepts: [
+      'Pass-down state is a function argument, so each branch gets its own copy and sibling paths can\'t interfere.',
+      'Collect-up state is a return value, so a parent sees its children\'s finished results.',
+      'A value larger than one int, such as a list, must be undone on the way back unless you copy it.',
+      'Two-pass problems (LC 1339) compute a total first, then use it while walking a second time.',
+    ],
+    example: {
+      problem: 'Maximum Difference Between Node and Ancestor with [8,3,10,1]',
+      lc: 1026,
+      walkthrough: [
+        'dfs(8) starts with lo = 8 and hi = 8.',
+        'dfs(3): lo = 3 and hi = 8. dfs(1): lo = 1 and hi = 8, and both null children return 8 - 1 = 7.',
+        'Back at 3: the left side gives 7, and the null right side gives 8 - 3 = 5. Return 7.',
+        'dfs(10): lo = 8 and hi = 10, and both null children return 2. Return 2.',
+        'Back at 8: max(7, 2) = 7. The pair is 8 and its descendant 1.',
+      ],
+    },
+    code: `def max_ancestor_diff(root):
+    def dfs(node, lo, hi):
+        if not node:
+            return hi - lo
+        lo, hi = min(lo, node.val), max(hi, node.val)
+        return max(dfs(node.left, lo, hi), dfs(node.right, lo, hi))
+    return dfs(root, root.val, root.val)`,
+    complexity: 'O(n) time and O(h) space, since each node does constant work with the state it receives.',
+    pitfalls: [
+      'Keeping min and max in a global without restoring them: values from one branch leak into its sibling.',
+      'LC 1448 counts a node equal to the path maximum as good, so compare with >=, not >.',
+      'LC 979: moves are abs(surplus) on each edge, while the value returned up keeps its sign.',
+      'LC 1080: a node is removed based on the result from its children, so decide after recursing, not before.',
+    ],
+    pointsToPonder: [
+      'Why is passing an int by value a form of backtracking you get for free?',
+      'Could LC 1026 be solved by returning min and max up instead? What changes?',
+      'In LC 979, why does adding up the flow over each edge give the exact number of moves?',
+    ],
+    practice: [1448, 1026, 1376, 979, 968],
+    snippet: '15-dfs-with-state-count-good-nodes',
+  },
+
+  '14. Tree + BFS / Distance Problems': {
+    crux: 'Tree links only go down. Add parent links, or build an adjacency list, and the tree becomes an undirected graph where BFS measures distance from any start node.',
+    signals: [
+      '"All nodes that have a distance k from the target node": BFS outward from target, for k rounds.',
+      '"Infection starts from a node... each minute it spreads to adjacent nodes": the answer is the BFS depth from the start.',
+      '"Nearest leaf to the target k": BFS from k and stop at the first leaf.',
+      '"The frog jumps to an unvisited vertex with equal probability... after t seconds": BFS rounds that carry a probability.',
+    ],
+    notThis: [
+      'Distances from every node, as in Sum of Distances (LC 834): one BFS per node is O(n²), so reroot instead (section 12).',
+      'Minimum Time to Collect All Apples (LC 1443): no distance layers are needed, because a postorder pass decides which edges to walk twice.',
+      'Find Distance in a Binary Tree (LC 1740) can use BFS, but LCA and depths answer it directly (section 5).',
+    ],
+    concepts: [
+      'Parent map: one DFS stores parent[node], and each node then has up to three neighbors.',
+      'Use a seen set, because the graph is now undirected and BFS would otherwise walk straight back.',
+      'In a generic tree, passing the parent is enough for DFS, but BFS rounds still need a parent or seen check.',
+      'Tree diameter by two BFS runs: the farthest node from anywhere is one end of a diameter.',
+    ],
+    example: {
+      problem: 'All Nodes Distance K with [3,5,1,6,2,0,8,null,null,7,4], target = 5, k = 2',
+      lc: 863,
+      walkthrough: [
+        'Build the parent map, so parent[5] = 3, parent[6] = 5 and so on. Start with q = [5] and seen = {5}.',
+        'Round 1: pop 5. Its neighbors 6, 2 and 3 are all new, so q = [6,2,3].',
+        'Round 2: pop 6, and it adds nothing new. Pop 2, adding 7 and 4.',
+        'Still in round 2: pop 3. Its child 5 is seen and it has no parent, so it adds only 1.',
+        'k rounds are done, so the queue holds the answer: [7,4,1].',
+      ],
+    },
+    code: `def distance_k(root, target, k):
+    parent = {}
+    def link(node, par):
+        if node:
+            parent[node] = par
+            link(node.left, node)
+            link(node.right, node)
+    link(root, None)
+    q, seen = deque([target]), {target}
+    for _ in range(k):
+        for _ in range(len(q)):
+            node = q.popleft()
+            for nb in (node.left, node.right, parent[node]):
+                if nb and nb not in seen:
+                    seen.add(nb)
+                    q.append(nb)
+    return [n.val for n in q]`,
+    complexity: 'O(n) time and O(n) space for the parent map, seen set and queue.',
+    pitfalls: [
+      'Forgetting the seen set: after moving to a parent, BFS walks straight back to the child.',
+      'LC 2385: time is the farthest distance from the start, so the starting node counts as minute 0, not 1.',
+      'LC 1377: a frog with unvisited neighbors must jump, so it can stay at the target only if it arrives exactly on time or has nowhere left to go.',
+      'Keying the parent map by value breaks when values repeat, so key by node unless values are unique.',
+    ],
+    pointsToPonder: [
+      'Why does running BFS twice find a diameter on a tree, but not on a general graph?',
+      'When is LCA arithmetic better than BFS for the distance between two nodes?',
+      'Could you solve LC 863 without a parent map, by returning distances from recursion?',
+    ],
+    practice: [863, 2385, 1443, 742, 1377],
+    snippet: '19-unrooted-tree-on-graph-dfs-from-root',
+  },
+
+  '15. Tree + Prefix Sum / Hash Map': {
+    crux: 'A downward path from an ancestor to a node is the difference of two root prefixes. Keep a map of the prefixes on the current root path, and undo each entry on the way back.',
+    signals: [
+      '"The number of paths where the sum equals targetSum... must go downwards" but can start anywhere: prefix map.',
+      '"The path values can be rearranged to form a palindrome": XOR masks are prefix sums for parity.',
+      '"Return all duplicate subtrees": a map from serialized subtree to count.',
+      '"Split into two trees with equal sums by removing one edge": a collection of subtree sums.',
+    ],
+    notThis: [
+      'Paths always start at the root, as in Path Sum (LC 112): a running sum is enough.',
+      'The path may bend at a node, as in Maximum Path Sum (LC 124): a root prefix can\'t describe a bent path, so return arms instead (section 6).',
+      'Count Good Nodes (LC 1448) and Longest Univalue Path (LC 687) are listed here but need no map: simple state is enough (section 13).',
+    ],
+    concepts: [
+      'This is Subarray Sum Equals K on the array formed by the current root path.',
+      'Seeding the map with {0: 1} counts paths that begin at the root.',
+      'Add the prefix on entry and remove it on exit, so the map holds only ancestors of the current node.',
+      'Subtree maps work in postorder: compute a key or sum for each subtree, then count how often it appears.',
+    ],
+    example: {
+      problem: 'Path Sum III with [1,2,5,4], target = 6',
+      lc: 437,
+      walkthrough: [
+        'Start with prefix = {0:1}. At node 1, s = 1. Look up 1 - 6 = -5, which gives 0. Add 1 to the map.',
+        'At node 2, s = 3. Look up -3, which gives 0. Add 3 to the map.',
+        'At node 4, s = 7. Look up 1, which gives 1, for the path 2 -> 4. Add 7, return, then remove 7.',
+        'Back at node 2, remove 3. The map is now {0:1, 1:1}.',
+        'At node 5, s = 6. Look up 0, which gives 1, for the path 1 -> 5.',
+        'The total is 2. Removing 3 mattered: node 5 must not see a prefix from its sibling branch.',
+      ],
+    },
+    code: `def path_sum(root, target):
+    prefix = defaultdict(int)
+    prefix[0] = 1
+    def dfs(node, s):
+        if not node:
+            return 0
+        s += node.val
+        count = prefix[s - target]
+        prefix[s] += 1
+        count += dfs(node.left, s) + dfs(node.right, s)
+        prefix[s] -= 1
+        return count
+    return dfs(root, 0)`,
+    complexity: 'O(n) time on average and O(h) live map entries, or O(n) if zero entries stay in the map. The double-recursion version without a map is O(n·h).',
+    pitfalls: [
+      'Forgetting prefix[0] = 1: every path starting at the root is missed.',
+      'Adding the current prefix before the lookup: with target 0, a node would match itself as an empty path.',
+      'Leaving out the undo step: the count then includes pairs from different branches, which aren\'t paths.',
+      'Sums can overflow 32 bits (LC 437 has large values), so use long in C++ and Java.',
+    ],
+    pointsToPonder: [
+      'Why does this work with negative values, while a sliding window would not?',
+      'What is the XOR analogue of "s - target" when counting palindromic paths in LC 2791?',
+      'In LC 663, why must you leave out the whole-tree sum before searching for half of it?',
+    ],
+    practice: [1448, 437, 1457, 652, 663],
+    snippet: '16-tree-prefix-sum-hash-map-path-sum-iii',
+  },
+
+  '16. Tree Iterator / Traversal Design': {
+    crux: 'An iterator is a paused traversal. The stack holds exactly what the recursion would be waiting on, and each call does just enough work to reach the next value.',
+    signals: [
+      '"Implement the BSTIterator class" with next() and hasNext(): pause an inorder traversal.',
+      '"Average O(1) time and use O(h) memory": this rules out flattening the whole tree into an array.',
+      '"Flatten a nested list" lazily with next() and hasNext(): keep a stack of unfinished lists.',
+      '"Peek at the next element without moving": cache one value ahead.',
+      '"Two BSTs... a pair summing to target": walk two iterators like two pointers on sorted arrays.',
+    ],
+    notThis: [
+      'Inorder Successor in BST (LC 285) asks once and keeps no state: a single descent is enough, with no stack.',
+      'Binary Tree Upside Down (LC 156) and CBT Inserter (LC 919) are listed here but don\'t iterate: one rewires pointers and the other keeps a queue of open parents.',
+    ],
+    concepts: [
+      'Stack invariant: the top is the next value, and each entry\'s left side is finished.',
+      'Each node is pushed and popped once, so n calls cost O(n) in total even if a single call costs O(h).',
+      'A reverse iterator pushes right spines and yields values from largest to smallest.',
+      'Closest Values II (LC 272) walks a forward and a backward iterator from the target outward.',
+    ],
+    example: {
+      problem: 'Binary Search Tree Iterator with [7,3,15,null,null,9,20]',
+      lc: 173,
+      walkthrough: [
+        'Constructor: push 7 and 3 down the left spine. The stack is [7,3].',
+        'next() pops 3 and returns it. It has no right child. The stack is [7].',
+        'next() pops 7 and returns it, then pushes 15 and 9, so the stack is [15,9].',
+        'next() returns 9. hasNext() is True, because the stack is [15].',
+        'next() pops 15 and pushes 20. next() pops 20 and returns it.',
+        'The stack is empty, so hasNext() is False. The values came out as 3, 7, 9, 15, 20.',
+      ],
+    },
+    code: `class BSTIterator:
+    def __init__(self, root):
+        self.st = []
+        self._push_left(root)
+    def _push_left(self, node):
+        while node:
+            self.st.append(node)
+            node = node.left
+    def next(self):
+        node = self.st.pop()
+        self._push_left(node.right)
+        return node.val
+    def hasNext(self):
+        return bool(self.st)`,
+    complexity: 'next() is O(1) amortized and O(h) in the worst case. hasNext() is O(1). Space is O(h).',
+    pitfalls: [
+      'Flattening everything in the constructor works, but breaks the O(h) memory requirement.',
+      'Forgetting to process the popped node\'s right spine: its whole right subtree gets skipped.',
+      'LC 341: hasNext() must do the unpacking, because [[]] contains no integers at all.',
+      'LC 284: once peek() has advanced the wrapped iterator, next() and hasNext() must check the cached value first.',
+    ],
+    pointsToPonder: [
+      'Why is next() amortized O(1) even though one call can push a long spine?',
+      'How would you make an iterator for preorder or postorder?',
+      'If the tree changes between calls, what could go wrong with the saved stack?',
+    ],
+    practice: [173, 284, 285, 341, 272],
+    snippet: '17-bst-iterator-controlled-inorder',
+  },
+
+  '17. Trie as Tree (Prefix Tree)': {
+    crux: 'Words that share a prefix share a path, so a lookup costs O(word length), no matter how many words are stored.',
+    signals: [
+      '"startsWith" or "any previously inserted word with this prefix": the walk ends at a node, whether or not a word ends there.',
+      '"\'.\' can match any letter": try every child at a wildcard.',
+      '"Find all words on the board": walk the grid and trie together, so dead prefixes stop early.',
+      '"Replace each word with its shortest root": stop at the first end-of-word on the walk.',
+      '"Do the last characters of the stream form a word?": store the words reversed.',
+    ],
+    notThis: [
+      'Only exact membership matters: a hash set is simpler and faster.',
+      'Maximum XOR (LC 421): the alphabet is bits, so use the binary trie version (section 28).',
+    ],
+    concepts: [
+      'A node holds a map of children and an end-of-word flag. The flag can also be a count or a value.',
+      'A word ending at a node and a path passing through a node are different facts, so store them separately.',
+      'Word Search II (LC 212) shares one DFS across all words, and it prunes finished branches for speed.',
+      'The Tries topic covers this structure in much more depth.',
+    ],
+    example: {
+      problem: 'Implement Trie with insert("app"), insert("apple"), search("app"), search("ap"), startsWith("ap")',
+      lc: 208,
+      walkthrough: [
+        'insert("app") creates the path a -> p -> p and marks the last node with $.',
+        'insert("apple") reuses a -> p -> p, adds l -> e, and marks e with $.',
+        'search("app"): the walk succeeds and the node has $, so the result is True.',
+        'search("ap"): the walk succeeds, but the node has no $, so the result is False.',
+        'startsWith("ap"): the walk succeeds, which is all it needs, so the result is True.',
+      ],
+    },
+    code: `class Trie:
+    def __init__(self):
+        self.root = {}
+    def insert(self, word):
+        node = self.root
+        for ch in word:
+            node = node.setdefault(ch, {})
+        node['$'] = True
+    def _walk(self, s):
+        node = self.root
+        for ch in s:
+            if ch not in node:
+                return None
+            node = node[ch]
+        return node
+    def search(self, word):
+        node = self._walk(word)
+        return node is not None and '$' in node
+    def startsWith(self, prefix):
+        return self._walk(prefix) is not None`,
+    complexity: 'O(L) time per operation for a word of length L. O(total characters) nodes, each with up to alphabet-size children if you use arrays.',
+    pitfalls: [
+      'Treating a finished walk as a match: "ap" is a prefix of "app", but it was never inserted.',
+      'LC 211: at a wildcard you must try all children, and a hit in any branch counts.',
+      'LC 212: mark grid cells during DFS, and clear a found word so it isn\'t reported twice.',
+      'LC 1032: insert the words reversed, then walk the stream backward from its newest letter.',
+    ],
+    pointsToPonder: [
+      'When does a trie beat a sorted array with binary search?',
+      'How does removing finished words speed up Word Search II?',
+      'What would you store at each node to support top-3 autocomplete quickly (LC 642)?',
+    ],
+    practice: [208, 677, 648, 211, 212],
+  },
+
+  '18. Segment Tree': {
+    crux: 'Store an aggregate for each segment of a balanced tree over the array. Any range splits into O(log n) stored pieces, and an update touches only O(log n) ancestors.',
+    signals: [
+      '"Update the value at an index" mixed with "sum of elements between left and right": queries and updates interleave.',
+      '"Longest increasing subsequence with difference at most k": a range maximum over values, updated as you scan.',
+      '"Book an event" or "falling squares": updates cover ranges of coordinates, so you need lazy propagation.',
+      '"Frequency of value in the subarray" or "majority in a subarray", with many queries: an aggregate per segment.',
+    ],
+    notThis: [
+      'No updates between queries: prefix sums answer sums in O(1) (see the Range Queries topic).',
+      'Point updates with prefix sums only: a Fenwick tree is shorter (section 19).',
+      'My Calendar I (LC 729) only needs its neighbors: an ordered map is simpler (section 26).',
+    ],
+    concepts: [
+      'An iterative tree stores leaves at t[n..2n-1], and t[i] combines t[2i] and t[2i+1].',
+      'The merge must be associative: sum, min, max, gcd and "best subarray" records all qualify.',
+      'Lazy propagation stores a pending range update at a node and pushes it down only when needed.',
+      'Coordinate compression or a dynamic tree handles value ranges up to 10^9.',
+    ],
+    example: {
+      problem: 'Range Sum Query - Mutable with nums = [1,3,5]: sumRange(0,2), update(1,2), sumRange(0,2)',
+      lc: 307,
+      walkthrough: [
+        'Build: n = 3, so t = [0,0,0,1,3,5]. Then t[2] = 3 + 5 = 8 and t[1] = 8 + 1 = 9.',
+        'sumRange(0,2): l = 3 and r = 6. l is odd, so add t[3] = 1 and set l = 4. Halving gives l = 2 and r = 3.',
+        'r is odd, so set r = 2 and add t[2] = 8, for a total of 9. Halving gives l = 1 and r = 1, so stop.',
+        'update(1,2): i = 4, so t[4] = 2. Then t[2] = 2 + 5 = 7 and t[1] = 7 + 1 = 8.',
+        'sumRange(0,2) now adds t[3] = 1 and t[2] = 7, which gives 8.',
+      ],
+    },
+    code: `class NumArray:
+    def __init__(self, nums):
+        self.n = len(nums)
+        self.t = [0] * self.n + nums
+        for i in range(self.n - 1, 0, -1):
+            self.t[i] = self.t[2 * i] + self.t[2 * i + 1]
+    def update(self, i, val):
+        i += self.n
+        self.t[i] = val
+        while i > 1:
+            i //= 2
+            self.t[i] = self.t[2 * i] + self.t[2 * i + 1]
+    def sumRange(self, left, right):
+        l, r = left + self.n, right + self.n + 1  # half-open
+        total = 0
+        while l < r:
+            if l & 1:
+                total += self.t[l]
+                l += 1
+            if r & 1:
+                r -= 1
+                total += self.t[r]
+            l //= 2
+            r //= 2
+        return total`,
+    complexity: 'O(n) to build, then O(log n) per query and update. O(n) space, or 4n for the recursive array layout.',
+    pitfalls: [
+      'Mixing inclusive and half-open ranges: this iterative form needs r + 1 on entry.',
+      'The bottom-up query above can visit pieces out of order, which breaks non-commutative merges unless you keep left and right results apart.',
+      'A recursive tree stored in an array needs 4n slots. Using 2n can run out of bounds.',
+      'With lazy propagation, push the pending update down before you recurse into children.',
+    ],
+    pointsToPonder: [
+      'What must be true of an operation for a segment tree to work on it?',
+      'Why does any range split into only O(log n) nodes?',
+      'When would you choose a dynamic tree over coordinate compression?',
+    ],
+    practice: [307, 729, 2080, 315, 699],
+  },
+
+  '19. Binary Indexed Tree (Fenwick Tree)': {
+    crux: 'For point updates and prefix queries, index i stores the total of the lowbit(i) values ending at i. Both operations hop through O(log n) indices.',
+    signals: [
+      '"Number of smaller elements to the right of nums[i]": scan and count what has already been seen.',
+      '"Reverse pairs" or "global inversions": counts of earlier elements in some value range.',
+      '"The cost is the minimum of the number of elements strictly less than and strictly greater than": two prefix counts per insert.',
+      '"Choose 3 soldiers with increasing rating": smaller on the left times larger on the right, for each middle soldier.',
+    ],
+    notThis: [
+      'Range minimum or maximum under arbitrary updates: a Fenwick tree can\'t undo those, so use a segment tree (section 18).',
+      'No updates at all: use plain prefix sums.',
+      'Global and Local Inversions (LC 775) has an O(n) check: every element must be within one of its index.',
+    ],
+    concepts: [
+      'lowbit(i) = i & -i is the lowest set bit, and it gives the size of the range index i covers.',
+      'A query strips low bits on the way to 0. An update adds low bits on the way past n.',
+      'A range sum is query(r) - query(l - 1).',
+      'For counting by value, compress values to ranks 1..m and store counts instead of array values.',
+    ],
+    example: {
+      problem: 'Count of Smaller Numbers After Self with [5,2,6,1]',
+      lc: 315,
+      walkthrough: [
+        'Ranks are 1 -> 1, 2 -> 2, 5 -> 3 and 6 -> 4. Scan from the right.',
+        'x = 1: query(0) = 0, then add rank 1.',
+        'x = 6: query(3) = 1, because only 1 has been seen. Add rank 4.',
+        'x = 2: query(1) = 1. Add rank 2.',
+        'x = 5: query(2) = 2, for values 1 and 2. Add rank 3.',
+        'out = [0,1,1,2], which reversed gives [2,1,1,0].',
+      ],
+    },
+    code: `def count_smaller(nums):
+    rank = {v: i + 1 for i, v in enumerate(sorted(set(nums)))}
+    bit = [0] * (len(rank) + 1)
+    def add(i):
+        while i < len(bit):
+            bit[i] += 1
+            i += i & -i
+    def query(i):
+        total = 0
+        while i > 0:
+            total += bit[i]
+            i -= i & -i
+        return total
+    out = []
+    for x in reversed(nums):
+        out.append(query(rank[x] - 1))
+        add(rank[x])
+    return out[::-1]`,
+    complexity: 'O(n log n) time for sorting and n pairs of O(log n) operations. O(n) space.',
+    pitfalls: [
+      'Using index 0: lowbit(0) = 0, so add(0) loops forever. Keep the tree 1-indexed.',
+      'Querying rank[x] instead of rank[x] - 1 counts equal values as smaller.',
+      'Adding before querying makes the current element count itself.',
+      'LC 493 compares against 2 * x: compress the doubled values too, and watch for 32-bit overflow.',
+    ],
+    pointsToPonder: [
+      'Why does adding the lowbit reach exactly the indices whose ranges contain i?',
+      'How can a Fenwick tree support range updates with point queries?',
+      'Why does merge sort also solve LC 315 and LC 493, and how do the two approaches compare?',
+    ],
+    practice: [307, 1395, 775, 315, 493],
+  },
+
+  '20. N-ary / Generic Tree': {
+    crux: 'The DFS and BFS are the same as for binary trees, with a loop replacing left and right. When combining results, keep the best two children.',
+    signals: [
+      '"Each node has a list of children": the same traversal templates apply.',
+      '"manager[i] is the direct manager of employee i": a parent array, so build a children list first.',
+      '"parent[i]... s[i] is the character assigned to node i": a generic tree given by parents.',
+      '"Length of the longest path between any two nodes" with many children: top two heights at each node.',
+    ],
+    notThis: [
+      'Edges are undirected, with no root given: root it yourself, and pass the parent (section 21).',
+      'A problem depends on left versus right order, such as inorder: that has no general meaning here, so it probably needs a binary tree.',
+    ],
+    concepts: [
+      'The children loop replaces the two recursive calls. A leaf simply has an empty loop.',
+      'Postorder for N-ary trees can be done by reversing a modified preorder (root, then children right to left).',
+      'Encoding N-ary as binary (LC 431): first child goes left, next sibling goes right.',
+      'Tree of Coprimes (LC 1766) keeps, for each value, a stack of its ancestors on the current path.',
+    ],
+    example: {
+      problem: 'Diameter of N-ary Tree with [1,null,3,2,4,null,5,6]',
+      lc: 1522,
+      walkthrough: [
+        'Leaves 5 and 6 return height 0.',
+        'Node 3: child 5 gives h = 1, so top1 = 1. Child 6 gives h = 1, so top2 = 1. best = 2. Return 1.',
+        'Node 1: child 3 gives h = 2, so top1 = 2. Child 2 gives h = 1, so top2 = 1.',
+        'Child 4 gives h = 1, which beats neither. best = 2 + 1 = 3.',
+        'The answer is 3 edges, for example 5 -> 3 -> 1 -> 2.',
+      ],
+    },
+    code: `def diameter(root):
+    best = 0
+    def height(node):
+        nonlocal best
+        top1 = top2 = 0
+        for c in node.children:
+            h = height(c) + 1
+            if h > top1:
+                top1, top2 = h, top1
+            elif h > top2:
+                top2 = h
+        best = max(best, top1 + top2)
+        return top1
+    height(root)
+    return best`,
+    complexity: 'O(n) time, since each edge is used once across all the loops. O(h) space.',
+    pitfalls: [
+      'Forgetting to move the old top1 into top2 when a new maximum appears.',
+      'Sorting children at every node to find the top two: this adds a log factor for no benefit.',
+      'LC 2246: a child can extend the path only if its character differs, but you must still recurse into it.',
+      'LC 1376: the answer is the slowest chain, so take the max across children, not the sum.',
+    ],
+    pointsToPonder: [
+      'Why are two values enough to compute a diameter at a node?',
+      'How does the first-child, next-sibling encoding preserve the tree?',
+      'Which binary-tree patterns have no N-ary counterpart, and why?',
+    ],
+    practice: [559, 589, 590, 429, 1522],
+    snippet: '18-n-ary-tree-traversal',
+  },
+
+  '21. Tree on Graph (Unrooted Tree / Forest)': {
+    crux: 'An unrooted tree is a connected graph with n - 1 edges. Root it anywhere, pass the parent so you never walk back, and all the rooted tools apply.',
+    signals: [
+      '"n nodes labeled 0 to n - 1 and n - 1 edges": a tree given as an edge list.',
+      '"Determine if these edges make up a valid tree": exactly n - 1 edges, and connected.',
+      '"A tree with one additional edge added... return the edge": union-find spots the first edge that closes a cycle.',
+      '"Choose any node as the root... minimum height": peel leaves toward the center.',
+      '"Reorient the roads so each city can reach city 0": root at 0 and count edges that point the wrong way.',
+    ],
+    notThis: [
+      'Critical Edges in an MST (LC 1489) and Max Star Sum (LC 2497) are graph problems: the first needs Kruskal, and the second is a per-node sort.',
+      'The graph can contain real cycles: use general BFS, DFS or union-find (see the Graphs topic).',
+    ],
+    concepts: [
+      'Any tree has one or two centers, the midpoints of a diameter, and those are the minimum-height roots.',
+      'Removing a node splits the tree into its child subtrees plus the rest, of size n - subtree size.',
+      'In LC 685 the extra edge is directed, which can create a node with two parents, a cycle, or both.',
+      'A forest has more than one component, so count them or loop over every unvisited node.',
+    ],
+    example: {
+      problem: 'Minimum Height Trees with n = 6, edges = [[3,0],[3,1],[3,2],[3,4],[5,4]]',
+      lc: 310,
+      walkthrough: [
+        'Degrees: node 3 has 4, node 4 has 2, the rest have 1. Leaves = [0,1,2,5], and remaining = 6.',
+        'Peel: remaining becomes 2. Removing 0, 1 and 2 reduces g[3] to {4}, so 3 is a new leaf.',
+        'Removing 5 reduces g[4] to {3}, so 4 is a new leaf too. Now leaves = [3,4].',
+        'remaining = 2, so stop. The answer is [3,4].',
+      ],
+    },
+    code: `def find_min_height_trees(n, edges):
+    if n == 1:
+        return [0]
+    g = [set() for _ in range(n)]
+    for a, b in edges:
+        g[a].add(b)
+        g[b].add(a)
+    leaves = [i for i in range(n) if len(g[i]) == 1]
+    remaining = n
+    while remaining > 2:
+        remaining -= len(leaves)
+        next_leaves = []
+        for leaf in leaves:
+            nb = g[leaf].pop()
+            g[nb].remove(leaf)
+            if len(g[nb]) == 1:
+                next_leaves.append(nb)
+        leaves = next_leaves
+    return leaves`,
+    complexity: 'O(n) time and O(n) space, because each leaf is removed once and there are n - 1 edges.',
+    pitfalls: [
+      'n = 1 has no edges and so no leaves: return [0] explicitly.',
+      'Stopping when one node remains: two centers are possible, so stop at remaining <= 2.',
+      'LC 261: n - 1 edges alone isn\'t enough, because a cycle plus a disconnected node has the same count.',
+      'LC 2049: removing the root or a leaf leaves a part of size 0, so multiply only non-empty parts, using 64-bit values.',
+    ],
+    pointsToPonder: [
+      'Why can there never be more than two minimum-height roots?',
+      'Why does a BFS peel by layers instead of removing leaves in any order?',
+      'For LC 684, could DFS replace union-find, and at what cost?',
+    ],
+    practice: [323, 261, 684, 1466, 310],
+    snippet: '19-unrooted-tree-on-graph-dfs-from-root',
+  },
+
+  '22. Euler Tour / Flattening Tree to Array': {
+    crux: 'DFS entry order numbers every subtree as one contiguous range, so a subtree query becomes an array range query.',
+    signals: [
+      '"Add to a node, then report the sum of the subtree of u", many times: a range structure over the tour.',
+      '"Is u an ancestor of v?" asked many times: compare entry and exit times.',
+      '"For each query (node, val), consider all ancestors": answer offline during one DFS, adding on entry and removing on exit.',
+      'n and q both around 10^5, with queries about whole subtrees.',
+    ],
+    notThis: [
+      'Queries on a path from u to v: a path isn\'t a contiguous range in this order, so use LCA or HLD (sections 23 and 24).',
+      'Just one subtree question: a plain DFS answers it in O(n).',
+      'LC 1483 and LC 2791 are listed here, but they\'re solved by binary lifting and by path masks.',
+    ],
+    concepts: [
+      'tin[u] is when DFS enters u, and tout[u] is the last time used inside u\'s subtree.',
+      'v is in u\'s subtree exactly when tin[u] <= tin[v] <= tout[u].',
+      'Place values at flat[tin[u]], then use a Fenwick or segment tree over flat.',
+      'Doing the work on entry and undoing it on exit restricts a structure to the current root path, as in LC 1938.',
+    ],
+    example: {
+      problem: 'Flatten the tree with edges 0-1, 0-2, 1-3 and values [1,2,3,4], then sum the subtree of node 1',
+      walkthrough: [
+        'dfs(0): tin[0] = 0. Go to node 1: tin[1] = 1. Go to node 3: tin[3] = 2 and tout[3] = 2.',
+        'Back at node 1: tout[1] = 2.',
+        'Go to node 2: tin[2] = 3 and tout[2] = 3. Back at node 0: tout[0] = 3.',
+        'flat[tin[u]] = value[u] gives flat = [1,2,4,3].',
+        'The subtree of node 1 is the range [tin[1], tout[1]] = [1,2], and its sum is 2 + 4 = 6.',
+      ],
+    },
+    code: `def euler_tour(n, g, root=0):
+    tin, tout = [0] * n, [0] * n
+    timer = 0
+    def dfs(u, p):
+        nonlocal timer
+        tin[u] = timer
+        timer += 1
+        for v in g[u]:
+            if v != p:
+                dfs(v, u)
+        tout[u] = timer - 1
+    dfs(root, -1)
+    return tin, tout`,
+    complexity: 'O(n) time and space to flatten. Each later query or update costs O(log n) with a Fenwick or segment tree.',
+    pitfalls: [
+      'Indexing the range structure by node id instead of tin[u]: the ranges only exist in tour order.',
+      'Mixing up an inclusive tout (timer - 1, as here) with an exclusive one (timer).',
+      'The recursive DFS can overflow on a path of 10^5 nodes, so use an explicit stack.',
+      'The version that records a node on both entry and exit has size 2n, so ranges and arrays differ from this one.',
+    ],
+    pointsToPonder: [
+      'Why does a subtree form one contiguous block, while a path generally does not?',
+      'How would "add x to all nodes in a subtree, read one node" be done with this and a Fenwick tree?',
+      'How does the entry-and-exit add/remove trick compare with a persistent structure?',
+    ],
+    practice: [1483, 1938, 2791],
+    snippet: '20-euler-tour-flatten-subtree-to-a-range',
+  },
+
+  '23. Binary Lifting / Sparse Table on Trees': {
+    crux: 'Store each node\'s 2^k-th ancestor. Any jump is a sum of powers of two, so k-th ancestor and LCA queries take O(log n).',
+    signals: [
+      '"Find the kth ancestor of a given node", with up to 5 * 10^4 queries: walking up one step at a time is too slow.',
+      '"Distance between two nodes" for many pairs: depth arithmetic on top of LCA.',
+      '"Maximum edge weight on the path from u to v": store an aggregate alongside each jump.',
+      '"Jump to the k-th node on the path": split the jump at the LCA.',
+    ],
+    notThis: [
+      'Only one LCA query: the O(n) DFS from section 5 is shorter.',
+      'Subtree queries: an Euler tour is simpler (section 22).',
+      'Values on the tree change between path queries: stored aggregates go stale, so use HLD (section 24).',
+    ],
+    concepts: [
+      'up[k][v] = up[k-1][up[k-1][v]]: two jumps of 2^(k-1) make one jump of 2^k.',
+      'LCA: lift the deeper node to the same depth, then lift both while their ancestors differ.',
+      'After that loop, the parent of either node is the LCA.',
+      'Table size is n * LOG, where 2^LOG must be larger than the maximum depth.',
+    ],
+    example: {
+      problem: 'Kth Ancestor of a Tree Node with parent = [-1,0,0,1,1,2,2]',
+      lc: 1483,
+      walkthrough: [
+        'up[0] = [-1,0,0,1,1,2,2]. up[1] takes the parent of the parent: [-1,-1,-1,0,0,0,0]. All later levels are -1.',
+        'getKthAncestor(3,1): k = 1 in binary has bit 0 set, so node = up[0][3] = 1.',
+        'getKthAncestor(5,2): k = 10 in binary has bit 1 set, so node = up[1][5] = 0.',
+        'getKthAncestor(6,3): bit 0 gives up[0][6] = 2, and bit 1 gives up[1][2] = -1. The loop stops and returns -1.',
+      ],
+    },
+    code: `class TreeAncestor:
+    def __init__(self, n, parent):
+        self.LOG = 16  # 2^16 > 5 * 10^4
+        self.up = [parent[:]]
+        for _ in range(1, self.LOG):
+            prev = self.up[-1]
+            self.up.append([prev[prev[v]] if prev[v] != -1 else -1
+                            for v in range(n)])
+    def getKthAncestor(self, node, k):
+        for j in range(self.LOG):
+            if node == -1:
+                break
+            if k >> j & 1:
+                node = self.up[j][node]
+        return node`,
+    complexity: 'O(n log n) time and space to preprocess. O(log n) per query.',
+    pitfalls: [
+      'In Python, up[j][-1] silently reads the last element, so guard against -1 before indexing.',
+      'In the LCA version, set the root\'s parent to itself, or use a guard. Otherwise the table holds invalid indices.',
+      'LOG too small: 2^LOG must exceed the deepest possible jump.',
+      'LCA descent must go from the high bit to the low bit. Going low to high overshoots.',
+    ],
+    pointsToPonder: [
+      'Why must the shared LCA descent stop just below the LCA instead of on it?',
+      'What else could you store next to up[k][v] to answer path maximums?',
+      'How does the Euler tour plus sparse table approach get O(1) LCA queries?',
+    ],
+    practice: [1483],
+    snippet: '21-binary-lifting-lca-in-o-log-n',
+  },
+
+  '24. Centroid Decomposition / Heavy-Light Decomposition': {
+    crux: 'HLD cuts any path into O(log n) array segments, for updates and queries along paths. Centroid decomposition splits the tree at a balancing node, for counting over all paths.',
+    signals: [
+      '"Update a node, then find the maximum on the path from u to v": changing values on paths point to HLD.',
+      '"Count pairs of nodes at distance exactly k": every path passes through some centroid.',
+      '"Nearest marked node", with marks being added over time: store the best distance at each centroid ancestor.',
+      'n and q around 10^5 where a simple per-query walk could be O(n): the tree may be a long chain.',
+    ],
+    notThis: [
+      'Queries cover whole subtrees: an Euler tour is much shorter (section 22).',
+      'Values never change and you only need path sums: root prefixes with LCA are enough (section 23).',
+      'Count Paths That Can Form Palindrome (LC 2791) is listed here, but counting root masks in a hash map solves it in O(26n) (section 28).',
+    ],
+    concepts: [
+      'HLD: the edge to the child with the largest subtree is heavy. Any root path crosses O(log n) light edges.',
+      'Number nodes so each heavy chain is contiguous, then run a segment tree over those numbers.',
+      'A centroid is a node whose removal leaves parts of size at most n/2, so recursion depth is O(log n).',
+      'To find one, walk from any root toward a child whose subtree exceeds n/2, until no such child exists.',
+    ],
+    example: {
+      problem: 'Find the centroid of the path 0-1-2-3-4',
+      walkthrough: [
+        'Rooted at 0, the subtree sizes are size[4] = 1, size[3] = 2, size[2] = 3, size[1] = 4 and size[0] = 5. n // 2 = 2.',
+        'At u = 0, child 1 has size 4, above 2, so move to 1.',
+        'At u = 1, child 2 has size 3, above 2, so move to 2.',
+        'At u = 2, child 3 has size 2, not above 2, so return 2.',
+        'Removing node 2 leaves {0,1} and {3,4}, both of size 2, which is at most n/2.',
+      ],
+    },
+    code: `def find_centroid(n, g):
+    size = [1] * n
+    def dfs(u, p):
+        for v in g[u]:
+            if v != p:
+                dfs(v, u)
+                size[u] += size[v]
+    dfs(0, -1)
+    u, p = 0, -1
+    while True:
+        heavy = next((v for v in g[u]
+                      if v != p and size[v] > n // 2), None)
+        if heavy is None:
+            return u
+        u, p = heavy, u`,
+    complexity: 'Finding a centroid takes O(n). Centroid decomposition does O(n log n) work overall. HLD takes O(n) to build and O(log² n) per path query with a segment tree.',
+    pitfalls: [
+      'HLD: on each step, jump from whichever chain head is deeper, not whichever node is deeper.',
+      'HLD with edge weights: store each weight on the child, and exclude the LCA\'s own position in the last segment.',
+      'Centroid: recompute sizes for each component and skip removed nodes.',
+      'Centroid counting: pairs inside the same child part don\'t pass through the centroid, so subtract them.',
+    ],
+    pointsToPonder: [
+      'Why does a light edge at least double the subtree size as you move up?',
+      'Why does every path pass through exactly one centroid at the highest level that separates its ends?',
+      'For a real interview, how would you check that a simpler technique isn\'t enough first?',
+    ],
+    practice: [2791],
+  },
 }
