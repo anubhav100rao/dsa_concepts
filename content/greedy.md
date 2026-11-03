@@ -9,6 +9,30 @@ order: 50
 ---
 # Greedy Algorithms — Interview Question Bank
 
+**Which pattern do I use?** Find the phrase closest to your problem, then go to that section.
+
+| The problem says | Think | Section |
+|---|---|---|
+| "assign", "pair up", "minimum boats", order of input doesn't matter | Sort, then one pass or pair the ends | 1, 6 |
+| "maximum non-overlapping", "merge overlapping", "minimum rooms or arrows" | Sort intervals by end or start | 2 |
+| "maximum jump length", "reach the last index", "cover the whole range" | Extend the farthest reachable point | 3 |
+| "deadline", "maximum courses you can take", "cooldown between same tasks" | Order by deadline, evict the worst | 4 |
+| "at most k" ladders, refuels or projects, "sum times minimum" | Heap of past choices you can take back | 5 |
+| "lexicographically smallest", "remove k digits", "no two adjacent equal" | Monotonic stack or max-heap | 7, 15 |
+| "maximum subarray sum", "buy and sell many times", "make all equal" | One running quantity | 8 |
+| "connect all at minimum cost", "fewest cameras on a tree" | MST, or decide bottom-up on a tree | 9, 22 |
+| "minimum possible maximum", "within D days", "smallest speed" | Binary search the answer, greedy check | 10 |
+| "each letter in at most one part", "most frequent", "groups of k" | Counts or last positions | 11, 13 |
+| "largest number ≤ n with...", "swap two digits once", "next permutation" | Fix the highest digit first | 12 |
+| "double or subtract 1", "every i-th bulb", "moving by 2 is free" | Find the math rule or work backwards | 14 |
+| "maximum XOR", "binary number per row", "minimum bit flips" | Set the highest bit first | 16, 18 |
+| "circular route", "unique starting station" | Reset the start when the tank goes negative | 17 |
+| "higher rating than neighbors", "except self", "water above each bar" | One pass each way, then combine | 19, 24 |
+| "connect ropes, each merge costs the sum" | Always merge the two smallest | 20 |
+| "arrange to form the largest", "any order allowed" between pairs | Custom comparator, exchange argument | 21 |
+| "longest increasing subsequence", "envelopes fit inside" | Tails array with binary search | 23 |
+| "every number in [1, n] can be formed", hard and n up to 10^5 | Combine lenses: reach, heap, binary search | 25 |
+
 ---
 
 ## 1. Sorting + Greedy (Sort-Then-Decide)

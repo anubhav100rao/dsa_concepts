@@ -1,10 +1,38 @@
 export const greedy = {
   '1. Sorting + Greedy (Sort-Then-Decide)': {
     crux: 'Pick the right sort order, then sweep once making irrevocable local decisions.',
+    signals: [
+      '"Assign", "pair up" or "match" items where you may reorder the input freely: sort first and see what the order gives you.',
+      '"Minimum number of boats" or "minimize the maximum pair sum": sort, then pair from the ends.',
+      '"Form the largest number" or "arrange so that...": the answer depends on a custom sort order.',
+      '"After at most k moves" or "remove three elements" on the extremes: once sorted, only the ends can matter.',
+    ],
+    notThis: [
+      'The original order carries meaning, as in Longest Increasing Subsequence (LC 300): sorting destroys what you are asked about.',
+      'You choose a subset under a weight limit with indivisible items, as in 0/1 knapsack: sorting by ratio can lose, so use DP.',
+    ],
     concepts: [
       'The sort criterion IS the algorithm — end-time, deadline, ratio, or a custom a+b vs b+a comparator each define a different problem.',
       'After sorting, a single linear pass with a small running state (last end, total, count) is usually enough.',
       'Two-pointer pairing (greedy match smallest-with-largest or smallest-with-smallest) is a frequent sub-pattern.',
+    ],
+    example: {
+      problem: 'Assign Cookies with children g = [1,3] and cookies s = [1,2,4]',
+      lc: 455,
+      walkthrough: [
+        'Sort both lists. Here `items` is the cookies, and the state is i, the next hungriest child to feed. Start with i = 0.',
+        'Cookie 1: good, since 1 >= g[0] = 1. Take it, so i = 1.',
+        'Cookie 2: not good, since 2 < g[1] = 3. Skip it, because it can\'t satisfy anyone still waiting.',
+        'Cookie 4: good, since 4 >= g[1] = 3. Take it, so i = 2.',
+        'Both children are fed, so the answer is 2.',
+      ],
+    },
+    complexity: 'O(n log n) time for the sort, then one O(n) pass. O(1) extra space beyond the sort.',
+    pitfalls: [
+      'Reaching for the first sort key that comes to mind: Two City Scheduling (LC 1029) sorts by the cost difference, not by either cost.',
+      'Writing a C++ comparator with `<=` or `>=`: it must be a strict ordering, or sort can crash.',
+      'Spending the largest resource on the smallest need: in LC 455, feed each child the smallest cookie that fits.',
+      'Forgetting that a greedy pass can leave one item unpaired, as with the last person in Boats to Save People (LC 881).',
     ],
     pointsToPonder: [
       'Why does this particular sort order yield a globally optimal answer and not just a locally good one?',
@@ -18,6 +46,8 @@ for x in items:
     if good(x, state):
         take(x)
         state = update(state, x)`,
+    practice: [455, 1502, 881, 1029, 1877],
+    snippet: '12-assign-cookies',
   },
 
   '2. Interval Scheduling / Merging': {
@@ -74,10 +104,38 @@ for s, e in intervals:
 
   '3. Jump Game Family (Greedy Range Extension)': {
     crux: 'Track the farthest index reachable so far; extend the "current frontier" lazily.',
+    signals: [
+      '"Each element is your maximum jump length": track the farthest reachable index.',
+      '"Can you reach the last index?" asks about reachability, and "minimum number of jumps" asks about levels.',
+      '"Minimum number of clips, taps or stations to cover the whole range": each option extends a reachable frontier.',
+    ],
+    notThis: [
+      'You must jump exactly arr[i] in either direction, as in Jump Game III (LC 1306): the moves aren\'t ranges, so use BFS.',
+      'The next jump depends on the last one, as in Frog Jump (LC 403): the state includes the jump size, so use DP.',
+      'Forbidden positions and a limit on backward moves, as in Minimum Jumps to Reach Home (LC 1654): use BFS with a state for direction.',
+    ],
     concepts: [
       'Reachability (Jump Game I): walk left-to-right, if i > farthest you are stuck; else farthest = max(farthest, i + nums[i]).',
       'Min jumps (Jump Game II): BFS-like — `end` marks the boundary of the current jump level; when i == end, you must spend a jump and advance end to farthest.',
       'Refueling / taps / video stitching: treat reachable range as the state and pick the option that extends it the most.',
+    ],
+    example: {
+      problem: 'Jump Game II with nums = [2,3,1,1,4]',
+      lc: 45,
+      walkthrough: [
+        'Start with farthest = 0, end = 0 and jumps = 0. The loop stops before the last index.',
+        'i = 0: farthest = max(0, 0+2) = 2. Since i == end, spend a jump: jumps = 1 and end = 2.',
+        'i = 1: farthest = max(2, 1+3) = 4. i is not at end.',
+        'i = 2: farthest = max(4, 2+1) = 4. Since i == end, spend a jump: jumps = 2 and end = 4.',
+        'i = 3: farthest stays 4, and i is not at end. The loop finishes, so the answer is 2.',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space for the Jump Game pair. Refueling Stops adds a heap: O(n log n) time and O(n) space.',
+    pitfalls: [
+      'Looping up to the last index in Jump Game II: at i == n-1 with i == end, you count one jump too many.',
+      'Updating farthest only at the boundary: every index in the current level must get a chance to extend it.',
+      'In Jump Game I, reading nums[i] before checking i > farthest: an unreachable index must not extend the range.',
+      'In Video Stitching (LC 1024), not checking for a gap: if farthest doesn\'t grow at the boundary, return -1.',
     ],
     pointsToPonder: [
       'Why is updating farthest at every i (not just at the boundary) the correct invariant?',
@@ -91,14 +149,44 @@ for i in range(len(nums) - 1):
     if i == end:
         jumps += 1
         end = farthest`,
+    practice: [55, 45, 1024, 1326, 871],
+    snippet: '7-jump-game-ii',
   },
 
   '4. Activity Selection / Scheduling': {
     crux: 'Order tasks by a deadline/priority, then either greedily accept or swap out a worse past pick.',
+    signals: [
+      '"Deadline", "must finish by day d" or "lastDay": sort by deadline.',
+      '"Maximum number of courses or tasks you can complete": count what fits, and evict if it doesn\'t.',
+      '"The CPU picks the shortest available task", as in LC 1834: simulate with a heap of ready tasks.',
+      '"The same task must be n units apart": the most frequent task sets the layout, so count frequencies.',
+    ],
+    notThis: [
+      'Jobs have profits and fixed time ranges, as in Maximum Profit in Job Scheduling (LC 1235): use DP with binary search.',
+      'Sessions have a capacity and n is at most 14, as in Minimum Number of Work Sessions (LC 1986): use bitmask DP.',
+    ],
     concepts: [
       'Earliest-deadline-first ordering is the default for deadline-bounded scheduling.',
       'A max-heap of accepted tasks enables "regret": if a new task does not fit, evict the worst already accepted if it is worse than the new one.',
       'Task Scheduler with cooldown is a counting problem, not a sort problem: layout governed by the most frequent task.',
+    ],
+    example: {
+      problem: 'Course Schedule III with courses = [[3,4],[2,5],[1,5]] as [duration, deadline]',
+      lc: 630,
+      walkthrough: [
+        'Sorting by deadline keeps the order [3,4], [2,5], [1,5]. Start with an empty heap and time = 0.',
+        '[3,4]: push 3, so time = 3. Since 3 <= 4, keep it.',
+        '[2,5]: push 2, so time = 5. Since 5 <= 5, keep it.',
+        '[1,5]: push 1, so time = 6. Since 6 > 5, drop the longest course (3), so time = 3.',
+        'The heap holds durations 2 and 1, so the answer is 2 courses.',
+      ],
+    },
+    complexity: 'O(n log n) time for the sort and the heap operations. O(n) space for the heap.',
+    pitfalls: [
+      'Sorting Course Schedule III by duration: a short course with a late deadline can crowd out an urgent one.',
+      'Dropping the course you just added rather than the longest one: only evicting the longest frees the most time.',
+      'Skipping the max() in the Task Scheduler formula: with many distinct tasks, the answer is tasks.size() with no idle time.',
+      'In Single-Threaded CPU (LC 1834), not jumping the clock forward when no task is ready, which leaves the loop stuck.',
     ],
     pointsToPonder: [
       'When is pure greedy (no swap) optimal vs when do you NEED a regret heap?',
@@ -113,14 +201,44 @@ for dur, ddl in courses:
     time += dur
     if time > ddl:
         time += heapq.heappop(heap)  # drop longest`,
+    practice: [435, 646, 1353, 621, 630],
+    snippet: '26-greedy-with-priority-queue-course-schedule-iii',
   },
 
   "5. Greedy + Heap (Regret-Based / Exchange Argument)": {
     crux: 'Commit greedily as you go, but keep a heap of past decisions so you can "undo" the worst one when a better option appears.',
+    signals: [
+      '"At most k" of something scarce, with ladders, refuels or projects: spend it now and reassign it later if a better use appears.',
+      '"Use the ladders on the largest climbs" or "how far can you get?": keep the commitments you might want to take back.',
+      '"Pick k items to maximize sum times minimum": sort by one factor and keep the best k of the other in a heap.',
+      '"You may only start a project once you have enough capital": unlock options in order and always take the best unlocked one.',
+    ],
+    notThis: [
+      'A yes/no check gets easy once the answer is fixed, as in Maximum Running Time of N Computers (LC 2141): binary search the answer.',
+      'The task reduces to matching order, as in Minimum Operations to Make a Subsequence (LC 1713): map to indices and run LIS.',
+    ],
     concepts: [
       'Pattern: scan in some order → push current into heap → if constraint violated, pop the worst.',
       'Course Schedule III, IPO, Minimum Refueling Stops, Furthest Building are all this exact pattern with different "worst" definitions.',
       'The heap is not a priority queue of FUTURE options — it is a priority queue of PAST commitments you may want to revoke.',
+    ],
+    example: {
+      problem: 'Minimum Number of Refueling Stops with target = 100, startFuel = 10, stations = [[10,60],[20,30],[30,30],[60,40]]',
+      lc: 871,
+      walkthrough: [
+        'fuel = 10 means we can reach position 10. Push the only reachable station, so the heap holds {60}.',
+        'Pop 60: fuel = 70 and stops = 1.',
+        'fuel = 70 < 100, so push the stations at 20, 30 and 60. The heap holds {30, 30, 40}.',
+        'Pop 40: fuel = 110 and stops = 2.',
+        'fuel >= target ends the loop, so the answer is 2.',
+      ],
+    },
+    complexity: 'O(n log n) time, since each item is pushed and popped at most once. O(n) space for the heap.',
+    pitfalls: [
+      'Forgetting that Python\'s heapq is a min-heap: store negated values for a max-heap, and negate again on pop.',
+      'Pushing all stations up front instead of only reachable ones: you would be refueling at a place you can\'t get to.',
+      'Choosing the wrong thing to regret: in LC 1642 the heap holds ladder climbs, and the smallest one moves to bricks.',
+      'In LC 2542 and LC 1383, leaving the score unchecked until the heap is full: only a full k-sized heap gives a valid answer.',
     ],
     pointsToPonder: [
       'What is the regret quantity for this problem (longest duration? smallest fuel? shortest ladder use?)?',
@@ -136,14 +254,44 @@ while fuel < target:
     if not heap: return -1
     fuel += -heapq.heappop(heap); stops += 1
 return stops`,
+    practice: [1642, 2542, 630, 871, 502],
+    snippet: '27-minimum-refueling-stops',
   },
 
   '6. Two Pointer Greedy': {
     crux: 'Two pointers from opposite ends; on each step, move the one whose move cannot improve the answer.',
+    signals: [
+      '"Sorted array" plus "find a pair" or "closest to target": move the end that can\'t help.',
+      '"Two lines that form a container": the shorter side caps the result, so it moves.',
+      '"Each boat holds at most two people", or any "pair lightest with heaviest" rule: sort and pair from the ends.',
+      '"Do it in place with O(1) extra space" on an array: one pointer reads and the other writes.',
+    ],
+    notThis: [
+      'Subarray sums with negative numbers, as in Subarray Sum Equals K (LC 560): moving a pointer isn\'t safe, so use prefix sums and a hash map.',
+      'Partition Labels (LC 763) sits in this list, but it depends on the last position of each letter, so see section 11.',
+    ],
     concepts: [
       'Container With Most Water: area is bounded by the shorter wall, so move the shorter pointer — the taller one cannot improve area while paired with anything shorter.',
       'Boats / Assign Cookies: pair smallest-with-largest (or smallest-with-smallest) to satisfy a capacity constraint.',
       '3Sum / 3Sum Closest: fix one, then two-pointer the rest of a sorted array.',
+    ],
+    example: {
+      problem: 'Container With Most Water with h = [1,8,6,2,5]',
+      lc: 11,
+      walkthrough: [
+        'l = 0, r = 4: area = min(1,5) * 4 = 4, so best = 4. h[l] < h[r], so move l to 1.',
+        'l = 1, r = 4: area = min(8,5) * 3 = 15, so best = 15. h[l] >= h[r], so move r to 3.',
+        'l = 1, r = 3: area = min(8,2) * 2 = 4, so best stays 15. Move r to 2.',
+        'l = 1, r = 2: area = min(8,6) * 1 = 6, so best stays 15. Move r to 1.',
+        'l == r ends the loop, so the answer is 15.',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space, plus O(n log n) if the input must be sorted first. 3Sum costs O(n^2).',
+    pitfalls: [
+      'Moving the taller wall: the width shrinks and the height is still capped by the shorter wall, so the area can\'t improve.',
+      'Using `l <= r` when a pair needs two distinct elements. Boats (LC 881) does want `<=`, since one person can ride alone.',
+      'In 3Sum (LC 15), skipping duplicates only at the fixed index: the two inner pointers need skipping too.',
+      'Applying the sorted-array move to unsorted input, as in Two Sum (LC 1): moving a pointer no longer tells you anything.',
     ],
     pointsToPonder: [
       'Why is moving the smaller-side pointer always safe (no better partner exists on its side)?',
@@ -156,14 +304,44 @@ while l < r:
     best = max(best, min(h[l], h[r]) * (r - l))
     if h[l] < h[r]: l += 1
     else: r -= 1`,
+    practice: [455, 977, 167, 881, 11],
+    snippet: '30-two-pointer-greedy-pairing',
   },
 
   '7. Greedy String Construction / Manipulation': {
     crux: 'Build the answer char by char; use a stack to retract earlier choices that turned out worse.',
+    signals: [
+      '"Lexicographically smallest" or "smallest possible number" after removing characters: a stack retracts bad earlier picks.',
+      '"Remove k digits" or "most competitive subsequence of size k": you have a fixed budget of removals.',
+      '"Each letter exactly once, in smallest order": the stack rule plus a check that the letter appears again later.',
+      '"No two adjacent characters are the same" or "at most k in a row": always emit the most plentiful legal character from a heap.',
+    ],
+    notThis: [
+      'Any rotation or swap is allowed, as in Orderly Queue (LC 899): reachability decides the answer, so analyze the operation first.',
+      'You must keep a contiguous piece, as in Last Substring in Lexicographic Order (LC 1163): subsequence stack rules don\'t apply.',
+    ],
     concepts: [
       'Lexicographic-smallest result + budget of K removals → monotonic increasing stack; pop while top > current and budget remains.',
       'Remove Duplicate Letters: same stack pattern, but also enforce "do not pop the last occurrence".',
       'For "largest" or "reorganize" variants, use a max-heap of (count, char) to always emit the most-available legal char.',
+    ],
+    example: {
+      problem: 'Remove K Digits with num = "1432219" and k = 3',
+      lc: 402,
+      walkthrough: [
+        '1 and then 4: nothing to pop, so the stack is 1 4.',
+        '3: pop 4 since 4 > 3, so k = 2 and the stack is 1 3.',
+        '2: pop 3, so k = 1 and the stack is 1 2. The next 2 isn\'t smaller, so the stack is 1 2 2.',
+        '1: pop one 2, so k = 0 and the stack is 1 2 1. The budget is spent, so 9 just goes on: 1 2 1 9.',
+        'k = 0, so nothing is trimmed from the end and there are no leading zeros. The answer is "1219".',
+      ],
+    },
+    complexity: 'O(n) time, since each character is pushed and popped at most once. O(n) space for the stack. Heap variants take O(n log A) for alphabet size A.',
+    pitfalls: [
+      'Leaving k unused on a rising input: "12345" with k = 2 pops nothing, so trim the last k characters to get "123".',
+      'Forgetting leading zeros and the empty result: "10200" with k = 1 gives "200", and "10" with k = 2 gives "0".',
+      'In Remove Duplicate Letters (LC 316), popping a letter that never appears again, or adding one already in the stack.',
+      'In Reorganize String (LC 767), not returning "" when a letter appears more than (n+1)/2 times.',
     ],
     pointsToPonder: [
       'When is it safe to pop a character you already placed (will it appear again later)?',
@@ -178,14 +356,46 @@ for c in num:
     stack.append(c)
 result = ''.join(stack[:len(stack)-k]).lstrip('0')
 return result or '0'`,
+    practice: [402, 1081, 316, 767, 321],
+    snippet: '18-greedy-with-monotonic-stack-remove-k-digits',
   },
 
   '8. Greedy Array Manipulation / Transformation': {
     crux: 'Maintain a small running quantity (current sum, min seen, deficit) and make local decisions against it.',
+    signals: [
+      '"Maximum sum of a contiguous subarray": decide at each element whether to extend or restart.',
+      '"You may buy and sell as many times as you like": collect every upward step.',
+      '"Minimum moves to make all elements equal": look for a target value such as the median or the minimum.',
+      '"Minimum increments to make the array unique": sort and push each value just past the previous one.',
+    ],
+    notThis: [
+      'A cap on transactions, as in Best Time to Buy and Sell Stock IV (LC 188): collecting every rise breaks the cap, so use DP.',
+      'Signs can flip the result, as in Maximum Product Subarray (LC 152): a plain Kadane misses it, so track both max and min.',
+      'A window with an exact target, as in Minimum Operations to Reduce X to Zero (LC 1658): turn it into a sliding window.',
+    ],
     concepts: [
       "Kadane: cur = max(x, cur + x) — restart when prefix becomes a liability.",
       'Best Time to Buy/Sell I: track running min, take max(profit, price - min).',
       'Gas Station: total≥0 ⇒ a solution exists; the unique start is the index right after the last "tank goes negative".',
+    ],
+    example: {
+      problem: 'Maximum Subarray with nums = [-2,1,-3,4,-1,2]',
+      lc: 53,
+      walkthrough: [
+        'Start with cur = best = -2.',
+        'x = 1: cur = max(1, -1) = 1, so best = 1.',
+        'x = -3: cur = max(-3, -2) = -2, so best stays 1.',
+        'x = 4: cur = max(4, 2) = 4, so best = 4.',
+        'x = -1: cur = max(-1, 3) = 3, so best stays 4.',
+        'x = 2: cur = max(2, 5) = 5, so best = 5. The answer is 5, from [4,-1,2].',
+      ],
+    },
+    complexity: 'O(n) time and O(1) space for the running-state problems. Add O(n log n) where sorting is needed.',
+    pitfalls: [
+      'Starting cur and best at 0: with all-negative input like [-3,-1] the answer is -1, not 0.',
+      'Using the mean in LC 462: the median is what minimizes the sum of absolute differences.',
+      'In Gas Station (LC 134), returning the start without checking that total gas covers total cost.',
+      'In Product of Array Except Self (LC 238), dividing the total product: a zero in the input breaks it.',
     ],
     pointsToPonder: [
       'Why does Kadane\'s reset rule never miss the global maximum subarray?',
@@ -197,14 +407,45 @@ cur = best = nums[0]
 for x in nums[1:]:
     cur = max(x, cur + x)
     best = max(best, cur)`,
+    practice: [976, 122, 53, 134, 238],
+    snippet: '21-max-profit-stock-buy-sell-multiple-transactions',
   },
 
   '9. Greedy Graph / Tree': {
     crux: 'For graphs: sort edges + union-find (Kruskal) or grow a tree (Prim). For trees: post-order, decide at each node from its children.',
+    signals: [
+      '"Connect all points or cities at minimum total cost": build a minimum spanning tree.',
+      '"Fewest cameras" or "minimum moves" on a binary tree: decide bottom-up, from the children to the parent.',
+      '"Sum of distances for every node": compute one root, then reroot in O(1) per edge.',
+      '"Assign importance values to nodes" or "pick up to k neighbors": sort by degree or edge value.',
+    ],
+    notThis: [
+      'Cheapest route between two nodes, as in Network Delay Time (LC 743): an MST minimizes the total edge weight, not a path, so use Dijkstra.',
+      'A rooted subtree choice with several interacting states, as in House Robber III (LC 337): use tree DP, since a local rule isn\'t enough.',
+      'Edges are directed, as in Detonate the Maximum Bombs (LC 2101): there is no MST to build, so run BFS or DFS from each node.',
+    ],
     concepts: [
       'MST cut property: the lightest edge crossing any cut is in some MST — justifies Kruskal/Prim greedy.',
       'Tree DP-greedy: at a node, aggregate child answers and make a local decision (Binary Tree Cameras, Distribute Coins).',
       'Rerooting: compute answer for one root, then transition to neighbors in O(1) — turns O(n²) into O(n).',
+    ],
+    example: {
+      problem: 'Connecting Cities With Minimum Cost, with cities numbered 0 to 3 and edges [0,1,1], [1,2,2], [0,2,3], [2,3,4]',
+      lc: 1135,
+      walkthrough: [
+        'The edges are already sorted by weight. Each city starts as its own component, and total = 0.',
+        '[0,1,1]: different components, so union them. total = 1.',
+        '[1,2,2]: different components, so union them. total = 3.',
+        '[0,2,3]: 0 and 2 are already connected, so skip this edge to avoid a cycle.',
+        '[2,3,4]: different components, so union them. total = 7, and the answer is 7.',
+      ],
+    },
+    complexity: 'Kruskal takes O(E log E) time for the sort and O(V) space. Tree post-order takes O(n) time and O(h) stack space.',
+    pitfalls: [
+      'Not checking connectivity: if fewer than n-1 unions happened, the graph is disconnected and LC 1135 expects -1.',
+      'Using 0-based arrays on 1-based city labels, as in LC 1135: allocate n+1 or shift the labels.',
+      'In Binary Tree Cameras (LC 968), treating a null child as needing coverage: count it as covered, or you add extra cameras at the leaves.',
+      'In Distribute Coins (LC 979), losing the sign: pass up the signed excess and add its absolute value to the moves.',
     ],
     pointsToPonder: [
       'Why does picking the locally-cheapest edge (Kruskal) never trap you globally?',
@@ -218,14 +459,43 @@ total = 0
 for u, v, w in edges:
     if find(u) != find(v):
         union(u, v); total += w`,
+    practice: [1557, 1319, 1584, 1135, 968],
   },
 
   '10. Greedy + Binary Search': {
     crux: 'Binary search the answer; verify feasibility with a greedy O(n) check.',
+    signals: [
+      '"Minimum possible maximum" or "maximum possible minimum": binary search that answer.',
+      '"Smallest capacity or speed so that it finishes within D days or h hours": the check gets easier as the value grows.',
+      '"Split into k contiguous parts" with a limit on each: greedy packing answers the yes/no check.',
+      'Values up to 10^9 alongside n up to 10^5: search the value range instead of the input.',
+    ],
+    notThis: [
+      'Items can go to any group, as in Find Minimum Time to Finish All Jobs (LC 1723): left-to-right packing isn\'t optimal, so use backtracking or bitmask DP.',
+      'The check isn\'t monotonic: if a larger value can turn a yes into a no, binary search can skip the answer.',
+    ],
     concepts: [
       'Predicate must be MONOTONIC in the search variable (if X works, X+1 also works — or vice versa).',
       'The crux is the feasibility function: usually a one-pass greedy simulation.',
       'Split-Array-Largest-Sum / Ship-Packages: search the max-group-sum; greedy packs left-to-right.',
+    ],
+    example: {
+      problem: 'Capacity to Ship Packages with weights = [1,2,3,4] and D = 2',
+      lc: 1011,
+      walkthrough: [
+        'lo = max(weights) = 4 and hi = sum(weights) = 10.',
+        'mid = 7: load 1, 3, 6, and adding 4 would make 10 > 7, so start day 2 with load 4. That takes 2 days, which works, so hi = 7.',
+        'mid = 5: load 1, 3, and adding 3 makes 6 > 5, so day 2 has load 3. Adding 4 makes 7 > 5, so day 3. That takes 3 days, which fails, so lo = 6.',
+        'mid = 6: load 1, 3, 6, then adding 4 starts day 2. That takes 2 days, which works, so hi = 6.',
+        'lo == hi = 6, so the answer is 6, shipping [1,2,3] and then [4].',
+      ],
+    },
+    complexity: 'O(n log R) time, where R is the search range (here sum - max). O(1) extra space.',
+    pitfalls: [
+      'Setting lo below max(weights): one package could never fit, and the check quietly loads it anyway.',
+      'Using the minimize template to maximize: with lo = mid you need mid = (lo + hi + 1) // 2, or the loop never ends.',
+      'Resetting load to 0 when a package overflows and then skipping it: the current package must start the new day\'s load.',
+      'In C++, letting sums overflow int: LC 1482, LC 2187 and LC 2861 all need 64-bit values.',
     ],
     pointsToPonder: [
       'How do you prove monotonicity? (often "more budget ⇒ more capability")',
@@ -245,14 +515,43 @@ while lo < hi:
     mid = (lo + hi) // 2
     if canShip(mid): hi = mid
     else: lo = mid + 1`,
+    practice: [875, 1011, 1482, 1552, 410],
   },
 
   '11. Greedy Counting / Frequency': {
     crux: 'Counter + a rule keyed on max frequency (or "last seen index" for partitioning).',
+    signals: [
+      '"Each letter appears in at most one part": record each letter\'s last position.',
+      '"Same task must wait n intervals" or "no two adjacent equal": the most frequent item decides feasibility.',
+      '"Remove the fewest elements" so that the unique count or set size hits a target: count, sort the counts, take from one end.',
+      '"Groups of k consecutive cards": count values and consume from the smallest.',
+    ],
+    notThis: [
+      'A fixed-size window over a string, as in Find All Anagrams in a String (LC 438): the counts slide, so use a sliding window.',
+      'Which items you pick changes later options, as in Minimum Deletions variants with costs: when each deletion has a price, compare with DP.',
+    ],
     concepts: [
       'Partition Labels: precompute last[c]; extend partition end = max(end, last[c]) until i == end.',
       'Task Scheduler with cooldown k: answer = max(n, (max_freq - 1) * (k + 1) + count_of_max).',
       'Min Deletions for Unique Frequencies: decrement collisions; greedy walks frequencies downward.',
+    ],
+    example: {
+      problem: 'Partition Labels with s = "abaccd"',
+      lc: 763,
+      walkthrough: [
+        'Last positions: a = 2, b = 1, c = 4, d = 5. Start with start = 0 and end = 0.',
+        'i = 0 (a): end = 2. i = 1 (b): end stays 2.',
+        'i = 2 (a): end stays 2 and i == end, so close a part of size 3. start = 3.',
+        'i = 3 (c): end = 4. i = 4 (c): i == end, so close a part of size 2. start = 5.',
+        'i = 5 (d): end = 5 and i == end, so close a part of size 1. The answer is [3,2,1].',
+      ],
+    },
+    complexity: 'O(n) time for counting, and O(k) space for k distinct values. Sorting the counts adds O(k log k).',
+    pitfalls: [
+      'Closing a partition before reaching end: a letter inside the part can push the boundary further out.',
+      'Using the count-based Task Scheduler answer without max(n, ...): it undercounts when no idling is needed.',
+      'In Minimum Rounds (LC 2244), missing that a count of 1 is impossible, so return -1.',
+      'In Hand of Straights (LC 846), starting a group anywhere other than the smallest remaining card.',
     ],
     pointsToPonder: [
       'Why does the "extend to max last-seen" rule always produce the maximum number of partitions?',
@@ -266,14 +565,44 @@ for i, c in enumerate(s):
     end = max(end, last[c])
     if i == end:
         parts.append(i - start + 1); start = i + 1`,
+    practice: [1481, 1338, 763, 1647, 621],
+    snippet: '20-partition-labels',
   },
 
   '12. Greedy Digit / Number Construction': {
     crux: 'Walk digits left-to-right (for max) or right-to-left (for monotone fix-up) and patch the first violation with 9s.',
+    signals: [
+      '"Largest number less than or equal to n" with a digit rule: find the first violation and pad with 9s.',
+      '"You can swap two digits at most once" for the largest result: swap an early digit with the largest later one.',
+      '"Next greater number using the same digits": find the pivot from the right, as in Next Permutation.',
+      '"Remove k digits", or "smallest number" after deleting: earlier digits outweigh later ones, so fix them first.',
+    ],
+    notThis: [
+      'Counting numbers up to n with a digit rule, as in Numbers At Most N Given Digit Set (LC 902): this is counting, so use digit DP.',
+      'Exact arithmetic with repeats, as in Fraction to Recurring Decimal (LC 166): do long division and use a hash map of remainders.',
+    ],
     concepts: [
       'Monotone Increasing Digits: scan right-to-left, on a drop decrement the left digit and 9-pad to the right.',
       'Maximum Swap: for each digit, swap with the LATEST occurrence of the largest digit to its right.',
       'Next Permutation: find first decreasing pair from the right, swap with the smallest-larger suffix digit, reverse the suffix.',
+    ],
+    example: {
+      problem: 'Monotone Increasing Digits with n = 332',
+      lc: 738,
+      walkthrough: [
+        'd = [3,3,2] and marker = 3.',
+        'i = 2: d[1] = 3 > d[2] = 2, so d[1] becomes 2 and marker = 2. Now d = [3,2,2].',
+        'i = 1: d[0] = 3 > d[1] = 2, so d[0] becomes 2 and marker = 1. Now d = [2,2,2].',
+        'Fill from marker to the end with 9s: d = [2,9,9].',
+        'The answer is 299.',
+      ],
+    },
+    complexity: 'O(d) time and O(d) space for d digits, plus any sort for reordering problems like Largest Number.',
+    pitfalls: [
+      'Scanning Monotone Increasing Digits left to right: a decrement can create a new violation to its left, as in 332.',
+      'Forgetting a leading zero: 10 becomes "09", so convert back to an integer.',
+      'In Maximum Swap (LC 670), using the first occurrence of the max: 1993 needs the last 9 to reach 9913, not 9193.',
+      'In Next Greater Element III (LC 556), not checking that the result fits in 32 bits, which must return -1.',
     ],
     pointsToPonder: [
       'For Max Swap, why is "swap with the LAST occurrence of the max" required and not just any occurrence?',
@@ -289,14 +618,44 @@ for i in range(len(d) - 1, 0, -1):
         marker = i
 for i in range(marker, len(d)):
     d[i] = '9'`,
+    practice: [66, 738, 670, 31, 402],
+    snippet: '18-greedy-with-monotonic-stack-remove-k-digits',
   },
 
   '13. Greedy Partitioning / Splitting': {
     crux: 'Extend the current partition until a closing condition is forced; then start a new one.',
+    signals: [
+      '"Split into the maximum number of parts" or "fewest substrings" under a local rule: close a part only when forced, or as soon as allowed.',
+      '"Each part has unique characters" or "value at most k": extend until the next element breaks the rule.',
+      '"Balanced strings" or "equal sum parts": a running count hits a target that marks a cut.',
+    ],
+    notThis: [
+      'Each part has a cost tied to its contents, as in Minimum Cost to Split an Array (LC 2547): one early cut can cost more later, so use DP.',
+      'Part value depends on a max across the part, as in Partition Array for Maximum Sum (LC 1043): try every part length with DP.',
+      'Cuts are scored in pairs, as in Put Marbles in Bags (LC 2551): sort the adjacent pair sums rather than scan.',
+    ],
     concepts: [
       'Partition Labels: close when i reaches max last-seen.',
       'Optimal Partition of String: close when adding the next char would introduce a duplicate.',
       'Split Array Largest Sum: when paired with binary search, the greedy "extend until > cap, then close" packs optimally.',
+    ],
+    example: {
+      problem: 'Optimal Partition of String with s = "abacaba"',
+      lc: 2405,
+      walkthrough: [
+        'Start with count = 1 and an empty set.',
+        'a and b are new, so seen = {a, b}.',
+        'a is a repeat, so count = 2 and seen = {a}. c is new, so seen = {a, c}.',
+        'a is a repeat, so count = 3 and seen = {a}. b is new, so seen = {a, b}.',
+        'a is a repeat, so count = 4 and seen = {a}. The answer is 4: "ab", "ac", "ab", "a".',
+      ],
+    },
+    complexity: 'O(n) time and O(alphabet) space for the scan. With binary search on top, as in LC 410: O(n log R).',
+    pitfalls: [
+      'Starting count at 0: the first part exists before any cut, so count starts at 1.',
+      'Clearing the set on a cut without adding the current character: it belongs to the new part.',
+      'In LC 2522, not returning -1 when a single digit already exceeds k.',
+      'In LC 1013, stopping at exactly three cuts: with sum 0, as in [0,0,0,0], count at least three parts instead.',
     ],
     pointsToPonder: [
       'Why is "close at the earliest legal moment" always optimal for these problems?',
@@ -310,6 +669,8 @@ for c in s:
         count += 1; seen = {c}
     else:
         seen.add(c)`,
+    practice: [1221, 1013, 2405, 763, 410],
+    snippet: '20-partition-labels',
   },
 
   '14. Greedy with Math / Geometry': {
