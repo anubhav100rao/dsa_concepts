@@ -1,5 +1,7 @@
 ## 1. Graph representation
 
+**Use when:** Every graph problem starts here: pick an adjacency list, weighted or not, or move on a grid with direction arrays.
+
 ### Adjacency list — unweighted
 
 ```cpp
@@ -31,9 +33,23 @@ bool valid(int x, int y, int n, int m) {
 }
 ```
 
+**Complexity:** The adjacency list takes O(V + E) space, and adding an edge is O(1). `valid` is O(1).
+
+**Example:** With n = 3 and edges 0-1, 1-2, you get `g = [[1], [0, 2], [1]]`. On a 2 x 2 grid, `valid(1, 1, 2, 2)` is true and `valid(0, 2, 2, 2)` is false.
+
+**Pitfalls:**
+
+- Forgetting the reverse edge for undirected input, or adding one for directed input.
+- 1-indexed input needs `g(n + 1)`.
+- On a grid, `n` is rows and `m` is columns. Swapping them only shows up on non-square grids.
+
+**Used in:** LC 200, LC 207, LC 743, LC 1091
+
 ---
 
 ## 2. DFS — connected components
+
+**Use when:** "Count connected components / provinces" or "can every room be reached?"
 
 ```cpp
 vector<int> vis(n, 0);
@@ -58,9 +74,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(V + E) time, and O(V) space for `vis` and the recursion.
+
+**Example:** With n = 5 and edges 0-1, 1-2, 3-4, the result is `components = 2`.
+
+**Pitfalls:**
+
+- Deep recursion on a long chain can overflow the stack. Use an explicit stack when V is about 10^5.
+- Visited nodes are never unmarked, so this only covers nodes. It doesn't list paths.
+
+**Used in:** LC 323, LC 547, LC 841, LC 200
+
 ---
 
 ## 3. BFS — unweighted shortest path
+
+**Use when:** "Minimum number of moves / steps" when every edge costs the same.
 
 ```cpp
 vector<int> dist(n, -1);
@@ -82,11 +111,22 @@ while (!q.empty()) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With n = 4 and edges 0-1, 1-2, 0-3 from src = 0, you get `dist = [0, 1, 2, 1]`.
+
+**Pitfalls:**
+
+- Set dist when pushing, not when popping, or a node gets queued many times.
+- `dist == -1` means unreachable. Don't take max(dist) without handling it.
+
+**Used in:** LC 433, LC 752, LC 815, LC 1306
+
 ---
 
 ## 4. Multi-source BFS
 
-Use for nearest hospital/restaurant/zero/rotten orange.
+**Use when:** "Distance to the nearest X" for every cell, or "everything spreads at the same time each minute".
 
 ```cpp
 queue<pair<int,int>> q;
@@ -117,9 +157,23 @@ while (!q.empty()) {
 }
 ```
 
+**Complexity:** O(n x m) time and space, however many sources there are.
+
+**Example:** With grid `[[S, ., #], [., ., S]]`, you get `dist = [[0, 1, -1], [1, 1, 0]]`.
+
+**Pitfalls:**
+
+- Running one BFS per source is O(k x n x m), but seeding all of them at once gives the same nearest distances.
+- Blocked cells keep -1, so tell "wall" apart from "unreachable" if the answer needs it.
+- LC 994: also check that no fresh orange is left at the end.
+
+**Used in:** LC 542, LC 994, LC 286, LC 1162, LC 1765
+
 ---
 
 ## 5. Cycle detection — undirected graph DFS
+
+**Use when:** "Does this undirected graph contain a cycle?" or "is it a valid tree?"
 
 ```cpp
 vector<int> vis(n, 0);
@@ -148,9 +202,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** The triangle 0-1-2 gives `hasCycle = true`. The path 0-1-2 gives `false`.
+
+**Pitfalls:**
+
+- Parallel edges: `v != parent` skips both copies of u-v and misses the 2-cycle. Track the edge id instead.
+- Don't use this on directed graphs: a visited node there isn't always on the current path.
+
+**Used in:** LC 261, LC 684
+
 ---
 
 ## 6. Cycle detection — directed graph DFS
+
+**Use when:** "Can all courses be finished?" or "which nodes are eventually safe?" on a directed graph.
 
 ```cpp
 vector<int> color(n, 0);
@@ -178,9 +245,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** 0→1→2→0 gives `hasCycle = true`. The diamond 0→1, 0→2, 1→2 gives `false`, because 2 is already done (color 2) when it is reached a second time.
+
+**Pitfalls:**
+
+- A two-state visited array reports false cycles on diamonds. You need the "visiting" color.
+- For LC 802, the nodes that end with color 2 are the safe ones, so keep going rather than stopping at the first cycle.
+
+**Used in:** LC 207, LC 802, LC 210
+
 ---
 
 ## 7. Topological sort — Kahn’s algorithm
+
+**Use when:** "Prerequisites" or "must come before": return an order, or report that none exists.
 
 ```cpp
 vector<int> indegree(n, 0);
@@ -217,9 +297,23 @@ while (!q.empty()) {
 bool hasCycle = topo.size() != n;
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With edges 0→1, 0→2, 1→3, 2→3, you get `topo = [0, 1, 2, 3]` and `hasCycle = false`.
+
+**Pitfalls:**
+
+- Reversed edges: in LC 207, [a, b] means b → a.
+- Compare `topo.size()` with n. A cycle leaves some nodes with in-degree above 0.
+- Use a min-heap instead of the queue when the smallest order in lexical terms is needed.
+
+**Used in:** LC 207, LC 210, LC 2115, LC 1136, LC 269
+
 ---
 
 ## 8. Topological sort — DFS
+
+**Use when:** A topological order when you already have a DFS and know the graph is a DAG.
 
 ```cpp
 vector<int> vis(n, 0);
@@ -242,9 +336,22 @@ for (int i = 0; i < n; i++) {
 reverse(topo.begin(), topo.end());
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** With edges 0→1, 0→2, 1→3, 2→3, you get `topo = [0, 2, 1, 3]`. That is a different valid order than Kahn's.
+
+**Pitfalls:**
+
+- It doesn't detect cycles: on a cyclic graph it still returns an order. Add the 3-color check if cycles are possible.
+- Forgetting the final reverse gives the order backwards.
+
+**Used in:** LC 207, LC 210
+
 ---
 
 ## 9. Bipartite graph check
+
+**Use when:** "Split into two groups so that no conflicting pair is together", or "is there an odd cycle?"
 
 ```cpp
 vector<int> color(n, -1);
@@ -281,9 +388,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space.
+
+**Example:** The square 0-1-2-3-0 gives `isBipartite = true`. The triangle 0-1-2 gives `false`.
+
+**Pitfalls:**
+
+- The outer loop is needed because the graph can be disconnected.
+- LC 886 is 1-indexed and gives edge pairs, so build `g` of size n + 1 in both directions first.
+
+**Used in:** LC 785, LC 886, LC 2493
+
 ---
 
 ## 10. Dijkstra — shortest path
+
+**Use when:** "Minimum cost / time from a source" with non-negative edge weights.
 
 ```cpp
 const long long INF = 1e18;
@@ -311,9 +431,23 @@ while (!pq.empty()) {
 }
 ```
 
+**Complexity:** O(E log V) time and O(V + E) space.
+
+**Example:** With edges 0→1 (4), 0→2 (1), 2→1 (2) from src = 0, you get `dist = [0, 3, 1]`. The heap entry (4, 1) is popped later and skipped as stale.
+
+**Pitfalls:**
+
+- Without `if (d != dist[u]) continue`, stale entries re-relax their edges.
+- Negative edges break the method, so use Bellman-Ford.
+- Use `long long` because sums of large weights overflow `int`.
+
+**Used in:** LC 743, LC 1514, LC 1631, LC 1976, LC 2642
+
 ---
 
 ## 11. Dijkstra with path reconstruction
+
+**Use when:** Shortest path when you must output the route itself, not just its length.
 
 ```cpp
 vector<long long> dist(n, INF);
@@ -357,11 +491,22 @@ if (dist[target] != INF) {
 }
 ```
 
+**Complexity:** O(E log V) time and O(V + E) space, plus O(V) to rebuild the path.
+
+**Example:** Same graph as above with target = 1: parent[1] = 2 and parent[2] = 0, so `path = [0, 2, 1]`.
+
+**Pitfalls:**
+
+- `parent[src] = src` is what stops the rebuild loop, so don't leave it at -1.
+- Check `dist[target] != INF` before rebuilding, as an unreachable target has no parent chain.
+
+**Used in:** LC 743 and LC 1976 when the route itself is needed
+
 ---
 
 ## 12. 0-1 BFS
 
-Use when edge weights are only `0` or `1`.
+**Use when:** Every edge costs 0 or 1, as in "fewest walls to remove" or "fewest arrows to flip".
 
 ```cpp
 vector<int> dist(n, INT_MAX);
@@ -388,11 +533,22 @@ while (!dq.empty()) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space, with no log factor.
+
+**Example:** With edges 0→1 (1), 0→2 (0), 2→1 (0), you get `dist = [0, 0, 0]`. Node 1 first gets 1, then improves to 0 through node 2.
+
+**Pitfalls:**
+
+- Pushing 0-edges to the back breaks the sorted order.
+- A node can improve after being pushed, so compare dist values instead of using a visited flag.
+
+**Used in:** LC 2290, LC 1368, LC 959
+
 ---
 
 ## 13. Bellman-Ford
 
-Use for negative edges.
+**Use when:** Edge weights can be negative, or the path may use at most a fixed number of edges.
 
 ```cpp
 struct Edge {
@@ -410,6 +566,18 @@ for (int i = 0; i < n - 1; i++) {
     }
 }
 ```
+
+**Complexity:** O(V x E) time and O(V) space.
+
+**Example:** With edges 0→1 (4), 0→2 (5), 2→1 (-3) from src = 0, you get `dist = [0, 2, 5]`.
+
+**Pitfalls:**
+
+- Skip unreached nodes with `dist[e.u] != INF`, or INF plus a negative weight looks like a real distance.
+- In-place updates can chain several edges in one round. That is fine here, but wrong for "at most k edges" (see section 15).
+- Stop early if a whole round changes nothing.
+
+**Used in:** LC 787, LC 743
 
 ---
 
