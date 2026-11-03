@@ -483,6 +483,10 @@ int findPeakElement(vector<int>& a) {
 
 ## 13. Square root using binary search
 
+**Use when:** "Integer square root without built-ins", or any "last x with f(x) <= n" over a fast-growing function.
+
+**Complexity:** O(log x) time, O(1) space.
+
 ```cpp
 int mySqrt(int x) {
     int l = 0, r = x;
@@ -503,9 +507,19 @@ int mySqrt(int x) {
 }
 ```
 
+**Example:** `x = 8` returns `2`, and `x = 16` returns `4`.
+
+**Pitfalls:** `mid * mid` overflows `int`, which is why `mid` is `long long`. The result rounds down.
+
+**Used in:** LC 69, LC 367, LC 441
+
 ---
 
 ## 14. Floating point binary search
+
+**Use when:** The answer is a real number accepted within a tolerance, such as "within 10^-5".
+
+**Complexity:** O(C log(R / eps)) time for the `eps` version, and O(100 C) for the fixed-count one, where C is the cost of `check`. O(1) space.
 
 ```cpp
 double binarySearchDouble(double low, double high) {
@@ -543,9 +557,19 @@ double binarySearchDouble(double low, double high) {
 }
 ```
 
+**Example:** With `check(x) = x * x >= 2`, `low = 0` and `high = 2`, the result is about `1.41421`.
+
+**Pitfalls:** Never loop on `low < high`. An `eps` that is too small for the size of the values can hang, because the doubles stop changing, so the fixed count is safer. Moves are `low = mid` and `high = mid`, never with `+ 1`.
+
+**Used in:** LC 774, LC 644, LC 2137
+
 ---
 
 ## 15. Binary search in 2D matrix
+
+**Use when:** Each row continues where the last one ended ("the first integer of each row is greater than the last of the previous row").
+
+**Complexity:** O(log(mn)) time, O(1) space.
 
 Matrix sorted row-wise and globally:
 
@@ -571,9 +595,19 @@ bool searchMatrix(vector<vector<int>>& mat, int target) {
 }
 ```
 
+**Example:** `mat = [[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]]`: `target = 3` returns `true`, and `target = 13` returns `false`.
+
+**Pitfalls:** Divide by the column count: `row = mid / n`, with `n` the number of columns. This doesn't work if rows and columns are only sorted separately (LC 240), which needs a staircase walk from a corner. `mat[0]` needs a non-empty matrix.
+
+**Used in:** LC 74
+
 ---
 
 ## 16. First and last occurrence
+
+**Use when:** "Find the starting and ending position" of a value in a sorted array with duplicates.
+
+**Complexity:** O(log n) time for the two searches, O(1) space.
 
 ```cpp
 pair<int, int> firstLast(vector<int>& a, int target) {
@@ -588,9 +622,19 @@ pair<int, int> firstLast(vector<int>& a, int target) {
 }
 ```
 
+**Example:** `a = [5, 7, 7, 8, 8, 10]`: `target = 8` returns `{3, 4}`, and `target = 6` returns `{-1, -1}`.
+
+**Pitfalls:** Uses `lowerBound` and `upperBound` from sections 2 and 3. Check `first == a.size()` before reading `a[first]`.
+
+**Used in:** LC 34
+
 ---
 
 ## 17. Count occurrences
+
+**Use when:** "How many times does x appear" in sorted data, including on sorted position lists for range frequency queries.
+
+**Complexity:** O(log n) time, O(1) space.
 
 ```cpp
 int countOccurrences(vector<int>& a, int target) {
@@ -601,9 +645,19 @@ int countOccurrences(vector<int>& a, int target) {
 }
 ```
 
+**Example:** `a = [1, 2, 4, 4, 5]`: `target = 4` returns `2`, and `target = 6` returns `0`.
+
+**Pitfalls:** Uses `lowerBound` and `upperBound` from sections 2 and 3. A missing value gives `0` on its own, with no special case. The array must be sorted.
+
+**Used in:** LC 2080, LC 1157
+
 ---
 
 ## 18. STL equivalent
+
+**Use when:** The problem is a plain bound lookup and writing the loop by hand would add risk.
+
+**Complexity:** O(log n) time on random-access containers, O(1) space.
 
 ```cpp
 int lb = lower_bound(a.begin(), a.end(), target) - a.begin();
@@ -614,9 +668,19 @@ bool exists = binary_search(a.begin(), a.end(), target);
 auto it = lower_bound(a.begin(), a.end(), target);
 ```
 
+**Example:** `a = [1, 2, 4, 4, 5]`, `target = 4`: `lb = 2`, `ub = 4` and `exists = true`.
+
+**Pitfalls:** On `std::set` or `std::map`, call the member `s.lower_bound(x)`: the free function degrades to O(n) there. Check the iterator against `end()` before reading it.
+
+**Used in:** LC 35, LC 34, LC 2300, LC 2389, LC 300, LC 1268
+
 ---
 
 ## Mental template
+
+**Use when:** You can state the problem as "find the smallest or largest value for which `can` is true".
+
+**Complexity:** O(C log R) time, where R is the size of the search range and C is the cost of `can`. O(1) space.
 
 ```cpp
 // Minimum valid answer
@@ -649,3 +713,9 @@ or
 ```cpp
 find last true
 ```
+
+**Example:** Minimum form on LC 875 with `piles = [3, 6, 7, 11]` and `h = 8` gives `4`. Maximum form on LC 1552 with `position = [1, 2, 3, 4, 7]` and `m = 3` gives `3`.
+
+**Pitfalls:** Both forms use `l <= r` and save the answer in `ans`, so `mid` never needs rounding up. They only apply if `can` flips once, so check that first.
+
+**Used in:** LC 410, LC 875, LC 1011, LC 1552, LC 2226
