@@ -1029,6 +1029,8 @@ long long countSpecialNumbers(long long n) {
 
 ## 25. DP + BFS state — Shortest Path Visiting All Nodes
 
+**Use when:** "The shortest walk that visits every node", where revisiting is allowed and every edge costs the same.
+
 ```cpp
 int shortestPathLength(vector<vector<int>>& graph) {
     int n = graph.size();
@@ -1063,11 +1065,21 @@ int shortestPathLength(vector<vector<int>>& graph) {
 }
 ```
 
+**Complexity:** O(2^n * E) time and O(2^n * n) space.
+
+**Example:** `graph = [[1,2,3],[0],[0],[0]]` returns `4` (1, 0, 2, 0, 3).
+
+**Pitfalls:** Start from every node, not only node 0, because the best walk can begin anywhere. A visited check on the node alone is wrong: mark the pair (mask, node), since coming back with more nodes covered is progress.
+
+**Used in:** LC 847.
+
 ---
 
 ## 26. DP with monotonic deque
 
-Example:
+**Use when:** "dp[i] depends on the best of the last k values" and n is too large for O(n * k).
+
+Recurrence:
 
 ```cpp
 dp[i] = nums[i] + max(dp[j]) where i - k <= j < i
@@ -1106,11 +1118,21 @@ int constrainedSubsetSum(vector<int>& nums, int k) {
 }
 ```
 
+**Complexity:** O(n) time and O(n) space, since each index enters and leaves the deque once.
+
+**Example:** `nums = [10,2,-10,5,20]`, `k = 2` returns `37` (10, 2, 5, 20).
+
+**Pitfalls:** This code removes the expired index after pushing, with `dq.front() <= i - k`, which leaves exactly the window i+1-k to i for the next step. If you move that check to the top of the loop, change it to `dq.front() < i - k`.
+
+**Used in:** LC 1425, LC 1696, LC 1499.
+
 ---
 
 ## 27. Partition DP
 
-Example:
+**Use when:** "Split the array into contiguous parts" with `dp[i]` trying every length for the last part.
+
+State:
 
 ```cpp
 dp[i] = best answer for first i elements
@@ -1137,17 +1159,19 @@ int partitionDP(vector<int>& arr, int k) {
 }
 ```
 
-Used in:
+**Complexity:** O(n * k) time and O(n) space.
 
-```cpp
-Partition Array for Maximum Sum
-Minimum Difficulty of Job Schedule
-Word Break variants
-```
+**Example:** `arr = [1,15,7,9,2,5,10]`, `k = 3` returns `84`. As written, this code solves Partition Array for Maximum Sum (LC 1043), which isn't in this topic's question list.
+
+**Pitfalls:** dp is indexed by prefix length, so the last part is `arr[i - len..i - 1]`. Check `i - len >= 0` before reading it. Problems that fix the number of parts, such as LC 1335, need a second dimension.
+
+**Used in:** LC 139, LC 1105, LC 813, LC 1335.
 
 ---
 
 ## 28. Stock DP — State machine
+
+**Use when:** "Buy and sell with a cooldown", or any problem with a few modes per day and rules between them.
 
 ```cpp
 int maxProfit(vector<int>& prices) {
@@ -1179,9 +1203,19 @@ sold = sold today
 rest = doing nothing
 ```
 
+**Complexity:** O(n) time and O(1) space.
+
+**Example:** `prices = [1,2,3,0,2]` returns `3` (buy 1, sell 2, cool down, buy 0, sell 2).
+
+**Pitfalls:** Save the previous values first, since all three states must read yesterday's numbers. `hold` must start very low, because starting at 0 gives a free stock. For LC 714, subtract the fee once per transaction.
+
+**Used in:** LC 309, LC 714, LC 122.
+
 ---
 
 ## 29. Regex Matching DP
+
+**Use when:** "Pattern with `.` and `*` that must match the entire string", where `*` repeats the previous character.
 
 ```cpp
 bool isMatch(string s, string p) {
@@ -1215,9 +1249,19 @@ bool isMatch(string s, string p) {
 }
 ```
 
+**Complexity:** O(n * m) time and O(n * m) space.
+
+**Example:** `s = "aab"`, `p = "c*a*b"` returns `true`.
+
+**Pitfalls:** Zero copies is `dp[i][j - 2]`, not `dp[i][j - 1]`. The empty-string row must be seeded, because `a*` can match nothing. This relies on `*` never being the first pattern character, which LC 10 guarantees.
+
+**Used in:** LC 10.
+
 ---
 
 ## 30. Wildcard Matching DP
+
+**Use when:** "Pattern with `?` and `*` that must match the entire string", where `*` matches any sequence on its own.
 
 ```cpp
 bool isMatch(string s, string p) {
@@ -1247,9 +1291,19 @@ bool isMatch(string s, string p) {
 }
 ```
 
+**Complexity:** O(n * m) time and O(n * m) space.
+
+**Example:** `s = "adceb"`, `p = "*a*b"` returns `true`.
+
+**Pitfalls:** `dp[i][j - 1]` means `*` matches nothing and `dp[i - 1][j]` means it takes one more character. Only leading `*` can match the empty string, so the seed loop copies from the left and stays false after the first other character.
+
+**Used in:** LC 44.
+
 ---
 
 ## 31. DP with prefix sum optimization
+
+**Use when:** A transition needs the sum of a range, and recomputing it would add an O(n) loop.
 
 ```cpp
 vector<int> prefix(n + 1, 0);
@@ -1270,9 +1324,19 @@ dp[l][r] = min(dp[l][r],
                dp[l][k] + dp[k + 1][r] + rangeSum(l, r));
 ```
 
+**Complexity:** O(n) to build, O(1) per query and O(n) space.
+
+**Example:** `arr = [1,2,3,4]` gives `rangeSum(1, 3) = 9` and `rangeSum(0, 0) = 1`.
+
+**Pitfalls:** `prefix` has size n + 1, so the sum of `arr[l..r]` is `prefix[r + 1] - prefix[l]`. Use long long if values and n are large, because the running sum can overflow int.
+
+**Used in:** LC 1000, LC 1563, LC 1140, LC 1406.
+
 ---
 
 ## 32. DP reconstruction — print chosen items
+
+**Use when:** "Return the chosen items, not just the best value."
 
 ```cpp
 vector<int> reconstructKnapsack(vector<int>& wt, vector<int>& val, int W) {
@@ -1306,9 +1370,19 @@ vector<int> reconstructKnapsack(vector<int>& wt, vector<int>& val, int W) {
 }
 ```
 
+**Complexity:** O(n * W) time and O(n * W) space, because walking back needs the whole table.
+
+**Example:** `wt = [1,3,4]`, `val = [15,20,30]`, `W = 4` returns indices `[0,1]`.
+
+**Pitfalls:** The rolled one-array version can't do this, since earlier rows are gone. Walk from `dp[n][W]` to row 1, subtract the weight only when the value changed, and reverse the list at the end.
+
+**Used in:** LC 1092, LC 368.
+
 ---
 
 ## 33. Most useful DP constants
+
+**Use when:** You're setting up a new DP table and need a safe "impossible" value or the usual modulus.
 
 ```cpp
 const int INF = 1e9;
@@ -1336,9 +1410,19 @@ vector<int> dp(n, -INF);
 dp[0] = 0;
 ```
 
+**Complexity:** O(1) for the constants. Filling a table with them is O(n).
+
+**Example:** With `coins = [2]`, `dp[3]` stays `INF` for amount 3, which means impossible. `(1000000006 + 1) % MOD` returns `0`.
+
+**Pitfalls:** INT_MAX + 1 overflows, while `INF = 1e9` keeps INF + INF within int. A product of two residues overflows int, so multiply as long long before taking `% MOD`. Check for `== INF` before using a value.
+
+**Used in:** LC 322, LC 1155.
+
 ---
 
 ## 34. Quick pattern reminder
+
+**Use when:** You've spotted the pattern and need the right loop order fast.
 
 ```cpp
 // 0/1 knapsack
@@ -1377,3 +1461,11 @@ postorder DFS
 // digit DP
 dfs(pos, tight, started, state)
 ```
+
+**Complexity:** Knapsack is O(n * W). Interval is O(n^3). Two-sequence is O(n * m). Bitmask is O(2^n * n) or more. Tree is O(n). Digit is O(digits * states * 10).
+
+**Example:** `coins = [1,2]`, `amount = 3` gives 2 with coin outside (1+1+1, 1+2) and 3 with amount outside (1+1+1, 1+2, 2+1).
+
+**Pitfalls:** `right = left + length - 1` assumes inclusive ends. Burst Balloons (section 16) uses exclusive ends, where `r = l + len`. Treat the backward and forward capacity loops as different problems, not as style.
+
+**Used in:** LC 416, LC 322, LC 518, LC 377, LC 312, LC 1143, LC 847, LC 337, LC 2376.
