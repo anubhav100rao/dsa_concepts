@@ -1,5 +1,9 @@
 ## 1. Activity Selection / Non-overlapping intervals
 
+**Use when:** "Maximum number of non-overlapping" intervals, meetings or events you can attend.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
+
 ```cpp
 sort(intervals.begin(), intervals.end(), [](auto &a, auto &b) {
     return a[1] < b[1]; // sort by end time
@@ -18,11 +22,19 @@ for (auto &in : intervals) {
 }
 ```
 
-Used in: max meetings, non-overlapping intervals, erase minimum intervals.
+**Example:** `intervals = [[1,2],[2,3],[3,4],[1,3]]` gives `count = 3`.
+
+**Pitfalls:** `start >= lastEnd` lets intervals that touch at a point both count. Use `>` if touching counts as overlap. Sorting by start instead of end is the classic wrong answer.
+
+**Used in:** LC 435, LC 646
 
 ---
 
 ## 2. Minimum intervals to remove
+
+**Use when:** "Remove the fewest intervals so the rest don't overlap": n minus the activity-selection count.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 sort(intervals.begin(), intervals.end(), [](auto &a, auto &b) {
@@ -41,9 +53,19 @@ for (int i = 1; i < intervals.size(); i++) {
 }
 ```
 
+**Example:** `intervals = [[1,2],[2,3],[3,4],[1,3]]` gives `removed = 1`.
+
+**Pitfalls:** `intervals[0]` crashes on empty input, so return 0 first. When two intervals overlap, keep the one that ends earlier, which the end-time sort already guarantees.
+
+**Used in:** LC 435
+
 ---
 
 ## 3. Merge Intervals
+
+**Use when:** "Merge all overlapping intervals" or "total length covered": sort by start, extend or open a new interval.
+
+**Complexity:** O(n log n) time for the sort, O(n) space for the output.
 
 ```cpp
 sort(intervals.begin(), intervals.end());
@@ -59,9 +81,19 @@ for (auto &in : intervals) {
 }
 ```
 
+**Example:** `intervals = [[1,3],[8,10],[2,6]]` gives `merged = [[1,6],[8,10]]`.
+
+**Pitfalls:** Write `max(back, in[1])`, not `in[1]`: `[1,10]` followed by `[2,3]` must stay `[1,10]`. `back < in[0]` merges intervals that touch, like `[1,2],[2,3]`. Use `<=` if they shouldn't merge.
+
+**Used in:** LC 56, LC 2848
+
 ---
 
 ## 4. Meeting Rooms / Minimum platforms
+
+**Use when:** "Minimum number of rooms or platforms", meaning the most intervals overlapping at once, when only that count matters.
+
+**Complexity:** O(n log n) time for the two sorts, O(1) extra space.
 
 ```cpp
 sort(start.begin(), start.end());
@@ -82,9 +114,19 @@ while (i < start.size()) {
 }
 ```
 
+**Example:** `start = [0,5,15]` and `end = [30,10,20]` (from `[[0,30],[5,10],[15,20]]`) give `ans = 2`.
+
+**Pitfalls:** Sort the two arrays separately. Pairing them no longer matters. `start[i] < end[j]` frees a room that ends exactly when the next meeting starts. Use `<=` if the end time is inclusive.
+
+**Used in:** LC 253, LC 252
+
 ---
 
 ## 5. Greedy with min-heap: Meeting Rooms II
+
+**Use when:** Same as the rooms count, but you also need to know which room frees up first, as in assigning meetings to rooms.
+
+**Complexity:** O(n log n) time, O(n) space for the heap.
 
 ```cpp
 sort(intervals.begin(), intervals.end());
@@ -104,9 +146,19 @@ for (auto &in : intervals) {
 int minRooms = pq.size();
 ```
 
+**Example:** `intervals = [[0,30],[5,10],[15,20]]` gives `minRooms = 2`.
+
+**Pitfalls:** Sort by start time, not end. Pop at most one room per meeting: one free room is enough, and the heap size is the answer.
+
+**Used in:** LC 253
+
 ---
 
 ## 6. Jump Game I
+
+**Use when:** "Each element is your maximum jump length. Can you reach the last index?"
+
+**Complexity:** O(n) time, O(1) space.
 
 ```cpp
 int farthest = 0;
@@ -120,9 +172,19 @@ for (int i = 0; i < nums.size(); i++) {
 return true;
 ```
 
+**Example:** `nums = [2,3,1,1,4]` returns `true`. `nums = [3,2,1,0,4]` returns `false`, since index 4 is beyond `farthest = 3`.
+
+**Pitfalls:** Check `i > farthest` before using `nums[i]`, because an unreachable index can't extend the range. A zero isn't a dead end unless nothing jumps past it.
+
+**Used in:** LC 55
+
 ---
 
 ## 7. Jump Game II
+
+**Use when:** "Minimum number of jumps to reach the last index", treating each jump as a BFS level over a range.
+
+**Complexity:** O(n) time, O(1) space.
 
 ```cpp
 int jumps = 0;
@@ -139,9 +201,19 @@ for (int i = 0; i < nums.size() - 1; i++) {
 }
 ```
 
+**Example:** `nums = [2,3,1,1,4]` gives `jumps = 2`.
+
+**Pitfalls:** Stop at `nums.size() - 1`. Visiting the last index can count an extra jump. That expression is unsigned, so it wraps on an empty array, but LC 45 guarantees n >= 1.
+
+**Used in:** LC 45
+
 ---
 
 ## 8. Gas Station
+
+**Use when:** "Circular route" with gas and cost per station, asking for the start index.
+
+**Complexity:** O(n) time, O(1) space.
 
 ```cpp
 int total = 0;
@@ -163,9 +235,19 @@ for (int i = 0; i < gas.size(); i++) {
 int ans = total >= 0 ? start : -1;
 ```
 
+**Example:** `gas = [1,2,3,4,5]` and `cost = [3,4,5,1,2]` give `ans = 3`.
+
+**Pitfalls:** Without the `total >= 0` check you return a start that fails. After a failure, restart at `i + 1`, not `start + 1`: every station in between fails too.
+
+**Used in:** LC 134
+
 ---
 
 ## 9. Fractional Knapsack
+
+**Use when:** Items can be split, and you want the most value under a weight limit: take the best value-to-weight ratio first.
+
+**Complexity:** O(n log n) time for the sort, O(1) extra space.
 
 ```cpp
 struct Item {
@@ -189,9 +271,19 @@ for (auto &item : items) {
 }
 ```
 
+**Example:** Items `(60,10), (100,20), (120,30)` with `W = 50` give `profit = 240.0`: the first two whole, plus 2/3 of the third.
+
+**Pitfalls:** This is only correct when items can be split. For 0/1 knapsack the same order gives 160 instead of 220, so use DP. Cast to double before dividing.
+
+**Used in:** None in greedy.md. This is the classic fractional knapsack, and section 21 contrasts it with 0/1 knapsack.
+
 ---
 
 ## 10. Job Sequencing with Deadlines
+
+**Use when:** Unit-time jobs with a deadline and a profit, to maximize total profit: richest first, in the latest free slot.
+
+**Complexity:** O(n log n + n * D) time for the largest deadline D, O(D) space. See section 25 for the faster DSU version.
 
 ```cpp
 struct Job {
@@ -221,9 +313,19 @@ for (int i = 0; i < jobs.size(); i++) {
 }
 ```
 
+**Example:** Jobs `(deadline, profit)` = `(2,100), (1,19), (2,27), (1,25), (3,15)` give `totalProfit = 142` from 3 jobs: 27, 100 and 15.
+
+**Pitfalls:** Scan slots from `deadline` down to 1, not up: the latest free slot keeps earlier ones open. Slots are 1-based, so allocate `maxDeadline + 1`.
+
+**Used in:** Job Sequencing Problem (classic, no LC number) in sections 4 and 21.
+
 ---
 
 ## 11. Candy Distribution
+
+**Use when:** "Each child with a higher rating than a neighbor gets more": run a left pass and a right pass.
+
+**Complexity:** O(n) time, O(n) space.
 
 ```cpp
 int n = ratings.size();
@@ -244,9 +346,19 @@ for (int i = n - 2; i >= 0; i--) {
 int total = accumulate(candy.begin(), candy.end(), 0);
 ```
 
+**Example:** `ratings = [1,0,2]` gives `total = 5`, from `candy = [2,1,2]`.
+
+**Pitfalls:** The right pass must take `max(candy[i], candy[i + 1] + 1)`, or it erases the left pass. Equal neighbors don't need equal candy.
+
+**Used in:** LC 135
+
 ---
 
 ## 12. Assign Cookies
+
+**Use when:** Match each need to the smallest resource that covers it, as in "maximum number of content children".
+
+**Complexity:** O(n log n + m log m) time for the sorts, O(1) extra space.
 
 ```cpp
 sort(g.begin(), g.end()); // greed
@@ -263,6 +375,12 @@ while (i < g.size() && j < s.size()) {
 
 int satisfied = i;
 ```
+
+**Example:** `g = [1,2,3]` and `s = [1,1]` give `satisfied = 1`.
+
+**Pitfalls:** Always advance the cookie pointer `j`, but advance the child pointer `i` only on a match. Swapping the roles of g and s silently returns the wrong count.
+
+**Used in:** LC 455
 
 ---
 
