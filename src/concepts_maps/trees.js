@@ -1422,4 +1422,370 @@ export const trees = {
     ],
     practice: [2791],
   },
+
+  '25. Morris Traversal / Threaded Trees': {
+    crux: 'Use the empty right pointer of a node\'s inorder predecessor as a temporary thread back to the node. You can return without a stack, then remove the thread.',
+    signals: [
+      '"A solution using O(n) space is pretty straightforward. Could you devise a constant space solution?": the LC 99 follow-up.',
+      '"Without recursion and without a stack" or "O(1) extra memory" for an inorder walk.',
+      '"Rearrange the tree in in-order so that the leftmost node is now the root" in place, with no extra list.',
+    ],
+    notThis: [
+      'The tree is read-only or shared with other threads: Morris changes pointers temporarily, so use a stack.',
+      'Postorder: Morris postorder exists but is fiddly, and O(h) space is usually acceptable.',
+      'No space limit is stated: the stack version is shorter and less error-prone (section 1).',
+    ],
+    concepts: [
+      'If cur has no left child, visit it and go right.',
+      'Otherwise find the rightmost node of the left subtree. If its right is null, set the thread and go left.',
+      'If the predecessor already points to cur, the left side is done: remove the thread, visit cur and go right.',
+      'Visiting when the thread is set, rather than when it is removed, gives preorder instead.',
+    ],
+    example: {
+      problem: 'Binary Tree Inorder Traversal with [2,1,3], using Morris',
+      lc: 94,
+      walkthrough: [
+        'cur = 2. Its predecessor is 1, whose right is null, so set 1.right = 2 and move to 1.',
+        'cur = 1 has no left child. Output 1 and follow the thread back to 2. out = [1].',
+        'cur = 2 again. Its predecessor 1 already points to 2, so remove the thread, output 2 and go to 3. out = [1,2].',
+        'cur = 3 has no left child. Output 3 and go right to null. out = [1,2,3].',
+        'Node 1\'s right pointer is null again, so the tree is back to its original shape.',
+      ],
+    },
+    code: `def morris_inorder(root):
+    out, cur = [], root
+    while cur:
+        if not cur.left:
+            out.append(cur.val)
+            cur = cur.right
+        else:
+            pred = cur.left
+            while pred.right and pred.right is not cur:
+                pred = pred.right
+            if not pred.right:
+                pred.right = cur  # thread
+                cur = cur.left
+            else:
+                pred.right = None  # unthread
+                out.append(cur.val)
+                cur = cur.right
+    return out`,
+    complexity: 'O(n) time, because each edge is walked at most a few times while finding predecessors. O(1) extra space.',
+    pitfalls: [
+      'Leaving out `pred.right is not cur` in the inner loop: the walk follows the thread and loops forever.',
+      'Returning early, for example once LC 230 finds the k-th value, leaves threads behind and corrupts the tree.',
+      'Reverse Morris (LC 538) mirrors every left and right, including the predecessor search.',
+      'LC 99: compare each visited node with the previous one, as in the stack version, and swap the two values at the end.',
+    ],
+    pointsToPonder: [
+      'Why is the total cost of finding predecessors O(n), not O(n·h)?',
+      'How do you know whether you arrived at a node for the first time or came back along a thread?',
+      'What would you change to get preorder from the same loop?',
+    ],
+    practice: [94, 897, 99, 230, 538],
+    snippet: '23-morris-inorder-o-1-space',
+  },
+
+  '26. Self-Balancing Trees (AVL / Red-Black / Splay — Conceptual)': {
+    crux: 'You rarely write rotations. Recognize when you need sorted order that keeps changing, then use the language\'s ordered map or set, such as std::map, TreeMap or SortedList.',
+    signals: [
+      '"Book the event if it does not cause a double booking": find the neighboring bookings with floor and ceiling lookups.',
+      '"abs(i - j) <= indexDiff and abs(nums[i] - nums[j]) <= valueDiff": keep a sorted window and use lower_bound.',
+      '"Return the median array for each window": a multiset, or two heaps with lazy deletion.',
+      '"Summarize the numbers seen so far as a list of disjoint intervals": an ordered map from start to end.',
+      '"Return a balanced BST with the same node values": rebuild from inorder, with no rotations needed.',
+    ],
+    notThis: [
+      'You only ever need the minimum or the maximum: a heap is simpler (see the Priority Queue topic).',
+      'The data never changes after loading: sort once and binary search.',
+      'Values fall in a small known range and you only count them: a Fenwick tree is faster (section 19).',
+    ],
+    concepts: [
+      'AVL trees keep child heights within one of each other, which makes lookups slightly faster.',
+      'Red-black trees allow more imbalance, which means fewer rotations on insert. std::map and TreeMap use them.',
+      'Splay trees move each accessed node to the root, so repeated access is fast and costs are amortized O(log n).',
+      'Python has no built-in ordered map: use sortedcontainers.SortedList, or bisect on a list for small inputs.',
+    ],
+    example: {
+      problem: 'My Calendar I with book(10,20), book(15,25), book(20,30)',
+      lc: 729,
+      walkthrough: [
+        'book(10,20): the list is empty, so insert at 0. events = [(10,20)]. True.',
+        'book(15,25): bisect gives i = 1. The previous event ends at 20, after 15, so they overlap. False.',
+        'book(20,30): bisect gives i = 1. The previous event ends at 20, which is not after 20, so no overlap.',
+        'There is no next event, so insert. events = [(10,20),(20,30)]. True.',
+        'The answers are [True, False, True]. With half-open intervals, touching at 20 is allowed.',
+      ],
+    },
+    code: `class MyCalendar:
+    def __init__(self):
+        self.events = []  # sorted (start, end); stands in for a TreeMap
+    def book(self, start, end):
+        i = bisect_left(self.events, (start, end))
+        if i > 0 and self.events[i - 1][1] > start:
+            return False
+        if i < len(self.events) and self.events[i][0] < end:
+            return False
+        self.events.insert(i, (start, end))
+        return True`,
+    complexity: 'O(log n) per operation with a balanced tree. The Python list above searches in O(log n) but inserts in O(n), which is fine for LC 729\'s limits.',
+    pitfalls: [
+      'In C++, multiset.erase(value) removes every copy. Use erase(find(value)) to remove just one.',
+      'Mixing up lower_bound (first >= x) and upper_bound (first > x), especially in the window checks of LC 220.',
+      'Treating intervals as closed when they are half-open: in LC 729, [10,20) and [20,30) don\'t overlap.',
+      'LC 1382: hand-written rotations are unnecessary, because inorder plus building from the middle is O(n).',
+    ],
+    pointsToPonder: [
+      'Which operations does a heap lack that make an ordered set necessary?',
+      'Why does a red-black tree do fewer rotations than an AVL tree, and when does that matter?',
+      'How would you solve LC 480 with two heaps, and what does lazy deletion cost?',
+    ],
+    practice: [729, 1382, 1395, 220, 480],
+  },
+
+  '27. Tree Design Problems': {
+    crux: 'List the operations and their required costs, then choose state that makes the hottest one cheap: a stack for an iterator, a queue of open parents for an inserter, a trie for paths.',
+    signals: [
+      '"Implement the CBTInserter class... insert returns the value of the parent": a queue of nodes still missing a child.',
+      '"ls, mkdir, addContentToFile, readContentFromFile": a trie of path components.',
+      '"changeRating" and "highestRated" for a cuisine: an ordered set per cuisine, or a heap with lazy deletion.',
+      '"inc, dec, getMaxKey and getMinKey, each in O(1) average time": linked buckets of counts plus a hash map.',
+      '"next() and hasNext()" or "serialize and deserialize": paused traversal or traversal format design.',
+    ],
+    notThis: [
+      'All O(1) Data Structure (LC 432) isn\'t really a tree: it\'s a doubly linked list of count buckets plus a hash map.',
+      'There\'s only one operation: write a function, not a class.',
+    ],
+    concepts: [
+      'Spend work in the constructor if it makes every later call cheap.',
+      'Write down what must stay true between calls, such as "open[0] is the next parent".',
+      'Lazy deletion: leave stale heap entries in place and skip them when they reach the top.',
+      'Many designs combine a hash map for direct access with an ordered structure for ranking.',
+    ],
+    example: {
+      problem: 'Complete Binary Tree Inserter with root [1,2], then insert(3) and insert(4)',
+      lc: 919,
+      walkthrough: [
+        'Constructor BFS: node 1 lacks a right child, so open = [1]. Node 2 has no children, so open = [1,2].',
+        'insert(3): the parent is 1. Its left exists, so set 1.right = 3. Node 1 is full, so pop it. Append 3. Return 1.',
+        'open = [2,3]. insert(4): the parent is 2, whose left is null, so set 2.left = 4. Append 4. Return 2.',
+        'The tree is now [1,2,3,4], which is still complete.',
+      ],
+    },
+    code: `class CBTInserter:
+    def __init__(self, root):
+        self.root = root
+        self.open = deque()  # nodes missing a child, in BFS order
+        q = deque([root])
+        while q:
+            node = q.popleft()
+            if node.left:
+                q.append(node.left)
+            if node.right:
+                q.append(node.right)
+            if not node.left or not node.right:
+                self.open.append(node)
+    def insert(self, val):
+        node = TreeNode(val)
+        parent = self.open[0]
+        if not parent.left:
+            parent.left = node
+        else:
+            parent.right = node
+            self.open.popleft()
+        self.open.append(node)
+        return parent.val
+    def get_root(self):
+        return self.root`,
+    complexity: 'O(n) for the constructor, then O(1) per insert. O(n) space for the queue.',
+    pitfalls: [
+      'Popping the parent after its left child is filled: it still needs a right child.',
+      'Forgetting to queue the new node, which becomes a parent later.',
+      'LC 2353: when a rating changes, remove the old entry from the ordered set or mark it stale in the heap.',
+      'LC 588: ls on a file path returns just that file\'s name, not a directory listing.',
+    ],
+    pointsToPonder: [
+      'Could CBTInserter work with only a node count and index arithmetic? What would it need?',
+      'For each design here, which operation sets the choice of structure?',
+      'When is lazy deletion a better choice than an ordered set?',
+    ],
+    practice: [173, 208, 919, 307, 297],
+    snippet: '17-bst-iterator-controlled-inorder',
+  },
+
+  '28. Tree + Bit Manipulation': {
+    crux: 'On a root path, a bitmask packs the parity of a small alphabet into one int, and XOR undoes itself. For maximum XOR, a binary trie chooses the opposite bit at each level.',
+    signals: [
+      '"Node values are digits from 1 to 9... at least one permutation of the path is a palindrome": a 10-bit parity mask.',
+      '"Each root-to-leaf path represents a binary number": value = value * 2 + bit on the way down.',
+      '"Maximum result of nums[i] XOR nums[j]": insert into a binary trie, then query the opposite bit.',
+      '"For each query (node, val), find the maximum val XOR ancestor value": add to a trie on entry and remove on exit.',
+      '"Characters on the path can be rearranged to form a palindrome" for any pair of nodes: count root masks that differ by at most one bit.',
+    ],
+    notThis: [
+      'Find XOR Sum of All Pairs Bitwise AND (LC 1835) involves no tree: AND distributes over XOR, so the answer is xor(arr1) AND xor(arr2).',
+      'The alphabet is large or values are arbitrary: a mask can\'t hold the counts, so use a hash map.',
+    ],
+    concepts: [
+      'A path can form a palindrome when at most one value appears an odd number of times, which means mask & (mask - 1) == 0.',
+      'Root masks: the mask of a path between u and v is mask[u] XOR mask[v], because the shared prefix cancels.',
+      'A binary trie with counts supports removal, which offline queries during a DFS need.',
+      'Go from the highest bit down, because winning a higher bit beats any lower bits.',
+    ],
+    example: {
+      problem: 'Pseudo-Palindromic Paths with [2,3,1,3,1,null,1]',
+      lc: 1457,
+      walkthrough: [
+        'At root 2, mask = 1 << 2 = 4.',
+        'Path 2 -> 3 -> 3: mask becomes 4 ^ 8 = 12, then 12 ^ 8 = 4. One bit is set, so it counts. Total 1.',
+        'Path 2 -> 3 -> 1: mask becomes 12 ^ 2 = 14. Three bits are set, so it doesn\'t count.',
+        'Path 2 -> 1 -> 1: mask becomes 4 ^ 2 = 6, then 6 ^ 2 = 4. One bit is set, so it counts. Total 2.',
+        'The answer is 2.',
+      ],
+    },
+    code: `def pseudo_palindromic(root):
+    def dfs(node, mask):
+        if not node:
+            return 0
+        mask ^= 1 << node.val
+        if not node.left and not node.right:
+            return int(mask & (mask - 1) == 0)
+        return dfs(node.left, mask) + dfs(node.right, mask)
+    return dfs(root, 0)`,
+    complexity: 'O(n) time and O(h) space for LC 1457. A binary trie costs O(B) per operation for B bits, so LC 421 is O(n·B).',
+    pitfalls: [
+      'Counting at null children instead of at leaves: a node with one child would count its path twice, or count a path that isn\'t root-to-leaf.',
+      'Using a shared mask variable without undoing it. Passing it by value avoids this.',
+      'LC 2791: check the same mask and the 26 one-bit neighbors, and don\'t count a pair twice.',
+      'LC 1938: decrement trie counts on exit, or values from finished branches stay as fake ancestors.',
+    ],
+    pointsToPonder: [
+      'Why does XOR give parity directly, while addition needs a modulus?',
+      'Why does choosing the opposite bit greedily in a trie always give the maximum XOR?',
+      'How does the prefix-difference idea from section 15 reappear as mask[u] XOR mask[v]?',
+    ],
+    practice: [1022, 1457, 421, 2791, 1938],
+    snippet: '15-dfs-with-state-count-good-nodes',
+  },
+
+  '29. Tree Miscellaneous / Hybrid': {
+    crux: 'These problems combine a familiar traversal with one twist. Name the traversal first, whether level, pre or post order, then add the state or pointer change the twist needs.',
+    signals: [
+      '"Populate each next pointer to point to its next right node"; "you may only use constant extra space": walk the level above using its next links.',
+      '"Collect all the leaf nodes, remove them, and repeat": group by height (LC 366).',
+      '"Flip the smallest number of nodes so the preorder matches voyage": preorder with a pointer into voyage.',
+      '"Lock, unlock and upgrade" a node: check ancestors and descendants with parent links and children lists.',
+      '"Exactly one node has its right child pointing to a node at the same depth": BFS from right to left.',
+    ],
+    notThis: [
+      'Clone Graph (LC 133) can contain cycles: tree recursion would loop, so use a map from old to new nodes.',
+      'Most Frequent Subtree Sum (LC 508) is a simple postorder sum plus a count map: it needs no special twist.',
+    ],
+    concepts: [
+      'Each level of next pointers is a linked list, so the level above can drive the creation of the next one.',
+      'A dummy head node avoids special cases when you link the first child of a level.',
+      'LC 156 upside down: walking down the left spine, each node\'s left becomes the new parent of it and its right sibling.',
+      'LC 2049: the score of a node is the product of its child subtree sizes and n - subtree size.',
+    ],
+    example: {
+      problem: 'Populating Next Right Pointers II with [1,2,3,4,5,null,7]',
+      lc: 117,
+      walkthrough: [
+        'level = 1. Its children are linked through a dummy, so 2 -> 3. Move to level = 2.',
+        'Walk 2: link 4 -> 5. Follow 2.next to 3 and link 5 -> 7.',
+        'Move to level = 4. None of 4, 5 or 7 has children, so the dummy\'s next is null and the loop ends.',
+        'The result is 2 -> 3 and 4 -> 5 -> 7, using O(1) extra space.',
+      ],
+    },
+    code: `def connect(root):
+    level = root
+    while level:
+        dummy = tail = TreeNode(0)
+        node = level
+        while node:
+            for child in (node.left, node.right):
+                if child:
+                    tail.next = child
+                    tail = child
+            node = node.next
+        level = dummy.next
+    return root`,
+    complexity: 'O(n) time and O(1) extra space. A plain BFS version also works but needs O(width) space.',
+    pitfalls: [
+      'The LC 116 trick, node.right.next = node.next.left, assumes a perfect tree and breaks on LC 117.',
+      'Forgetting to reset the dummy for each level, so one level\'s list runs into the next.',
+      'LC 971: when the next child doesn\'t match voyage, flip it, and if neither child matches, return [-1].',
+      'LC 1993 upgrade needs an unlocked node, no locked ancestors and at least one locked descendant.',
+    ],
+    pointsToPonder: [
+      'Why does using the level above make O(1) space possible?',
+      'Why does LC 1660 need right-to-left BFS to identify the broken node?',
+      'Which earlier section does each problem here really belong to?',
+    ],
+    practice: [116, 117, 366, 508, 971],
+    snippet: 'common-choose-what-pattern',
+  },
+
+  '30. Hard / Contest-Level Tree Problems': {
+    crux: 'This section has no new pattern. Hard tree problems stack two ideas from earlier sections, and the work is in splitting the statement into those ideas.',
+    signals: [
+      '"Minimum number of cameras needed to monitor all nodes": three states returned in postorder (section 11).',
+      '"Sum of the distances between each node and all others": rerooting (section 12).',
+      '"Two nodes were swapped by mistake", with constant space: inorder inversions found with Morris (sections 4 and 25).',
+      '"Longest path such that no pair of adjacent nodes have the same character": top two child arms (sections 6 and 20).',
+      '"Delete some edges so that every component has the same value": the component value must divide the total, so try each divisor.',
+    ],
+    notThis: [
+      'Reaching for HLD or centroid decomposition first: almost every LeetCode Hard here runs in O(n) or O(n log n) with plain DFS.',
+      'Frog Position After T Seconds (LC 1377) is a probability BFS: it needs no DP over the tree.',
+    ],
+    concepts: [
+      'Ask whether the information flows down, up, or both (section 13).',
+      'Ask whether the answer is needed once or for every node (sections 11 and 12).',
+      'Ask whether queries are single or many, and whether the tree changes (sections 22-24).',
+      'Check whether a greedy choice is safe bottom-up, as with cameras placed at a leaf\'s parent.',
+    ],
+    example: {
+      problem: 'Binary Tree Cameras with [0,0,null,0,0]',
+      lc: 968,
+      walkthrough: [
+        'The two leaves at the bottom see null children, which count as COVERED, so each returns NEEDS.',
+        'Their parent sees a child with NEEDS, so it places a camera. cams = 1, and it returns CAMERA.',
+        'The root sees CAMERA on the left and null (COVERED) on the right, so it returns COVERED.',
+        'The root isn\'t NEEDS, so the answer is 1 camera, placed on the middle node.',
+        'For the single node [0], the root returns NEEDS, so the final check adds the 1 camera it needs.',
+      ],
+    },
+    code: `def min_camera_cover(root):
+    NEEDS, COVERED, CAMERA = 0, 1, 2
+    cams = 0
+    def dfs(node):
+        nonlocal cams
+        if not node:
+            return COVERED
+        l, r = dfs(node.left), dfs(node.right)
+        if l == NEEDS or r == NEEDS:
+            cams += 1
+            return CAMERA
+        if l == CAMERA or r == CAMERA:
+            return COVERED
+        return NEEDS
+    if dfs(root) == NEEDS:
+        cams += 1
+    return cams`,
+    complexity: 'O(n) time and O(h) space for LC 968. Most problems in this list run in O(n) or O(n log n).',
+    pitfalls: [
+      'LC 968: forgetting the final check, so a root that still needs coverage gets no camera.',
+      'Checking CAMERA before NEEDS: a node with one NEEDS child and one CAMERA child must still place a camera.',
+      'LC 2440: divisors must be tried from the largest component count down, and each try is a fresh DFS.',
+      'Recursion depth on contest-sized trees: use an explicit stack or raise the limit.',
+    ],
+    pointsToPonder: [
+      'Why is placing a camera at a leaf\'s parent never worse than placing one at the leaf?',
+      'For each problem in the list, which two earlier sections does it combine?',
+      'Which of these would you need to redo if the input became a general graph?',
+    ],
+    practice: [99, 124, 968, 297, 834],
+    snippet: 'common-choose-what-pattern',
+  },
 }
