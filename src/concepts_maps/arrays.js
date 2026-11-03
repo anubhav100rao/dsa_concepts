@@ -695,4 +695,743 @@ for s, e in intervals:
     practice: [252, 56, 57, 435, 986],
     snippet: '22-merge-intervals',
   },
+
+  '13. Array Sorting / Custom Sort': {
+    crux: 'Decide what "comes before" should mean for this problem, and sorting or partitioning does the rest.',
+    signals: [
+      '"Arrange them such that they form the largest number": compare a + b with b + a.',
+      '"Sort according to the order in another array" or "custom order": map each value to a rank and sort by rank.',
+      '"Without using the library\'s sort", with only 0, 1 and 2: three-way partition.',
+      '"nums[0] < nums[1] > nums[2] < ...": a wiggle arrangement, which needs less than a full sort.',
+      '"Kth largest element" with "O(n) average": partition only the side that holds k.',
+      '"At least h papers with at least h citations": sort, then look for the crossover point.',
+    ],
+    notThis: [
+      'Values lie in a small known range, as in LC 451 or LC 347: counting or buckets beat comparison sorting.',
+      'Items arrive over time, so the order must stay current: use a heap or an ordered set.',
+      'You only need pairs or windows on data that is already sorted: skip the sort and use two pointers.',
+    ],
+    concepts: [
+      'A comparator must define a consistent order. If a < b and b < c, then a < c must hold, or sort can misbehave.',
+      'Sort keys can be tuples: sort by frequency, then by value, without writing a comparator.',
+      'Partitioning: Dutch flag (LC 75) and parity (LC 905) are in-place one-pass sorts for a few classes.',
+      'Quickselect (LC 215) partitions and recurses into one side only, for O(n) average time.',
+      'Reconstruction by order (LC 406): sort so that later insertions cannot disturb what was placed earlier.',
+    ],
+    example: {
+      problem: 'Largest Number with nums = [3,30,34]',
+      lc: 179,
+      walkthrough: [
+        'Convert to strings, because the rule compares concatenations.',
+        '"3" against "30": "330" is larger than "303", so 3 goes before 30.',
+        '"34" against "3": "343" is larger than "334", so 34 goes before 3.',
+        '"34" against "30": "3430" is larger than "3034", so 34 goes before 30.',
+        'The order is 34, 3, 30, so the answer is "34330". Plain numeric order would give 34, 30, 3, or "34303", which is smaller.',
+      ],
+    },
+    code: `from functools import cmp_to_key
+
+def compare(a, b):
+    if a + b > b + a:
+        return -1
+    if a + b < b + a:
+        return 1
+    return 0
+
+ordered = sorted(map(str, nums), key=cmp_to_key(compare))
+answer = ''.join(ordered)
+if answer[0] == '0':
+    answer = '0'`,
+    complexity: 'O(n log n) comparisons, each costing O(length of the strings) here. O(n) space for the strings. Quickselect is O(n) on average and O(n^2) in the worst case.',
+    pitfalls: [
+      'LC 179 with all zeros: [0,0] must return "0", not "00".',
+      'Comparator returning true for equal items in C++: `<=` violates strict weak ordering and can crash std::sort. Use `<`.',
+      'Comparing by lexicographic string order only: "3" against "30" gives the wrong order, so compare concatenations.',
+      'Dutch flag: after swapping with the high end, do not advance mid, because the swapped-in value is unchecked.',
+      'Quickselect with a fixed pivot on sorted input degrades to O(n^2). Pick a random pivot.',
+    ],
+    pointsToPonder: [
+      'Why is comparing a + b with b + a actually transitive? It is not obvious.',
+      'When does stability matter, and what can you do if your sort is not stable?',
+      'Why can wiggle sort (LC 280) skip full sorting, when LC 324 needs much more care?',
+    ],
+    practice: [905, 75, 179, 274, 215],
+    snippet: '39-sort-by-frequency',
+  },
+
+  '14. Bucket Sort / Counting Sort / Radix Sort': {
+    crux: 'When the keys come from a small or evenly spread range, index by the key and avoid comparing at all.',
+    signals: [
+      '"Top k frequent" with "better than O(n log n)": a count can only be 1 to n, so bucket by count.',
+      '"Linear time and linear extra space", as in Maximum Gap: buckets or radix.',
+      '"Sort by decreasing frequency": count, then order by count.',
+      '"Rank of each element": sort unique values and map each to its position.',
+      '"Two values within valueDiff at indices within indexDiff": buckets of width valueDiff + 1 make the check O(1).',
+    ],
+    notThis: [
+      'Keys are huge and sparse with no useful bound, so buckets would be mostly empty: a comparison sort is simpler.',
+      'The ordering rule depends on pairs of elements, as in Largest Number (LC 179): this needs a comparator.',
+      'Values keep changing and you need the current top: use a heap, or the frequency stacks of LC 895.',
+    ],
+    concepts: [
+      'Counting sort: count each value, then write them out in order. O(n + range).',
+      'Frequency buckets: index = count. Walking from high to low gives items by descending frequency.',
+      'Pigeonhole (LC 164): the maximum gap is at least (max - min) / (n - 1), so with buckets of that width it can only occur across buckets.',
+      'Radix sort: run a stable counting sort per digit, from least significant to most significant.',
+      'Sliding buckets (LC 220): two values in one bucket always qualify, and otherwise only the neighbouring buckets need checking.',
+    ],
+    example: {
+      problem: 'Top K Frequent Elements with nums = [1,1,1,2,2,3], k = 2',
+      lc: 347,
+      walkthrough: [
+        'Count: 1 appears 3 times, 2 appears 2 times, 3 appears once.',
+        'Bucket by count: buckets[3] = [1], buckets[2] = [2], buckets[1] = [3].',
+        'Walk from count 6 down. Counts 6, 5 and 4 are empty.',
+        'Count 3 adds 1, so answer = [1].',
+        'Count 2 adds 2, so answer = [1,2], which has k elements. Count 1 adds nothing, because the answer is full.',
+      ],
+    },
+    code: `count = {}
+for x in nums:
+    count[x] = count.get(x, 0) + 1
+buckets = [[] for _ in range(len(nums) + 1)]
+for x, c in count.items():
+    buckets[c].append(x)
+answer = []
+for c in range(len(nums), 0, -1):
+    for x in buckets[c]:
+        if len(answer) < k:
+            answer.append(x)`,
+    complexity: 'O(n + range) time and O(n + range) space. Radix sort is O(d * (n + base)) for d digits.',
+    pitfalls: [
+      'Sizing buckets at n rather than n + 1: an all-equal array has count n, which needs index n.',
+      'Maximum Gap: when all values are equal the width comes out as 0, so clamp it to at least 1 and handle that case.',
+      'Counting sort with negative values: shift by the minimum first.',
+      'Radix: each digit pass must be stable, or the earlier digit order is lost.',
+      'LC 220 bucket ids for negatives: integer division rounds differently across languages, so use floor division.',
+    ],
+    pointsToPonder: [
+      'Why is the O(n log n) lower bound for sorting not violated here?',
+      'Why can the maximum gap never fall inside one bucket in LC 164?',
+      'When is a heap of size k a better choice than frequency buckets?',
+    ],
+    practice: [1636, 1331, 347, 451, 164],
+    snippet: '39-sort-by-frequency',
+  },
+
+  '15. Boyer-Moore Voting Algorithm': {
+    crux: 'Cancel pairs of different values. A true majority has more copies than everything else combined, so it survives.',
+    signals: [
+      '"Appears more than n / 2 times" with "O(1) space": one candidate and one counter.',
+      '"All elements that appear more than n / 3 times": at most two can qualify, so keep two candidates.',
+      '"The majority element always exists": you may skip the verification pass.',
+      '"Heavy hitters" on a stream with limited memory: Misra-Gries keeps k - 1 counters.',
+      '"Queries ask for the majority in a subarray": voting plus a data structure, as in LC 1157.',
+    ],
+    notThis: [
+      'The array is sorted, as in LC 1150: binary search for the first and last position, and no voting is needed.',
+      'You want the top k by frequency, with no fraction threshold (LC 347): count with a hash map, then use buckets or a heap.',
+      'No space limit applies and you want exact counts anyway: a hash map is simpler to get right.',
+    ],
+    concepts: [
+      'Cancellation: each decrement discards one candidate copy and one other value. The majority cannot be fully cancelled.',
+      'The result is only a candidate. Unless a majority is guaranteed, count it in a second pass.',
+      'Generalization: at most k - 1 values can occur more than n / k times, so k - 1 counters are enough.',
+      'Decrement all counters together only when the new value matches none and no counter is empty.',
+      'Range version (LC 1157): segment tree nodes hold a vote result, then binary search on position lists verifies it.',
+    ],
+    example: {
+      problem: 'Majority Element with nums = [2,2,1,1,1,2,2]',
+      lc: 169,
+      walkthrough: [
+        '2: count is 0, so candidate = 2 and count = 1.',
+        '2: matches, so count = 2.',
+        '1: differs, so count = 1.',
+        '1: differs, so count = 0.',
+        '1: count is 0, so candidate = 1 and count = 1.',
+        '2: differs, so count = 0.',
+        '2: count is 0, so candidate = 2 and count = 1. The answer is 2.',
+      ],
+    },
+    code: `candidate, count = None, 0
+for x in nums:
+    if count == 0:
+        candidate, count = x, 1
+    elif x == candidate:
+        count += 1
+    else:
+        count -= 1`,
+    complexity: 'O(n) time and O(1) extra space. The n / k version is O(n * k) time and O(k) space.',
+    pitfalls: [
+      'Skipping verification when no majority is guaranteed: [1,2,3] leaves candidate 3, which is not a majority.',
+      'LC 229: the check for matching a candidate must come before the check for an empty slot, or one value can take both slots.',
+      'Thresholds: "more than n / 3" is strict, so an element with exactly n / 3 copies does not count.',
+      'In the n / 3 verification, using two separate `if`s without `else` when both candidates are equal can double count.',
+      'Reading the final count as a frequency: it is only what remains after cancelling.',
+    ],
+    pointsToPonder: [
+      'Why can the candidate change many times and still end on the majority?',
+      'Why can at most two elements appear more than n / 3 times?',
+      'What does Misra-Gries guarantee when no element reaches the threshold?',
+    ],
+    practice: [169, 1150, 229, 1157],
+    snippet: '20-majority-element-boyer-moore',
+  },
+
+  '16. Merge / Divide and Conquer on Arrays': {
+    crux: 'Split, solve both halves, then use the fact that both halves are sorted to count or combine across the middle in linear time.',
+    signals: [
+      '"Count of smaller numbers after self" or "how many pairs i < j satisfy ...": count across the split during merge.',
+      '"Reverse pairs" with a condition such as nums[i] > 2 * nums[j]: count on sorted halves first, then merge.',
+      '"Merge k sorted": merge in pairs, or use a heap.',
+      '"Median of two sorted arrays" in "O(log (m + n))": binary search on the partition.',
+      '"Sort an array" with no built-in functions: merge sort or quicksort.',
+    ],
+    notThis: [
+      'Pairs are constrained by a window or distance, not by all i < j: a sliding window or deque may be all you need.',
+      'Values are small or easily compressed, and you prefer an online scan: a Fenwick tree over ranks works too (section 26).',
+      'You only need the kth element, not the full order (LC 215): quickselect is lighter.',
+    ],
+    concepts: [
+      'Merge counting: while merging, an element from the right placed ahead of remaining left items forms an inversion with each of them.',
+      'If the count condition differs from the sort order (LC 493), count with a separate two-pointer pass before the merge.',
+      'Attach original indices when the answer is per element (LC 315).',
+      'Merge from the back for an in-place merge (LC 88).',
+      'Master theorem: T(n) = 2T(n / 2) + O(n) gives O(n log n), so keep the combine step linear.',
+    ],
+    example: {
+      problem: 'Count of Smaller Numbers After Self with nums = [5,2,6,1]',
+      lc: 315,
+      walkthrough: [
+        'Split into [5,2] and [6,1], then each of those into single elements.',
+        'Merge [5] and [2]: 2 is smaller than 5, so j = 1 and counts[0] += 1. Sorted: [2,5].',
+        'Merge [6] and [1]: 1 is smaller than 6, so j = 1 and counts[2] += 1. Sorted: [1,6].',
+        'Merge [2,5] and [1,6]. For 2: 1 is smaller, so j = 1 and counts[1] += 1.',
+        'For 5: 6 is not smaller, so j stays 1 and counts[0] += 1, making it 2.',
+        'The answer is [2,1,1,0].',
+      ],
+    },
+    code: `counts = [0] * len(nums)
+
+def merge_sort(items):
+    if len(items) <= 1:
+        return items
+    mid = len(items) // 2
+    left, right = merge_sort(items[:mid]), merge_sort(items[mid:])
+    merged, j = [], 0
+    for value, index in left:
+        while j < len(right) and right[j][0] < value:
+            merged.append(right[j])
+            j += 1
+        counts[index] += j
+        merged.append((value, index))
+    return merged + right[j:]
+
+merge_sort([(x, i) for i, x in enumerate(nums)])`,
+    complexity: 'O(n log n) time and O(n) space. Median of two sorted arrays is O(log(min(m, n))).',
+    pitfalls: [
+      'Counting equal elements as smaller: LC 315 needs a strict comparison, so ties must not advance j.',
+      'Overflow in LC 493: 2 * nums[j] overflows 32 bits, so use 64-bit values.',
+      'Counting during the merge in LC 493: the merge order and the counting condition differ, so do them in two steps.',
+      'Copying into fresh arrays at every level with a large constant: reuse one buffer in C++.',
+      'Sorting values alone in LC 315 and losing track of which original index each belongs to.',
+    ],
+    pointsToPonder: [
+      'Why does sorting each half make the count across the middle linear?',
+      'How does a Fenwick tree solve the same problem, and when would you pick each?',
+      'Why does the median problem binary search on a partition rather than on a value?',
+    ],
+    practice: [88, 912, 215, 315, 493],
+    snippet: '34-count-inversions-merge-sort',
+  },
+
+  '17. Array as Hashmap (Index Mapping)': {
+    crux: 'When values fit the index range, the array can double as its own "seen" table: a value marks the slot it points to.',
+    signals: [
+      '"Numbers in the range [1, n]" plus "without extra space": each value names a slot.',
+      '"Find all numbers disappeared" or "appear twice": read the marks afterwards.',
+      '"One number is duplicated and one is missing": marks reveal both.',
+      '"Set S[k] = {nums[k], nums[nums[k]], ...}": values are next-pointers, so the array is a set of cycles.',
+      '"You may assume the returned list does not count as extra space": a hint that O(1) working space is expected.',
+    ],
+    notThis: [
+      'You may not modify the input, as in Find the Duplicate Number (LC 287): use Floyd or binary search on the value range.',
+      'Values fall outside 1..n and are not filtered, as in LC 1346: a hash set is the right tool.',
+      'Find the Celebrity (LC 277) is about eliminating candidates with a knows() query, not about marking slots.',
+    ],
+    concepts: [
+      'Sign marking: negate nums[abs(x) - 1]. A positive slot means its value never appeared, and an already negative slot means a duplicate.',
+      'Always read through abs(), because earlier steps may have flipped the value you are reading.',
+      'Swapping home versus marking: cyclic sort rearranges values, and marking keeps order but uses the sign bit.',
+      'Cycle walks (LC 565): follow i to nums[i] and mark visited slots, so each cycle is walked once.',
+      'If values may be zero or negative, shift or filter them first, or the sign has no free bit to carry.',
+    ],
+    example: {
+      problem: 'Find All Numbers Disappeared in an Array with nums = [2,2,1,5,5]',
+      lc: 448,
+      walkthrough: [
+        'x = 2: mark index 1, giving [2,-2,1,5,5].',
+        'x = -2: abs is 2, so index 1 stays marked.',
+        'x = 1: mark index 0, giving [-2,-2,1,5,5].',
+        'x = 5: mark index 4, giving [-2,-2,1,5,-5].',
+        'x = -5: abs is 5, so index 4 stays marked.',
+        'Indices 2 and 3 are still positive, so the missing numbers are [3,4].',
+      ],
+    },
+    code: `for x in nums:
+    i = abs(x) - 1
+    nums[i] = -abs(nums[i])
+answer = [i + 1 for i, x in enumerate(nums) if x > 0]`,
+    complexity: 'O(n) time. O(1) extra space besides the output, though the input is modified.',
+    pitfalls: [
+      'Reading nums[i] directly after it may have been negated: that gives a negative index. Use abs().',
+      'Negating with -nums[i] instead of -abs(nums[i]): a second visit flips the mark back off.',
+      'Off-by-one: value v maps to index v - 1 when values start at 1, but to index v for 0..n.',
+      'Leaving the input mangled when the caller needs it: restore the signs at the end if required.',
+      'Applying sign marks to arrays that contain zero: -0 is 0, so the mark is lost.',
+    ],
+    pointsToPonder: [
+      'Where is the extra information stored, given that no extra memory is allocated?',
+      'Would this still count as O(1) space if the input were read-only or shared?',
+      'Why does LC 287 count as a harder problem than LC 442, even though both look for duplicates?',
+    ],
+    practice: [268, 448, 645, 442, 41],
+    snippet: '32-cyclic-sort',
+  },
+
+  '18. Prefix / Suffix Arrays (Precomputation)': {
+    crux: 'If each index depends on what lies to its left and to its right, compute one summary per side, then combine them at every index.',
+    signals: [
+      '"Product of all the elements except nums[i]": the product to the left times the product to the right.',
+      '"Without using the division operator" and "O(n)": prefix and suffix products.',
+      '"Water trapped above each bar": min(left max, right max) - height.',
+      '"At most two transactions": best on the left plus best on the right at every split.',
+      '"Each child must have more than a lower-rated neighbour": one pass per direction.',
+      '"Non-increasing for the k days before and non-decreasing for the k days after": streak arrays from both sides.',
+    ],
+    notThis: [
+      'Only one side matters, as in Best Time to Buy and Sell Stock (LC 121): one running value is enough.',
+      'You need range sums for arbitrary queries (LC 303): that is a plain prefix sum.',
+      'The next element meeting a condition matters, not a summary of the whole side, as in LC 739: use a monotonic stack.',
+    ],
+    concepts: [
+      'Left and right summaries are often max, min, sum, product or streak length.',
+      'Splitting an array: at each split, combine best-on-left[i] with best-on-right[i + 1] (LC 123, LC 689).',
+      'Space saving: if the combine step goes in one direction, one array plus a running value is enough (LC 238).',
+      'Two opposite greedy passes can settle constraints from both neighbours, as in Candy (LC 135).',
+      'Two pointers can replace the arrays in LC 42, once you see that only the smaller side matters.',
+    ],
+    example: {
+      problem: 'Product of Array Except Self with nums = [1,2,3,4]',
+      lc: 238,
+      walkthrough: [
+        'Left pass: answer[i] is the product of everything before i. That gives [1,1,2,6].',
+        'Right pass, with right = 1. i = 3: answer[3] = 6 * 1 = 6, then right = 4.',
+        'i = 2: answer[2] = 2 * 4 = 8, then right = 12.',
+        'i = 1: answer[1] = 1 * 12 = 12, then right = 24.',
+        'i = 0: answer[0] = 1 * 24 = 24. The answer is [24,12,8,6].',
+      ],
+    },
+    code: `n = len(nums)
+answer = [1] * n
+left = 1
+for i in range(n):
+    answer[i] = left
+    left *= nums[i]
+right = 1
+for i in range(n - 1, -1, -1):
+    answer[i] *= right
+    right *= nums[i]`,
+    complexity: 'O(n) time. O(n) space for two arrays, or O(1) extra space beyond the output with the running-value form.',
+    pitfalls: [
+      'Updating the running product before writing the answer: the element then includes itself.',
+      'Trying total product divided by nums[i]: a zero breaks it, and the problem forbids division anyway.',
+      'Mixing the bounds at a split: the left part ends at i and the right part starts at i + 1, so one index is not counted twice.',
+      'Candy: a single pass misses the right-neighbour rule, so take the max of both passes.',
+      'Streak arrays in LC 2100: check whether the streak needs to include the day itself.',
+    ],
+    pointsToPonder: [
+      'Why is the left-then-right order enough to cover every element except the current one?',
+      'When can a precomputed suffix array be replaced with a running value?',
+      'Why does Candy need two passes, when one pass handles each neighbour rule alone?',
+    ],
+    practice: [1013, 238, 2100, 42, 135],
+    snippet: '24-product-except-self',
+  },
+
+  '19. Bit Manipulation on Arrays': {
+    crux: 'XOR cancels pairs, and bits can be counted one position at a time, so these problems often need no extra memory at all.',
+    signals: [
+      '"Every element appears twice except for one": XOR all of them.',
+      '"Appears three times except for one": count each bit modulo 3.',
+      '"Exactly two elements appear only once": XOR, then split on any set bit.',
+      '"Sum of Hamming distances between all pairs": for each bit, pairs = ones * zeros.',
+      '"Maximum XOR of two numbers": build the answer greedily from the high bit, using a trie or a prefix set.',
+      '"Linear runtime" and "constant extra space" on a counting problem.',
+    ],
+    notThis: [
+      'Duplicates can appear any number of times with no parity rule: XOR says nothing, so use a hash map.',
+      'A range sum is asked for and values can be negative: use prefix sums. XOR prefixes only help with XOR queries such as LC 1310.',
+      'The range is large and only membership matters: a hash set is clearer, unless space is explicitly limited.',
+    ],
+    concepts: [
+      'x ^ x = 0 and x ^ 0 = x, and XOR is order-independent, so pairs vanish in any arrangement.',
+      'x & -x isolates the lowest set bit. x & (x - 1) clears it.',
+      'Per-bit counting turns O(n^2) pair problems into O(32 * n), as in LC 477.',
+      'Prefix XOR: xor(l..r) = pref[r + 1] ^ pref[l], the same as prefix sums (LC 1310).',
+      'Identities help on hard problems: in LC 1835, the XOR of all pairwise ANDs is (xor of a) & (xor of b).',
+    ],
+    example: {
+      problem: 'Single Number III with nums = [1,2,1,3,2,5]',
+      lc: 260,
+      walkthrough: [
+        'XOR everything. The pairs of 1 and 2 cancel, leaving 3 ^ 5 = 6, which is binary 110.',
+        'The lowest set bit of 6 is 2 (binary 010). The two singles must differ at that bit.',
+        'Numbers with that bit set are 2, 3 and 2, so their XOR is a = 3.',
+        'Numbers without it are 1, 1 and 5, so their XOR is b = 5.',
+        'The answer is [3,5].',
+      ],
+    },
+    code: `xor_all = 0
+for x in nums:
+    xor_all ^= x
+low_bit = xor_all & -xor_all
+a = b = 0
+for x in nums:
+    if x & low_bit:
+        a ^= x
+    else:
+        b ^= x
+answer = sorted([a, b])`,
+    complexity: 'O(n) time and O(1) extra space. Per-bit approaches are O(bits * n). Maximum XOR is O(bits * n) with a trie or set.',
+    pitfalls: [
+      'Forgetting C++ precedence: x & mask == 0 parses as x & (mask == 0), so add parentheses.',
+      'x & -x on INT_MIN overflows in C++: use unsigned or a 64-bit type.',
+      'Per-bit rebuild with negatives: in C++, shifting a negative value is implementation-sensitive, so use unsigned.',
+      'In Python ints have no fixed width, so ~x and negative results need a mask when the problem assumes 32 bits.',
+      'Trying to use XOR on values with an odd count of duplicates: only even counts cancel.',
+    ],
+    pointsToPonder: [
+      'Why must the two singles differ at any set bit of the XOR?',
+      'How does counting bits modulo 3 generalize to "appears k times except one"?',
+      'Why does a greedy high-bit strategy work for maximum XOR?',
+    ],
+    practice: [136, 268, 137, 260, 477],
+    snippet: '19-find-single-number',
+  },
+
+  '20. Simulation / Ad-Hoc Array Problems': {
+    crux: 'Follow the rules exactly, and pick the state representation that makes each step simple and correct.',
+    signals: [
+      '"After applying the rules", "repeat until stable" or "in each step": do what it says.',
+      '"Collide", "explode" or "cancel when moving in opposite directions": a stack holds the survivors.',
+      '"Students take turns", "go to the back of the line": a queue, or a formula on the counts.',
+      '"All cells update simultaneously": read from old state and write to new state.',
+      '"Each number is the sum of the two above it": build row by row from the previous one.',
+    ],
+    notThis: [
+      'The step count can reach 10^9: running each step is too slow, so find a cycle or a formula.',
+      'Many range changes are applied and only the result matters: use a difference array.',
+      'There is a choice at each step and you want the best outcome: that is greedy or DP, not simulation.',
+    ],
+    concepts: [
+      'Check the constraints first: if n and the step count are small, a direct simulation is the intended answer.',
+      'Stack for interactions with the nearest survivor. Queue for turn order.',
+      'Simultaneous updates need a copy, or an in-place encoding that keeps both old and new values (LC 289).',
+      'Shortcuts by counting: LC 2073 sums min(tickets[i], limit) for each person without running the queue.',
+      'Write down small cases by hand and watch for a pattern before writing the loop.',
+    ],
+    example: {
+      problem: 'Asteroid Collision with asteroids = [5,10,-5,-20]',
+      lc: 735,
+      walkthrough: [
+        '5 moves right, so push it: [5].',
+        '10 moves right, so push it: [5,10].',
+        '-5 meets 10. 10 is larger, so -5 explodes and the stack stays [5,10].',
+        '-20 meets 10. 10 is smaller, so pop it. Then it meets 5, which is also smaller, so pop that as well.',
+        'The stack is empty, so -20 survives. The answer is [-20].',
+      ],
+    },
+    code: `stack = []
+for a in asteroids:
+    alive = True
+    while alive and a < 0 and stack and stack[-1] > 0:
+        if stack[-1] < -a:
+            stack.pop()
+        elif stack[-1] == -a:
+            stack.pop()
+            alive = False
+        else:
+            alive = False
+    if alive:
+        stack.append(a)`,
+    complexity: 'Here O(n) time and O(n) space, because each asteroid is pushed and popped at most once. In general it is O(steps * work per step).',
+    pitfalls: [
+      'Treating negative then positive as a collision: they move apart, so only a positive followed by a negative collide.',
+      'Equal sizes: both explode, so pop and also drop the new asteroid.',
+      'Updating a grid in place when the next cell still needs old values.',
+      'Rotations and pointers wrapping around: use modulo, and handle k larger than n.',
+      'Assuming a loop stops after one pass when "until stable" needs several passes (LC 1243, LC 723).',
+    ],
+    pointsToPonder: [
+      'Is this a true simulation problem, or does counting give the same answer faster?',
+      'What state has to be stored for a step to be applied without looking back?',
+      'What is a safe way to confirm that a loop ending at "no changes" will finish?',
+    ],
+    practice: [657, 118, 2073, 289, 735],
+    snippet: '55-pascal-triangle',
+  },
+
+  '21. Monotonic Array / Trend Detection': {
+    crux: 'Read the array as a shape. Runs, turning points and running extremes usually hold the answer without any sorting.',
+    signals: [
+      '"Entirely non-increasing or non-decreasing": one pass checking both directions.',
+      '"Longest continuous increasing": reset a counter when the trend breaks.',
+      '"Strictly increasing then strictly decreasing", as in a mountain: climb up, then down, and check both happened.',
+      '"Find a peak element" in "O(log n)": binary search on the slope.',
+      '"Shortest subarray that, if sorted, sorts the whole array": compare against running max and min.',
+      '"Increasing subsequence of length 3" in O(1) space: keep the smallest and second smallest so far.',
+    ],
+    notThis: [
+      'The increasing elements need not be adjacent and you want the longest, as in LC 300: use DP or patience sorting.',
+      'Each element needs the next greater one, as in Daily Temperatures (LC 739): use a monotonic stack.',
+      'You must return a whole sorted array, not just find where it is out of order: use a plain sort.',
+    ],
+    concepts: [
+      'Compare neighbours: the sign of nums[i + 1] - nums[i] is all you need for many trend problems.',
+      'Running extremes: an element below the max to its left is out of place, and likewise an element above the min to its right.',
+      'Runs: track up and down lengths, and reset at a flat or a reversed step.',
+      'A slope comparison at mid tells you which side has a peak, even in unsorted data (LC 162).',
+      'Sorted and rotated: a rotated sorted array has at most one descent, counted circularly (LC 1752).',
+    ],
+    example: {
+      problem: 'Shortest Unsorted Continuous Subarray with nums = [2,6,4,8,5,9]',
+      lc: 581,
+      walkthrough: [
+        'Start with max_seen = 2 and min_seen = 9. Each step reads one element from the left and one from the right.',
+        'i = 1: 6 is the new max, and 5 is the new min.',
+        'i = 2: 4 is below max 6, so right = 2. 8 is above min 5, so left = 3.',
+        'i = 3: 8 is the new max, and 4 is the new min.',
+        'i = 4: 5 is below max 8, so right = 4. 6 is above min 4, so left = 1.',
+        'i = 5: 9 is the new max, and 2 is the new min. Neither end moves.',
+        'The answer is 4 - 1 + 1 = 4, the subarray [6,4,8,5].',
+      ],
+    },
+    code: `n = len(nums)
+left, right = -1, -2
+max_seen, min_seen = nums[0], nums[-1]
+for i in range(1, n):
+    max_seen = max(max_seen, nums[i])
+    if nums[i] < max_seen:
+        right = i
+    min_seen = min(min_seen, nums[n - 1 - i])
+    if nums[n - 1 - i] > min_seen:
+        left = n - 1 - i
+answer = right - left + 1`,
+    complexity: 'O(n) time and O(1) extra space. Peak finding is O(log n). LIS is O(n log n) with patience sorting.',
+    pitfalls: [
+      'Mountains need both slopes: a purely increasing array is not a mountain, so require an up step and a down step.',
+      'Mixing up strict and non-strict: LC 896 allows equal neighbours, but LC 941 and LC 845 do not.',
+      'LC 581 on a sorted input: left = -1 and right = -2 make the length come out as 0. Other starting values give 1.',
+      'LC 581: comparing only neighbours misses how far a value really has to move, so compare with running extremes.',
+      'LC 334: the "smallest" variable can move past the second, and that is fine, since it only needs to record that a smaller pair existed.',
+    ],
+    pointsToPonder: [
+      'Why can a binary search find a peak in an unsorted array?',
+      'In LC 334, first and second may not be in order at the end. Why is the answer still right?',
+      'Which of these problems need the whole left side, and which need only the neighbour?',
+    ],
+    practice: [896, 674, 941, 334, 581],
+    snippet: '11-prefix-max-suffix-max',
+  },
+
+  '22. Array Design / Online / Stream': {
+    crux: 'List the required operations and their target costs, then combine structures so that each one covers what the other cannot.',
+    signals: [
+      '"Design a class" with "average O(1)": an array for positions plus a hash map for lookup.',
+      '"getRandom" with equal probability: you need index access, so the values must live in an array.',
+      '"Snapshot", "get the value at time t" or "timestamp_prev <= timestamp": append versions and binary search them.',
+      '"Moving average" or "hits in the last 5 minutes": a queue or circular buffer.',
+      '"Least recently used" or "least frequently used": a hash map plus a linked list.',
+      '"Return the minimum in constant time": a second stack, or stored pairs.',
+    ],
+    notThis: [
+      'All queries are known up front: answering offline after sorting is often simpler (section 24).',
+      'You need sorted-order queries such as the kth smallest in a changing set: use a heap, a balanced tree or a Fenwick tree.',
+      'Queries are range sums on changing values, as in LC 307: use a Fenwick or segment tree.',
+    ],
+    concepts: [
+      'Array plus map: the array gives random access, and the map gives each value\'s position.',
+      'Remove from an array in O(1) by swapping the target with the last element, then popping.',
+      'Versioning (LC 1146, 981): store (time, value) per key, then use binary search for reads.',
+      'Monotonic stack for streaming spans (LC 901): collapse smaller entries into one with a count.',
+      'Circular buffers keep a fixed-window state with a fixed amount of memory (LC 346, 362).',
+    ],
+    example: {
+      problem: 'Insert Delete GetRandom O(1) with insert(1), insert(2), insert(3), remove(1), then getRandom()',
+      lc: 380,
+      walkthrough: [
+        'After the inserts, vals = [1,2,3] and pos = {1: 0, 2: 1, 3: 2}.',
+        'remove(1): i = pos[1] = 0, and the last value is 3.',
+        'Move the last value into the hole: vals[0] = 3 and pos[3] = 0.',
+        'Pop the end and delete the key: vals = [3,2] and pos = {2: 1, 3: 0}.',
+        'getRandom() picks a random index of vals, so it returns 3 or 2 with equal chance.',
+      ],
+    },
+    code: `class RandomizedSet:
+    def __init__(self):
+        self.vals, self.pos = [], {}
+
+    def insert(self, x):
+        if x in self.pos:
+            return False
+        self.pos[x] = len(self.vals)
+        self.vals.append(x)
+        return True
+
+    def remove(self, x):
+        if x not in self.pos:
+            return False
+        i, last = self.pos[x], self.vals[-1]
+        self.vals[i] = last
+        self.pos[last] = i
+        self.vals.pop()
+        del self.pos[x]
+        return True
+
+    def getRandom(self):
+        return random.choice(self.vals)`,
+    complexity: 'O(1) average per operation and O(n) total space for this design. Versioned reads cost O(log versions).',
+    pitfalls: [
+      'Removing the last element: deleting pos[x] before updating pos[last] puts x back in the map when x is the last value.',
+      'Scanning the array to remove: that makes the operation O(n).',
+      'Duplicates (LC 381): each value needs a set of positions, not one position.',
+      'Snapshot Array: copying the whole array per snapshot is O(n) per call, and it will run out of memory.',
+      'Timestamps: LC 981 needs the latest time at or before t, so use upper bound minus one.',
+    ],
+    pointsToPonder: [
+      'What does each structure in your design give you that the other cannot?',
+      'Why is a hash map alone not enough for a uniform getRandom?',
+      'Where can you accept a slower write in exchange for faster reads, and vice versa?',
+    ],
+    practice: [705, 706, 346, 380, 1146],
+  },
+
+  '23. Multi-Array / Parallel Array Processing': {
+    crux: 'Keep one pointer per array and always advance the one that can no longer help.',
+    signals: [
+      '"Two sorted arrays" or "two lists of intervals": one pointer in each.',
+      '"Assign" or "match each child with a cookie": sort both and pair greedily.',
+      '"Maximize the number of indices where nums1[i] > nums2[i]": sort both and match the smallest winner.',
+      '"Smallest range that includes at least one number from each of the k lists": a min-heap over k pointers.',
+      '"Shortest distance between word1 and word2": keep the latest position of each.',
+    ],
+    notThis: [
+      'The arrays are unsorted and you may use memory, as in LC 349: a hash set is simpler than sorting.',
+      'You must relate positions inside one array, not across arrays: use the single-array patterns.',
+      'You need the median of two sorted arrays in O(log n) (LC 4): a linear merge is too slow, so binary search on the partition.',
+    ],
+    concepts: [
+      'Advance the smaller or earlier-ending side, because it cannot match anything further along the other array.',
+      'k pointers need a heap to find which one to move next (LC 632).',
+      'Sort pairs by a difference when a choice applies to both arrays (LC 1029 sorts by cost difference).',
+      'Keep original indices when you sort, if the output order matters (LC 870).',
+      'For LC 88, fill from the end so that unread values are not overwritten.',
+    ],
+    example: {
+      problem: 'Interval List Intersections with A = [[0,2],[5,10]], B = [[1,5],[8,12]]',
+      lc: 986,
+      walkthrough: [
+        'Compare [0,2] with [1,5]: the overlap is [1,2], so add it. A ends first, so i = 1.',
+        'Compare [5,10] with [1,5]: the overlap is [5,5], so add it. B ends first, so j = 1.',
+        'Compare [5,10] with [8,12]: the overlap is [8,10], so add it. A ends first, so i = 2.',
+        'A is done, so stop. The answer is [[1,2],[5,5],[8,10]].',
+      ],
+    },
+    code: `i = j = 0
+answer = []
+while i < len(A) and j < len(B):
+    lo = max(A[i][0], B[j][0])
+    hi = min(A[i][1], B[j][1])
+    if lo <= hi:
+        answer.append([lo, hi])
+    if A[i][1] < B[j][1]:
+        i += 1
+    else:
+        j += 1`,
+    complexity: 'O(m + n) time for two pointers, plus sorting if needed. With k lists and a heap, O(N log k) time and O(k) space.',
+    pitfalls: [
+      'Advancing both pointers after a match: the longer interval may also overlap the next one.',
+      'Using lo < hi: closed intervals that touch still intersect at one point, so use <=.',
+      'Forgetting the leftover elements when merging: after the loop one array may still hold values.',
+      'LC 632: stop as soon as any list runs out, because a valid range needs one element from every list.',
+      'Sorting one array and losing the index mapping that the output depends on.',
+    ],
+    pointsToPonder: [
+      'Why can the earlier-ending interval never overlap anything further along?',
+      'Why does a heap become necessary at k lists, when two lists need only a comparison?',
+      'What exchange argument proves the greedy matching in LC 455?',
+    ],
+    practice: [88, 350, 455, 986, 632],
+    snippet: '35-merge-two-sorted-arrays',
+  },
+
+  '24. Range Query / Offline Processing': {
+    crux: 'If queries can be answered in any order, sort them so that shared work carries over from one query to the next.',
+    signals: [
+      '"Return an answer for each query" with queries known up front and 10^5 of them: consider sorting the queries.',
+      '"Maximum beauty among items with price at most q": sort items and queries, and sweep together.',
+      '"XOR of elements from left to right" with no updates: prefix XOR.',
+      '"Update an element" mixed with "sum of a range": Fenwick or segment tree.',
+      '"Smallest interval containing the query": sort both, plus a heap of active intervals.',
+      '"How many flowers are in bloom when each person arrives": sort arrival times against start and end times.',
+    ],
+    notThis: [
+      'Answers are needed immediately and each query depends on earlier results: you cannot reorder, so use an online structure.',
+      'There are no updates and the query is a plain sum: a prefix sum is enough, with no sorting.',
+      'There are just a few queries on a small n: scanning per query is simple and fast enough.',
+    ],
+    concepts: [
+      'Offline trick: sort query indices, process them in that order, and write answers back to their original positions.',
+      'Static sums use prefix arrays. Point updates with range reads use a Fenwick tree. Range updates with range reads use a lazy segment tree.',
+      'Sparse tables give O(1) range min or max with no updates.',
+      'Value-indexed position lists (LC 2080): binary search over where each value occurs.',
+      'Mo\'s algorithm orders queries by block so that the window endpoints move about O((n + q) * sqrt(n)) in total.',
+    ],
+    example: {
+      problem: 'Most Beautiful Item for Each Query with items = [[1,2],[3,1],[2,4]], queries = [2,1,3]',
+      lc: 2070,
+      walkthrough: [
+        'Sort items by price: [1,2], [2,4], [3,1]. Sorting query positions by value gives the order 1, 0, 2.',
+        'Query position 1 (price limit 1): take [1,2], so best = 2 and answer[1] = 2.',
+        'Query position 0 (price limit 2): take [2,4], so best = 4 and answer[0] = 4.',
+        'Query position 2 (price limit 3): take [3,1], and best stays 4, so answer[2] = 4.',
+        'The answer in the original order is [4,2,4].',
+      ],
+    },
+    code: `items.sort()
+order = sorted(range(len(queries)), key=lambda q: queries[q])
+answer = [0] * len(queries)
+i = best = 0
+for q in order:
+    while i < len(items) and items[i][0] <= queries[q]:
+        best = max(best, items[i][1])
+        i += 1
+    answer[q] = best`,
+    complexity: 'O((n + q) log(n + q)) time for offline sorting, and O(q) space for the order. Fenwick and segment trees take O(log n) per operation.',
+    pitfalls: [
+      'Writing answers in sorted order: map each one back to its original query position.',
+      'Sorting the queries themselves and losing their indices: sort indices or (value, index) pairs.',
+      'Applying offline tricks when the problem encodes each query with the previous answer: that forces online handling.',
+      'Off-by-one in Fenwick trees: they are 1-indexed, so shift input indices by 1.',
+      'Rebuilding a structure per query when an incremental sweep would reuse the work.',
+    ],
+    pointsToPonder: [
+      'What property of a query makes it possible to carry over work from the previous one?',
+      'When is offline processing simpler than a segment tree, and when is it not an option?',
+      'Why does Mo\'s algorithm need "add" and "remove" to both be cheap?',
+    ],
+    practice: [303, 1310, 2070, 307, 1851],
+    snippet: '56-mo-s-algorithm-skeleton',
+  },
 }
