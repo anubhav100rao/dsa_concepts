@@ -450,6 +450,10 @@ string minWindow(const string& s, const string& t) {
 
 ## 13. Sliding Window — Find All Anagrams
 
+**Use when:** The problem says "anagram" or "permutation of p", so the window size is fixed and only letter counts matter.
+
+**Complexity:** O(26 · n) time, which is O(n), and O(1) space for the two arrays.
+
 ```cpp
 vector<int> findAnagrams(const string& s, const string& p) {
     vector<int> res;
@@ -470,9 +474,19 @@ vector<int> findAnagrams(const string& s, const string& p) {
 }
 ```
 
+**Example:** `s = "cbaebabacd", p = "abc"` returns `[0, 6]`.
+
+**Pitfalls:** Drop `s[i - k]` only once `i >= k`, and record only once `i >= k - 1`. The 26-slot array assumes lowercase letters. Return early when `s` is shorter than `p`.
+
+**Used in:** LC 438, LC 567
+
 ---
 
 ## 14. Sliding Window + Monotonic Deque
+
+**Use when:** The problem needs the window's max or min at each step, as in "absolute difference at most limit" or "maximum of each window".
+
+**Complexity:** O(n) time, since each index enters and leaves a deque at most once, and O(n) space in the worst case.
 
 Longest subarray where `max - min <= limit`.
 
@@ -500,9 +514,19 @@ int longestSubarray(vector<int>& a, int limit) {
 }
 ```
 
+**Example:** `a = [8,2,4,7], limit = 4` returns `2`, from `[2,4]` or `[4,7]`.
+
+**Pitfalls:** Store indices, so you can tell when the front has left the window. Compare `front()` to `left` before moving `left`. Popping equal values (`<=`, `>=`) is safe here, because the newer index stays in the window longer.
+
+**Used in:** LC 239, LC 1425, LC 1438, LC 1696
+
 ---
 
 ## 15. Sliding Window + Multiset
+
+**Use when:** The problem asks for the median or k-th value of each window, which a deque can't give you.
+
+**Complexity:** O(n log k) for the inserts and erases, plus O(k) per `advance`, so O(nk) as written. Moving a saved iterator one step at a time brings it down to O(n log k). Space is O(k).
 
 Window median / kth via ordered multiset (slide by erase one occurrence).
 
@@ -524,9 +548,19 @@ for (int right = 0; right < (int)a.size(); right++) {
 }
 ```
 
+**Example:** `a = [1,3,-1,-3,5], k = 3` gives `*it` values `1, -1, -1`.
+
+**Pitfalls:** `win.erase(value)` removes every copy, so use `erase(find(value))`. For an even `k`, `k / 2` gives the upper median, and the true median averages two middle values. Average in `double` or `long long` to avoid overflow.
+
+**Used in:** LC 480, LC 1438
+
 ---
 
 ## 16. Sliding Window on Circular Array
+
+**Use when:** The problem says "circular", or that the first and last elements are adjacent, and the window has a set size.
+
+**Complexity:** O(n + k) time and O(1) space, because `% n` avoids doubling the array.
 
 Max subarray-sum-style scan by doubling indices `i % n`.
 
@@ -546,9 +580,19 @@ long long maxCircularWindow(vector<int>& a, int k) {
 }
 ```
 
+**Example:** `a = [5,1,2,6], k = 2` returns `11`, from the wrapped window `[6,5]`.
+
+**Pitfalls:** Assumes `k <= n`, since a larger window would count elements twice. Start `best` at `LLONG_MIN` because sums can be negative. The loop ends at `n + k - 2`, which gives exactly `n` windows.
+
+**Used in:** LC 1652, LC 2134
+
 ---
 
 ## 17. Multi-Pointer — 3Sum
+
+**Use when:** The problem says "all triplets" or "unique" combinations that sum to a target.
+
+**Complexity:** O(n²) time. Extra space is O(1) beyond the output and the sort.
 
 ```cpp
 vector<vector<int>> threeSum(vector<int>& a) {
@@ -581,9 +625,19 @@ vector<vector<int>> threeSum(vector<int>& a) {
 }
 ```
 
+**Example:** `a = [-1,0,1,2,-1,-4]` returns `[[-1,-1,2],[-1,0,1]]`.
+
+**Pitfalls:** Compare the anchor with `a[i - 1]`, not `a[i + 1]`, or you lose answers like `[-1,-1,2]`. Skip inner duplicates only after recording a match. For 4Sum, sum into `long long`.
+
+**Used in:** LC 15, LC 16, LC 18, LC 259
+
 ---
 
 ## 18. Two Pointers on Strings — Backspace Compare
+
+**Use when:** The problem says "# means a backspace", or asks for O(1) space where later characters change earlier ones.
+
+**Complexity:** O(n + m) time and O(1) space.
 
 Compare two strings with `#` as backspace, `O(1)` space.
 
@@ -616,9 +670,19 @@ bool backspaceCompare(const string& s, const string& t) {
 }
 ```
 
+**Example:** `s = "ab#c", t = "ad#c"` returns `true`, and `s = "a#c", t = "b"` returns `false`.
+
+**Pitfalls:** Scan from the right, because a `#` affects what comes before it. Keep looping while either index is valid, since the other string may have only erased characters left. Both indices must run out together for a match.
+
+**Used in:** LC 844
+
 ---
 
 ## 19. Two Pointers on Linked Lists — Nth From End
+
+**Use when:** The problem says "n-th node from the end", and you don't know the list's length.
+
+**Complexity:** O(L) time for a list of length L, and O(1) space.
 
 ```cpp
 ListNode* removeNthFromEnd(ListNode* head, int n) {
@@ -636,9 +700,19 @@ ListNode* removeNthFromEnd(ListNode* head, int n) {
 }
 ```
 
+**Example:** `1 → 2 → 3 → 4 → 5, n = 2` returns `1 → 2 → 3 → 5`.
+
+**Pitfalls:** Use the dummy so that removing the head needs no special case. Loop on `fast->next` so that `slow` stops just before the target. This doesn't `delete` the removed node, which real code may need to do.
+
+**Used in:** LC 19, LC 61
+
 ---
 
 ## 20. Two Pointers + Binary Search
+
+**Use when:** The data can be sorted and, for each element, you need the farthest partner that meets a condition.
+
+**Complexity:** O(n log n) time and O(1) extra space.
 
 For each `i`, binary-search the farthest `j` keeping a condition.
 
@@ -657,9 +731,19 @@ int longestWithinDiff(vector<int>& a, int d) {
 }
 ```
 
+**Example:** `a = [1,5,2,8,3], d = 2` returns `3`, from `[1,2,3]` after sorting.
+
+**Pitfalls:** `upper_bound` returns one past the last match, so the count is `j - i` without a `+ 1`. The sort changes `a`, so copy it first if the caller needs the original order. Since `j` only grows with `i`, a second pointer would also work in O(n) after the sort.
+
+**Used in:** LC 1498, LC 1818, LC 2300
+
 ---
 
 ## 21. Two Pointers + Greedy — Boats to Save People
+
+**Use when:** The problem says "at most two per boat", or asks you to pair the extremes under a limit.
+
+**Complexity:** O(n log n) time for the sort, plus O(n) for the pass. O(1) extra space.
 
 ```cpp
 int numRescueBoats(vector<int>& people, int limit) {
@@ -677,9 +761,19 @@ int numRescueBoats(vector<int>& people, int limit) {
 }
 ```
 
+**Example:** `people = [3,2,2,1], limit = 3` returns `3`.
+
+**Pitfalls:** Use `l <= r`, or the last person never gets a boat. When `l == r`, the check adds one person to themselves, but `r--` still runs, so the count stays right. This greedy works only because a boat holds at most two people.
+
+**Used in:** LC 881, LC 1877
+
 ---
 
 ## 22. Sliding Window + Prefix Sum — Subarray Sum Equals K
+
+**Use when:** The problem says "subarray sum equals k" and values can be negative.
+
+**Complexity:** O(n) expected time and O(n) space.
 
 Handles negatives (window won't work, use hashed prefix sums).
 
@@ -699,9 +793,19 @@ int subarraySum(vector<int>& a, int k) {
 }
 ```
 
+**Example:** `a = [1,-1,1,1], k = 1` returns `5`.
+
+**Pitfalls:** Seed the map with `{0, 1}`, or you miss subarrays that start at index 0. Look up before inserting the current prefix, or `k = 0` counts empty subarrays. `seen[pref - k]` inserts missing keys, so use `find` if memory is tight.
+
+**Used in:** LC 325, LC 560, LC 930, LC 1248
+
 ---
 
 ## 23. Sliding Window on Matrix — Best Row Band + 1D Window
+
+**Use when:** The problem asks about rectangles in a grid, and fixing two rows turns each one into a 1D range.
+
+**Complexity:** O(C) per band with this window, and O(R²C) overall when you try every row pair. Space is O(C).
 
 Reduce 2D to 1D by fixing a row band, then slide over columns.
 
@@ -721,9 +825,19 @@ long long bestColumnWindow(vector<long long>& colSum, int k) {
 // caller fixes top/bottom, accumulates colSum[c] += a[row][c], then calls above
 ```
 
+**Example:** `colSum = [3,-1,4,2], k = 2` returns `6`, from `[4,2]`.
+
+**Pitfalls:** Reset `colSum` for each new top row, and keep adding to it as the bottom row grows. Start `best` at `LLONG_MIN`. Check that `k` fits the width, because `best` stays at `LLONG_MIN` if `k > colSum.size()`. Loop the bands over the smaller dimension.
+
+**Used in:** LC 363, LC 1074
+
 ---
 
 ## 24. Shrinkable vs Non-Shrinkable Templates
+
+**Use when:** The problem says "shortest" or asks for a count, which needs the shrinkable form, or says "longest" and needs only the length, which allows the non-shrinkable form.
+
+**Complexity:** Both are O(n) time, since `left` only moves forward. Space depends on the window state.
 
 ```cpp
 // ---- SHRINKABLE: find the MINIMUM valid window ----
@@ -740,16 +854,26 @@ for (int right = 0; right < n; right++) {
 left = 0;
 for (int right = 0; right < n; right++) {
     add(a[right]);
-    while (windowInvalid()) {       // shrink only to restore validity
+    if (windowInvalid()) {          // slide once: size never decreases
         remove(a[left++]);
     }
     best = max(best, right - left + 1);
 }
 ```
 
+**Example:** Shrinkable with `sum >= 7` on `[2,3,1,2,4,3]` gives `2`. Non-shrinkable with "at most one zero" on `[1,0,1,0,0,1,1]` gives `3`.
+
+**Pitfalls:** Non-shrinkable windows can be invalid, so only their size is meaningful. They can't be used for counting subarrays. Using `if` on a shortest-window problem misses answers, because `left` must move as far as possible.
+
+**Used in:** LC 3, LC 76, LC 209, LC 424, LC 1004
+
 ---
 
 ## Common Choose-What Pattern
+
+**Use when:** You have just read a problem and need to decide on a pattern, before you pick a template.
+
+**Complexity:** Most rows are O(n) after any sorting. The multiset row is O(n log k), and prefix sum plus hash map is O(n) with O(n) space.
 
 ```cpp
 // Sorted array + pair/triple sum     -> opposite-direction two pointers
@@ -765,3 +889,9 @@ for (int right = 0; right < n; right++) {
 // Subarray sum with negatives        -> prefix sum + hash map
 // Anagram / substring match          -> fixed window + freq array
 ```
+
+**Example:** "Sorted array, two numbers add up to 9" matches the first row, so use opposite-direction pointers. "Longest substring with at most 2 distinct" matches the longest-window row.
+
+**Pitfalls:** Check whether values can be negative before choosing a window, because negatives break it. "Exactly k" isn't directly slidable, so rewrite it first. Sliding Window Maximum belongs to the deque row, not the multiset row, even though both work.
+
+**Used in:** LC 167, LC 11, LC 26, LC 141, LC 643, LC 3, LC 76, LC 992, LC 239, LC 480, LC 560, LC 438
