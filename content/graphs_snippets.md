@@ -1160,6 +1160,8 @@ for (int u : topo) {
 
 ## 27. Grid DFS — number of islands
 
+**Use when:** "Number of islands", "max area of island", or any flood fill over 4-connected cells.
+
 ```cpp
 void dfs(int x, int y) {
     grid[x][y] = '0';
@@ -1186,9 +1188,22 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
+**Complexity:** O(n x m) time, and O(n x m) recursion depth in the worst case.
+
+**Example:** With grid `[["1","1","0"],["0","0","1"],["0","1","1"]]`, you get `islands = 2`.
+
+**Pitfalls:**
+
+- This overwrites the input. Copy it first if the caller still needs the grid.
+- A large all-land grid can overflow the stack, so switch to BFS or an explicit stack.
+
+**Used in:** LC 200, LC 695, LC 1020, LC 130
+
 ---
 
 ## 28. Shortest path in binary matrix
+
+**Use when:** "Shortest clear path" in a 0/1 matrix with 8-direction moves.
 
 ```cpp
 queue<pair<int,int>> q;
@@ -1218,11 +1233,22 @@ while (!q.empty()) {
 }
 ```
 
+**Complexity:** O(n x m) time and space.
+
+**Example:** With grid `[[0,0,0],[1,1,0],[1,1,0]]`, you get `dist[2][2] = 4`, counting cells.
+
+**Pitfalls:**
+
+- dist counts cells, so it starts at 1. The answer is `dist[n-1][m-1]`, which is -1 if never reached.
+- If the start is blocked, nothing gets pushed, so the answer stays -1. If the target is blocked, it is never pushed either.
+
+**Used in:** LC 1091
+
 ---
 
 ## 29. BFS with extra state
 
-Example: shortest path with obstacle elimination.
+**Use when:** Shortest path where a resource changes what is allowed, like "eliminate at most k obstacles", keys collected or a bitmask.
 
 ```cpp
 vector<vector<vector<int>>> dist(
@@ -1255,9 +1281,23 @@ while (!q.empty()) {
 }
 ```
 
+**Complexity:** O(n x m x (k + 1)) time and space.
+
+**Example:** With grid `[[0,1],[1,0]]` and k = 1, `dist[1][1][1] = 2`, and `dist[1][1][0]` stays -1. The answer is the minimum over all `used` values at the target.
+
+**Pitfalls:**
+
+- The answer is the smallest `dist[n-1][m-1][used]` over every used value, not just the one for k.
+- LC 1293: if k >= n + m - 2, the answer is just n + m - 2. Exit early to save memory.
+- States multiply quickly, so check that n x m x (k + 1) fits.
+
+**Used in:** LC 1293, LC 864, LC 847
+
 ---
 
 ## 30. Word ladder BFS
+
+**Use when:** "Shortest transformation sequence" where each step changes one letter.
 
 ```cpp
 unordered_set<string> st(wordList.begin(), wordList.end());
@@ -1289,9 +1329,23 @@ while (!q.empty()) {
 return 0;
 ```
 
+**Complexity:** O(N x L² x 26) time for N words of length L, because each candidate costs O(L) to hash. O(N x L) space.
+
+**Example:** With beginWord = "hit", endWord = "cog" and wordList = [hot, dot, dog, lot, log, cog], it returns 5.
+
+**Pitfalls:**
+
+- Erase a word when it is pushed, not when it is popped, or it gets queued many times.
+- The answer counts words, so the start is step 1.
+- If endWord isn't in the list, the loop never reaches it and returns 0, which is correct.
+
+**Used in:** LC 127, LC 433, LC 752
+
 ---
 
 ## 31. Alien Dictionary
+
+**Use when:** "Words are sorted in an unknown alphabet": find a valid letter order.
 
 ```cpp
 vector<vector<int>> g(26);
@@ -1351,9 +1405,23 @@ int total = accumulate(exists.begin(), exists.end(), 0);
 return order.size() == total ? order : "";
 ```
 
+**Complexity:** O(C) time, where C is the total number of characters, plus O(26 + E) for the toposort.
+
+**Example:** With words = ["wrt","wrf","er","ett","rftt"], it returns "wertf".
+
+**Pitfalls:**
+
+- If a word comes before its own prefix, as with "abc" then "ab", return "". The snippet handles this.
+- Duplicate edges are fine here, because each copy adds to and removes from indegree once.
+- Letters with no rules still need to appear, which is why `exists` is tracked.
+
+**Used in:** LC 269
+
 ---
 
 ## 32. Euler path / itinerary style
+
+**Use when:** "Use every ticket / edge exactly once", with the smallest order in lexical terms.
 
 ```cpp
 unordered_map<string, priority_queue<string, vector<string>, greater<string>>> g;
@@ -1380,9 +1448,23 @@ dfs("JFK");
 reverse(route.begin(), route.end());
 ```
 
+**Complexity:** O(E log E) time and O(V + E) space.
+
+**Example:** With tickets [JFK,KUL], [JFK,NRT], [NRT,JFK], you get `route = [JFK, NRT, JFK, KUL]`. KUL is a dead end, so it is appended first and ends up last.
+
+**Pitfalls:**
+
+- Append to `route` after the loop, when leaving the node, and reverse at the end.
+- A recursive DFS on thousands of tickets can go deep. Use an iterative stack if needed.
+- LC 2097: start from the node with out-degree minus in-degree equal to 1.
+
+**Used in:** LC 332, LC 2097, LC 753
+
 ---
 
 ## 33. Bipartite matching — DFS augmenting path
+
+**Use when:** "Assign each item on the left to at most one on the right" to maximize the pairs.
 
 ```cpp
 vector<vector<int>> g(n); // left side nodes: 0 to n-1
@@ -1414,9 +1496,22 @@ for (int u = 0; u < n; u++) {
 }
 ```
 
+**Complexity:** O(V x E) time and O(V) space.
+
+**Example:** With left 0 → {0, 1} and left 1 → {0}, you get `matching = 2`. Left 1 takes right 0 by moving left 0 over to right 1.
+
+**Pitfalls:**
+
+- `seen` must be fresh for each left node, as the snippet does.
+- `matchR` indexes the right side, so size it to m, not n.
+
+**Used in:** LC 1820, LC 1349
+
 ---
 
 ## 34. Detect redundant connection
+
+**Use when:** "Which edge, when removed, leaves a tree?" on an undirected graph.
 
 ```cpp
 DSU dsu(n + 1);
@@ -1430,9 +1525,22 @@ for (auto &e : edges) {
 }
 ```
 
+**Complexity:** O(E α(n)) time and O(n) space.
+
+**Example:** With edges [[1,2],[1,3],[2,3]], it returns [2,3]. That is the first edge whose ends were already connected.
+
+**Pitfalls:**
+
+- Nodes are 1-indexed, so `DSU dsu(n + 1)` with n = edges.size().
+- This handles only the undirected version. LC 685, with directed edges, also needs the "two parents" cases.
+
+**Used in:** LC 684, LC 685
+
 ---
 
 ## 35. Number of islands II — dynamic DSU
+
+**Use when:** "After each addLand, return the number of islands", with cells added online.
 
 ```cpp
 DSU dsu(n * m);
@@ -1471,9 +1579,23 @@ for (auto &pos : positions) {
 }
 ```
 
+**Complexity:** O(k α(n x m)) time for k positions, and O(n x m) space.
+
+**Example:** On a 3 x 3 grid with positions [[0,0],[0,1],[1,2],[2,1]], you get `ans = [1, 1, 2, 3]`.
+
+**Pitfalls:**
+
+- Repeated positions must not increase the count, which is what the `active` check is for.
+- Decrement only when `unite` returns true, since two neighbors may already be one island.
+- Cell id is `x * m + y` with m the number of columns. Using n would collide on non-square grids.
+
+**Used in:** LC 305
+
 ---
 
 ## 36. Clone graph
+
+**Use when:** "Deep copy a graph" that can contain cycles.
 
 ```cpp
 unordered_map<Node*, Node*> mp;
@@ -1494,9 +1616,22 @@ Node* cloneGraph(Node* node) {
 }
 ```
 
+**Complexity:** O(V + E) time and O(V) space for the map and recursion.
+
+**Example:** With 1 ↔ 2, the copy of 1 points to a new node 2, whose neighbor is the copy of 1 rather than the original.
+
+**Pitfalls:**
+
+- Store the copy in `mp` before recursing into neighbors, or a cycle recurses forever.
+- The empty-graph case needs the `nullptr` return.
+
+**Used in:** LC 133
+
 ---
 
 ## 37. Evaluate division — weighted graph DFS
+
+**Use when:** "Given a / b = k, find c / d": a path whose answer is the product of edge weights.
 
 ```cpp
 unordered_map<string, vector<pair<string,double>>> g;
@@ -1529,11 +1664,22 @@ double dfs(string u, string target, unordered_set<string>& vis) {
 }
 ```
 
+**Complexity:** O(V + E) per query and O(V + E) space.
+
+**Example:** With a / b = 2 and b / c = 3, `dfs("a", "c")` returns 6 and `dfs("c", "a")` returns 1/6.
+
+**Pitfalls:**
+
+- Check that both variables exist before calling dfs. Otherwise "x / x" with an unknown x returns 1.0, while LC 399 expects -1.0.
+- Use a fresh `vis` set for each query.
+
+**Used in:** LC 399
+
 ---
 
 ## 38. A\* search skeleton
 
-Useful for shortest path on map/grid with heuristic.
+**Use when:** Shortest path to one known target, when you can estimate the remaining distance cheaply.
 
 ```cpp
 auto heuristic = [&](int x, int y) {
@@ -1570,9 +1716,23 @@ while (!pq.empty()) {
 }
 ```
 
+**Complexity:** Worst case O(V log V) like Dijkstra. A good heuristic explores far fewer cells. O(V) space.
+
+**Example:** With grid `[[0,0,0],[1,1,0],[0,0,0]]` from (0,0) to (2,0), you get `dist[2][0] = 6`. The wall forces the long way around.
+
+**Pitfalls:**
+
+- This skeleton never stops early. Add `if (x == targetX && y == targetY) break;` after popping.
+- Manhattan distance is only admissible for 4-direction moves. With 8 directions, as in LC 1091, use the Chebyshev distance max(|dx|, |dy|).
+- Without a stale check, as in Dijkstra, old entries get re-expanded. It stays correct, just slower.
+
+**Used in:** LC 675, LC 773, LC 1197, LC 1091
+
 ---
 
 ## 39. Common graph pattern selection
+
+**Use when:** You know the problem is a graph problem but haven't picked the algorithm yet.
 
 ```cpp
 // unweighted shortest path        -> BFS
@@ -1590,6 +1750,17 @@ while (!pq.empty()) {
 // assignment rider-order          -> Bipartite matching
 // graph with extra condition      -> BFS/Dijkstra with expanded state
 ```
+
+**Complexity:** None, as this is a lookup table. See each linked section for its cost.
+
+**Example:** "Fewest walls to break to reach the corner": the edges are 0 or 1, so use 0-1 BFS (section 12).
+
+**Pitfalls:**
+
+- Check the weights first: negative weights rule out Dijkstra, and equal weights make it overkill.
+- "Extra condition" usually means adding it to the BFS or Dijkstra state, not inventing a new algorithm.
+
+**Used in:** LC 743, LC 787, LC 1091, LC 2290, LC 1334, LC 207, LC 684, LC 1584, LC 1192, LC 785, LC 1820, LC 1293
 
 ---
 
